@@ -19,10 +19,23 @@ function readOutput(file) {
   return readFileSync(join(dist, file), 'utf8');
 }
 
+function readCssOutput() {
+  return readdirSync(dist, { recursive: true })
+    .filter((file) => file.endsWith('.css'))
+    .map((file) => readOutput(file))
+    .join('\n');
+}
+
 function linkPattern(rel, href, hreflang) {
   const language = hreflang ? `(?=[^>]*\\bhreflang="${hreflang}")` : '';
-  return new RegExp(`<link(?=[^>]*\\brel="${rel}")${language}(?=[^>]*\\bhref="${href}")[^>]*>`);
+  const escapedHref = href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`<link(?=[^>]*\\brel="${rel}")${language}(?=[^>]*\\bhref="${escapedHref}")[^>]*>`);
 }
+
+test('link metadata checks reject regex-like URL lookalikes', () => {
+  const lookalike = '<link rel="canonical" href="https://orkaidXde/tools/">';
+  assert.doesNotMatch(lookalike, linkPattern('canonical', 'https://orkaid.de/tools/'));
+});
 
 test('build emits all mirrored routes with locale metadata and CSP', () => {
   for (const route of routes) {
@@ -52,7 +65,15 @@ test('homepages ship the hydration proof island', () => {
     const html = readOutput(file);
     assert.match(html, /<astro-island\b/, file);
     assert.match(html, new RegExp(label), file);
+    assert.ok(html.includes(`aria-label="${label}: 0"`), `${file} accessible name includes the count`);
   }
+});
+
+test('built shell keeps accent out of text and focus colors', () => {
+  const css = readCssOutput();
+  assert.doesNotMatch(css, /(?:^|[;{])color:var\(--accent\)/);
+  assert.match(css, /:focus-visible\{[^}]*outline:[^;}]*var\(--ink\)/);
+  assert.match(css, /text-decoration-color:var\(--accent\)/);
 });
 
 test('build references and copies local fonts and logo', () => {
@@ -68,10 +89,7 @@ test('build references and copies local fonts and logo', () => {
     'ibm-plex-mono-latin-400-normal.woff2',
     'ibm-plex-mono-latin-500-normal.woff2',
   ];
-  const css = readdirSync(dist, { recursive: true })
-    .filter((file) => file.endsWith('.css'))
-    .map((file) => readOutput(file))
-    .join('\n');
+  const css = readCssOutput();
 
   for (const file of fontFiles) {
     assert.match(css, new RegExp(`/fonts/${file}`), file);

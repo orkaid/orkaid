@@ -5,7 +5,7 @@
 </script>
 
 <div class="proof">
-  <button type="button" aria-label={label} onclick={() => count += 1}>
+  <button type="button" aria-label={label + ': ' + count} onclick={() => count += 1}>
     {label} · {count}
   </button>
   <p>

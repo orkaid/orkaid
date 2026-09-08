@@ -86,7 +86,8 @@ img {
 }
 
 a {
-  color: var(--accent);
+  color: var(--ink);
+  text-decoration-color: var(--accent);
   text-underline-offset: 0.2em;
 }
 
@@ -95,7 +96,7 @@ a:hover {
 }
 
 :focus-visible {
-  outline: 0.2rem solid var(--accent);
+  outline: 0.2rem solid var(--ink);
   outline-offset: 0.2rem;
 }
 
@@ -182,7 +183,7 @@ a:hover {
 
 .eyebrow {
   margin: 0 0 var(--space-2);
-  color: var(--accent);
+  color: var(--muted);
   font: 500 0.7rem/1.4 var(--mono);
   letter-spacing: 0.16em;
   text-transform: uppercase;
