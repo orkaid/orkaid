@@ -1,0 +1,33 @@
+---
+import HydrationProof from '../components/tools/HydrationProof.svelte';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  locale="de"
+  title="Orkaid — Freie Werkzeuge für Finanzen und Compliance"
+  description="Orkaid ist ein freies, quelloffenes Werkzeug-Hub für Finanzen, Buchhaltung, Compliance und Software."
+  pathname="/"
+>
+  <section class="hero">
+    <p class="eyebrow">Was hier entsteht</p>
+    <h1>Offene Werkzeuge für deutsche E-Rechnungen.</h1>
+    <div class="lead-grid">
+      <p>Orkaid ist ein freies, quelloffenes Werkzeug-Hub an der Schnittstelle von Finanzen, Buchhaltung, Compliance und Software — offen entwickelt von einem praktizierenden Finanzbuchhalter, für die Menschen, die die Unterlagen tatsächlich einreichen.</p>
+      <p>Der erste Baustein ist ein XRechnung-Generator nach EN 16931 — der Startpunkt, nicht die Grenze des Projekts.</p>
+    </div>
+  </section>
+
+  <section class="content-section" aria-labelledby="tools-heading">
+    <p class="eyebrow">Werkzeuge</p>
+    <h2 id="tools-heading">Die Plattform-Grundlage steht.</h2>
+    <p>Der Werkzeug-Hub wird schrittweise aufgebaut. Der XRechnung-Generator selbst ist noch nicht Teil dieses Bootstraps.</p>
+    <p><a href="/tools/">Zum Werkzeug-Hub</a></p>
+  </section>
+
+  <section class="content-section" aria-labelledby="proof-heading">
+    <p class="eyebrow">Technischer Nachweis</p>
+    <h2 id="proof-heading">Interaktive Insel</h2>
+    <HydrationProof locale="de" client:load />
+  </section>
+</BaseLayout>

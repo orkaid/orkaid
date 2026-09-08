@@ -1,0 +1,83 @@
+---
+import { localePath, ui, type Locale } from '../i18n/ui';
+import '../styles/tokens.css';
+
+interface Props {
+  locale: Locale;
+  title: string;
+  description: string;
+  pathname: string;
+}
+
+const { locale, title, description, pathname } = Astro.props;
+const origin = Astro.site ?? new URL('https://orkaid.de');
+const deUrl = new URL(localePath('de', pathname), origin);
+const enUrl = new URL(localePath('en', pathname), origin);
+const canonical = locale === 'de' ? deUrl : enUrl;
+const alternateLocale: Locale = locale === 'de' ? 'en' : 'de';
+const copy = ui[locale];
+---
+
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="alternate" hreflang="de" href={deUrl} />
+    <link rel="alternate" hreflang="en" href={enUrl} />
+    <link rel="alternate" hreflang="x-default" href={deUrl} />
+    <link rel="icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" type="image/png" />
+    <link rel="icon" href="/assets/icon-192.png" sizes="192x192" type="image/png" />
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Orkaid" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={new URL('/assets/orkaid-social.png', origin)} />
+    <meta property="og:locale" content={locale === 'de' ? 'de_DE' : 'en_US'} />
+    <meta property="og:locale:alternate" content={locale === 'de' ? 'en_US' : 'de_DE'} />
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <div class="site-shell">
+      <a class="skip-link" href="#content">{locale === 'de' ? 'Zum Inhalt' : 'Skip to content'}</a>
+      <header class="site-header">
+        <a class="brand" href={localePath(locale, '/')} aria-label={copy.home}>
+          <img
+            src="/assets/orkaid-logo-horizontal-light-600x160.png"
+            srcset="/assets/orkaid-logo-horizontal-light-600x160.png 1x, /assets/orkaid-logo-horizontal-light-1200x320.png 2x"
+            width="600"
+            height="160"
+            alt="Orkaid"
+          />
+        </a>
+        <nav class="site-nav" aria-label={locale === 'de' ? 'Hauptnavigation' : 'Main navigation'}>
+          <ul>
+            <li><a href={localePath(locale, '/')}>{copy.home}</a></li>
+            <li><a href={localePath(locale, '/tools/')}>{copy.tools}</a></li>
+            <li><a href="https://github.com/orkaid/orkaid" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a href="https://orkaid.substack.com" target="_blank" rel="noopener noreferrer">Substack</a></li>
+          </ul>
+        </nav>
+      </header>
+      <main id="content" class="site-main">
+        <slot />
+      </main>
+      <footer class="site-footer">
+        <span>Orkaid — <a href="mailto:kontakt@orkaid.de">kontakt@orkaid.de</a></span>
+        <nav aria-label={locale === 'de' ? 'Rechtliches und Sprache' : 'Legal and language'}>
+          <ul>
+            <li><a href={localePath(locale, '/impressum/')}>{copy.imprint}</a></li>
+            <li><a href={localePath(locale, '/datenschutz/')}>{copy.privacy}</a></li>
+            <li><a href={localePath(alternateLocale, pathname)} hreflang={alternateLocale}>{copy.language}</a></li>
+          </ul>
+        </nav>
+      </footer>
+    </div>
+  </body>
+</html>
