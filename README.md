@@ -4,14 +4,13 @@ Open-source tools for finance, accounting and compliance, built in public.
 
 Orkaid is a practitioner-led project by Mihai-Adrian Mateescu at the intersection of professional domain expertise and software engineering.
 
-The first build is an XRechnung tool for German e-invoicing. It is the starting point, not the boundary of the project.
+This repository currently contains the local-only Astro platform bootstrap for the future tool hub. The XRechnung generator is not part of this bootstrap.
 
 ## Current status
 
 The Orkaid public site is live.
 
-The first professional tool — an XRechnung generator for German
-e-invoicing — is currently being built.
+The repository currently contains a local-only Astro platform bootstrap. The XRechnung generator is planned and is not included here.
 
 ## Links
 
@@ -21,12 +20,26 @@ e-invoicing — is currently being built.
 ## Local preview
 
 ```bash
-python3 -m http.server 8000 --directory site
+npm ci
+npm run dev
 ```
 
 Then open:
 
-`http://localhost:8000`
+`http://localhost:4321`
+
+## Development checks
+
+Use Node `24.20.0` and npm `11.19.0`.
+
+```bash
+npm run check
+npm test
+npm run build
+npm audit
+```
+
+The production build is written to `dist/`.
 
 ## Attribution
 
@@ -50,4 +63,4 @@ Software in this repository is licensed under the MIT License unless otherwise s
 
 Orkaid brand assets are excluded from the MIT software license; see `BRAND_ASSETS.md`.
 
-Third-party fonts retain their own licenses under `site/fonts/`.
+Third-party fonts retain their own licenses under `public/fonts/`.

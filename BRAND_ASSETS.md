@@ -40,4 +40,4 @@ Text-only attribution like the above does not require use of the Orkaid logo, an
 
 ## Third-party fonts
 
-Fonts self-hosted under `site/fonts/` (Source Serif 4, IBM Plex Sans, IBM Plex Mono) remain under their own respective licenses (SIL Open Font License 1.1). See the `LICENSE-*.txt` files alongside them in that directory.
+Fonts self-hosted under `public/fonts/` (Source Serif 4, IBM Plex Sans, IBM Plex Mono) remain under their own respective licenses (SIL Open Font License 1.1). See the `LICENSE-*.txt` files alongside them in that directory.
