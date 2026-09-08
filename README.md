@@ -8,9 +8,10 @@ The first build is an XRechnung tool for German e-invoicing. It is the starting 
 
 ## Current status
 
-Pre-launch.
+The Orkaid public site is live.
 
-The initial Orkaid public site is being prepared while the first professional tool is built.
+The first professional tool — an XRechnung generator for German
+e-invoicing — is currently being built.
 
 ## Links
 
