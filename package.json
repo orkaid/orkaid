@@ -1,0 +1,25 @@
+{
+  "name": "orkaid",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "check": "astro check && tsc --noEmit",
+    "test": "node --test tests/domain/*.test.ts",
+    "build": "astro build && node --test tests/build-output.test.mjs"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "3.7.4",
+    "@astrojs/svelte": "9.0.1",
+    "astro": "7.3.2",
+    "svelte": "5.57.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.10",
+    "typescript": "6.0.3"
+  }
+}
