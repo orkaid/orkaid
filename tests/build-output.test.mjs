@@ -32,6 +32,30 @@ function linkPattern(rel, href, hreflang) {
   return new RegExp(`<link(?=[^>]*\\brel="${rel}")${language}(?=[^>]*\\bhref="${escapedHref}")[^>]*>`);
 }
 
+function sitemapAlternatePattern(href, hreflang) {
+  const escapedHref = href.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`<xhtml:link(?=[^>]*\\brel="alternate")(?=[^>]*\\bhreflang="${hreflang}")(?=[^>]*\\bhref="${escapedHref}")[^>]*>`);
+}
+
+function sitemapEntry(sitemap, url) {
+  const escapedUrl = url.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return sitemap.match(new RegExp(`<url>\\s*<loc>${escapedUrl}</loc>[\\s\\S]*?</url>`))?.[0];
+}
+
+function assertSitemapRoutePairs(sitemap) {
+  for (const path of new Set(routes.map((route) => route.path))) {
+    const deUrl = `https://orkaid.de${path}`;
+    const enUrl = `https://orkaid.de/en${path}`;
+
+    for (const [url, label] of [[deUrl, 'German'], [enUrl, 'English']]) {
+      const entry = sitemapEntry(sitemap, url);
+      assert.ok(entry, `${label} sitemap entry exists for ${path}`);
+      assert.match(entry, sitemapAlternatePattern(deUrl, 'de-DE'), `${label} sitemap entry links to German ${path}`);
+      assert.match(entry, sitemapAlternatePattern(enUrl, 'en'), `${label} sitemap entry links to English ${path}`);
+    }
+  }
+}
+
 test('link metadata checks reject regex-like URL lookalikes', () => {
   const lookalike = '<link rel="canonical" href="https://orkaidXde/tools/">';
   assert.doesNotMatch(lookalike, linkPattern('canonical', 'https://orkaid.de/tools/'));
@@ -76,6 +100,10 @@ test('built shell keeps accent out of text and focus colors', () => {
   assert.match(css, /text-decoration-color:var\(--accent\)/);
 });
 
+test('built h1 CSS lets long German words wrap on narrow screens', () => {
+  assert.match(readCssOutput(), /h1\{[^}]*overflow-wrap:anywhere/);
+});
+
 test('built CSS includes the exact core brand trio and highlights the hydration control', () => {
   const css = readCssOutput();
   for (const declaration of ['--paper:#fafaf8', '--accent:#4fa7a3', '--highlight:#fff997']) {
@@ -105,15 +133,19 @@ test('build references and copies local fonts and logo', () => {
   }
 });
 
-test('sitemap includes both locale route trees', () => {
+test('sitemap contains reciprocal locale alternates in each route entry', () => {
   const sitemapFiles = readdirSync(dist).filter(
     (file) => file === 'sitemap.xml' || file === 'sitemap-index.xml' || /^sitemap-\d+\.xml$/.test(file),
   );
   assert.ok(sitemapFiles.length > 0, 'sitemap output exists');
   const sitemap = sitemapFiles.map(readOutput).join('\n');
 
-  for (const route of routes) {
-    const prefix = route.locale === 'en' ? '/en' : '';
-    assert.match(sitemap, new RegExp(`https://orkaid\\.de${prefix}${route.path}`), route.file);
-  }
+  assertSitemapRoutePairs(sitemap);
+});
+
+test('sitemap route checks reject missing entries and alternates', () => {
+  const sitemap = readOutput('sitemap-0.xml');
+  assertSitemapRoutePairs(sitemap);
+  assert.throws(() => assertSitemapRoutePairs(sitemap.replace('<url><loc>https://orkaid.de/tools/</loc>', '<url>')));
+  assert.throws(() => assertSitemapRoutePairs(sitemap.replace(/<xhtml:link[^>]*\/>/g, '')));
 });

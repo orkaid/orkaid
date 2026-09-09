@@ -204,6 +204,7 @@ h1 {
   line-height: 1.05;
   letter-spacing: -0.015em;
   text-wrap: pretty;
+  overflow-wrap: anywhere;
 }
 
 h2 {
