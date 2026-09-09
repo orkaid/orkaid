@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "astro dev",
     "check": "astro check && tsc --noEmit",
-    "test": "node --test tests/domain/*.test.ts",
+    "test": "node --test tests/**/*.test.ts",
     "build": "astro build && node --test tests/build-output.test.mjs"
   },
   "dependencies": {
