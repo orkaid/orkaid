@@ -76,6 +76,14 @@ test('built shell keeps accent out of text and focus colors', () => {
   assert.match(css, /text-decoration-color:var\(--accent\)/);
 });
 
+test('built CSS includes the exact core brand trio and highlights the hydration control', () => {
+  const css = readCssOutput();
+  for (const declaration of ['--paper:#fafaf8', '--accent:#4fa7a3', '--highlight:#fff997']) {
+    assert.ok(css.includes(declaration), declaration);
+  }
+  assert.match(readOutput('index.html'), /button\.[^{]*\{[^}]*background:var\(--highlight\)/);
+});
+
 test('build references and copies local fonts and logo', () => {
   const logo = '/assets/orkaid-logo-horizontal-light-600x160.png';
   assert.match(readOutput('index.html'), new RegExp(logo));

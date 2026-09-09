@@ -25,7 +25,7 @@
 
   button {
     border: 1px solid var(--ink);
-    background: transparent;
+    background: var(--highlight);
     color: var(--ink);
     cursor: pointer;
     font: 500 0.75rem/1.4 var(--mono);
