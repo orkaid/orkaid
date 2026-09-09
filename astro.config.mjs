@@ -5,6 +5,8 @@ import svelte from '@astrojs/svelte';
 export default defineConfig({
   site: 'https://orkaid.de',
   output: 'static',
+  // ponytail: no Markdown/code content at bootstrap; add Prism only when syntax highlighting is required.
+  markdown: { syntaxHighlight: false },
   trailingSlash: 'always',
   i18n: {
     defaultLocale: 'de',
