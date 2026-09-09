@@ -78,6 +78,7 @@ test('build emits all mirrored routes with locale metadata and CSP', () => {
     assert.match(html, linkPattern('alternate', deUrl, 'de-DE'), route.file);
     assert.match(html, linkPattern('alternate', enUrl, 'en'), route.file);
     assert.match(html, linkPattern('alternate', deUrl, 'x-default'), route.file);
+    assert.doesNotMatch(html, /hreflang="de"/, route.file);
 
     const csp = html.match(/<meta(?=[^>]*http-equiv="content-security-policy")[^>]*>/i)?.[0];
     assert.ok(csp, `${route.file} has a CSP meta tag`);

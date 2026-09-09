@@ -139,10 +139,6 @@ a:hover {
   border-bottom: 1px solid var(--ink);
 }
 
-.brand {
-  border: 0;
-}
-
 .brand-block {
   display: flex;
   flex-direction: column;

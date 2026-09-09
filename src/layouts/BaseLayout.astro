@@ -77,7 +77,7 @@ const copy = ui[locale];
           <ul>
             <li><a href={localePath(locale, '/impressum/')}>{copy.imprint}</a></li>
             <li><a href={localePath(locale, '/datenschutz/')}>{copy.privacy}</a></li>
-            <li><a href={localePath(alternateLocale, pathname)} hreflang={alternateLocale}>{copy.language}</a></li>
+            <li><a href={localePath(alternateLocale, pathname)} hreflang={alternateLocale === 'de' ? 'de-DE' : 'en'}>{copy.language}</a></li>
           </ul>
         </nav>
         <span class="footer-disclaimer">© 2026 — {copy.disclaimer}</span>
