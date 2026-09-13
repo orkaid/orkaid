@@ -1,5 +1,4 @@
 ---
-import HydrationProof from '../components/tools/HydrationProof.svelte';
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
 
@@ -23,11 +22,5 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <h2 id="tools-heading">Die Plattform-Grundlage steht.</h2>
     <p>Der Werkzeug-Hub wird schrittweise aufgebaut. Der XRechnung-Generator selbst ist noch nicht Teil dieses Bootstraps.</p>
     <p><a href="/tools/">Zum Werkzeug-Hub</a></p>
-  </section>
-
-  <section class="content-section" aria-labelledby="proof-heading">
-    <p class="eyebrow">Technischer Nachweis</p>
-    <h2 id="proof-heading">Interaktive Insel</h2>
-    <HydrationProof locale="de" client:load />
   </section>
 </BaseLayout>

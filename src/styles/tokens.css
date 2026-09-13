@@ -143,9 +143,21 @@ a:hover {
   border: 0;
 }
 
+.brand-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
 .brand img {
   width: auto;
   height: 2.5rem;
+}
+
+.brand-descriptor {
+  color: var(--muted);
+  font: 500 0.65rem/1.4 var(--mono);
+  letter-spacing: 0.08em;
 }
 
 .site-nav ul,
@@ -266,6 +278,11 @@ h3 {
   margin: 0;
 }
 
+.status-highlight {
+  background: var(--highlight);
+  padding-inline: 0.25em;
+}
+
 .legal {
   max-width: 47.5rem;
   margin-inline: auto;
@@ -279,6 +296,10 @@ h3 {
 .legal p,
 .legal li {
   max-width: 72ch;
+}
+
+.legal a {
+  overflow-wrap: anywhere;
 }
 
 .legal .updated,

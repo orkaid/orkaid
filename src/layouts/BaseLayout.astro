@@ -26,7 +26,7 @@ const copy = ui[locale];
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
-    <link rel="alternate" hreflang="de" href={deUrl} />
+    <link rel="alternate" hreflang="de-DE" href={deUrl} />
     <link rel="alternate" hreflang="en" href={enUrl} />
     <link rel="alternate" hreflang="x-default" href={deUrl} />
     <link rel="icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png" />
@@ -47,15 +47,18 @@ const copy = ui[locale];
     <div class="site-shell">
       <a class="skip-link" href="#content">{locale === 'de' ? 'Zum Inhalt' : 'Skip to content'}</a>
       <header class="site-header">
-        <a class="brand" href={localePath(locale, '/')} aria-label={copy.home}>
-          <img
-            src="/assets/orkaid-logo-horizontal-light-600x160.png"
-            srcset="/assets/orkaid-logo-horizontal-light-600x160.png 1x, /assets/orkaid-logo-horizontal-light-1200x320.png 2x"
-            width="600"
-            height="160"
-            alt="Orkaid"
-          />
-        </a>
+        <div class="brand-block">
+          <a class="brand" href={localePath(locale, '/')} aria-label={copy.home}>
+            <img
+              src="/assets/orkaid-logo-horizontal-light-600x160.png"
+              srcset="/assets/orkaid-logo-horizontal-light-600x160.png 1x, /assets/orkaid-logo-horizontal-light-1200x320.png 2x"
+              width="600"
+              height="160"
+              alt="Orkaid"
+            />
+          </a>
+          <span class="brand-descriptor">{copy.descriptor}</span>
+        </div>
         <nav class="site-nav" aria-label={locale === 'de' ? 'Hauptnavigation' : 'Main navigation'}>
           <ul>
             <li><a href={localePath(locale, '/')}>{copy.home}</a></li>
@@ -77,6 +80,7 @@ const copy = ui[locale];
             <li><a href={localePath(alternateLocale, pathname)} hreflang={alternateLocale}>{copy.language}</a></li>
           </ul>
         </nav>
+        <span class="footer-disclaimer">© 2026 — {copy.disclaimer}</span>
       </footer>
     </div>
   </body>

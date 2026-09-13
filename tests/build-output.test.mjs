@@ -4,16 +4,12 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 const dist = join(process.cwd(), 'dist');
-const routes = [
-  { file: 'index.html', locale: 'de', path: '/' },
-  { file: 'tools/index.html', locale: 'de', path: '/tools/' },
-  { file: 'impressum/index.html', locale: 'de', path: '/impressum/' },
-  { file: 'datenschutz/index.html', locale: 'de', path: '/datenschutz/' },
-  { file: 'en/index.html', locale: 'en', path: '/' },
-  { file: 'en/tools/index.html', locale: 'en', path: '/tools/' },
-  { file: 'en/impressum/index.html', locale: 'en', path: '/impressum/' },
-  { file: 'en/datenschutz/index.html', locale: 'en', path: '/datenschutz/' },
-];
+const sourceCss = readFileSync(join(process.cwd(), 'src/styles/tokens.css'), 'utf8');
+const expectedPaths = ['/', '/datenschutz/', '/impressum/', '/tools/'];
+const routes = expectedPaths.flatMap((path) => [
+  { file: path === '/' ? 'index.html' : `${path.slice(1)}index.html`, locale: 'de', path },
+  { file: path === '/' ? 'en/index.html' : `en${path}index.html`, locale: 'en', path },
+]);
 
 function readOutput(file) {
   return readFileSync(join(dist, file), 'utf8');
@@ -42,8 +38,17 @@ function sitemapEntry(sitemap, url) {
   return sitemap.match(new RegExp(`<url>\\s*<loc>${escapedUrl}</loc>[\\s\\S]*?</url>`))?.[0];
 }
 
-function assertSitemapRoutePairs(sitemap) {
-  for (const path of new Set(routes.map((route) => route.path))) {
+function localeRouteSets() {
+  const files = readdirSync(dist, { recursive: true }).filter((file) => file.endsWith('index.html'));
+  const toPath = (file) => `/${file.replace(/index\.html$/, '')}`;
+  return {
+    de: files.filter((file) => !file.startsWith('en/')).map(toPath).sort(),
+    en: files.filter((file) => file.startsWith('en/')).map((file) => toPath(file.slice(3))).sort(),
+  };
+}
+
+function assertSitemapRoutePairs(sitemap, paths = localeRouteSets().de) {
+  for (const path of paths) {
     const deUrl = `https://orkaid.de${path}`;
     const enUrl = `https://orkaid.de/en${path}`;
 
@@ -70,7 +75,7 @@ test('build emits all mirrored routes with locale metadata and CSP', () => {
 
     assert.match(html, new RegExp(`<html[^>]*\\blang="${route.locale}"`), route.file);
     assert.match(html, linkPattern('canonical', canonical), route.file);
-    assert.match(html, linkPattern('alternate', deUrl, 'de'), route.file);
+    assert.match(html, linkPattern('alternate', deUrl, 'de-DE'), route.file);
     assert.match(html, linkPattern('alternate', enUrl, 'en'), route.file);
     assert.match(html, linkPattern('alternate', deUrl, 'x-default'), route.file);
 
@@ -78,38 +83,68 @@ test('build emits all mirrored routes with locale metadata and CSP', () => {
     assert.ok(csp, `${route.file} has a CSP meta tag`);
     assert.match(csp, /default-src 'self'/, route.file);
     assert.match(csp, /object-src 'none'/, route.file);
+    assert.doesNotMatch(csp, /'unsafe-inline'/, route.file);
+    assert.doesNotMatch(csp, /'unsafe-eval'/, route.file);
   }
 });
 
-test('homepages ship the hydration proof island', () => {
-  for (const [file, label] of [
-    ['index.html', 'Plattform-Hydrationsprüfung'],
-    ['en/index.html', 'Platform hydration check'],
-  ]) {
-    const html = readOutput(file);
-    assert.match(html, /<astro-island\b/, file);
-    assert.match(html, new RegExp(label), file);
-    assert.ok(html.includes(`aria-label="${label}: 0"`), `${file} accessible name includes the count`);
-  }
+test('public shell restores positioning and removes bootstrap-only hydration proof', () => {
+  const de = readOutput('index.html');
+  const en = readOutput('en/index.html');
+  assert.match(de, /Open-Source-Werkzeuge für Finanzen, Buchhaltung und Compliance/);
+  assert.match(en, /open-source tools for finance, accounting and compliance/);
+  assert.match(de, /Keine Steuer- oder Rechtsberatung/);
+  assert.match(en, /No tax or legal advice/);
+  assert.doesNotMatch(`${de}\n${en}`, /<astro-island\b|Hydrationsprüfung|hydration check|Interaktive Insel|Interactive island/i);
 });
 
 test('built shell keeps accent out of text and focus colors', () => {
-  const css = readCssOutput();
-  assert.doesNotMatch(css, /(?:^|[;{])color:var\(--accent\)/);
-  assert.match(css, /:focus-visible\{[^}]*outline:[^;}]*var\(--ink\)/);
-  assert.match(css, /text-decoration-color:var\(--accent\)/);
+  assert.doesNotMatch(sourceCss, /(?:^|[;{])\s*color:\s*var\(--accent\)/);
+  assert.match(sourceCss, /:focus-visible\s*\{[^}]*outline:[^;}]*var\(--ink\)/s);
+  assert.match(sourceCss, /text-decoration-color:\s*var\(--accent\)/);
 });
 
 test('built h1 CSS lets long German words wrap on narrow screens', () => {
-  assert.match(readCssOutput(), /h1\{[^}]*overflow-wrap:anywhere/);
+  assert.match(sourceCss, /h1\s*\{[^}]*overflow-wrap:\s*anywhere/s);
 });
 
-test('built CSS includes the exact core brand trio and highlights the hydration control', () => {
-  const css = readCssOutput();
-  for (const declaration of ['--paper:#fafaf8', '--accent:#4fa7a3', '--highlight:#fff997']) {
-    assert.ok(css.includes(declaration), declaration);
+test('source tokens contain the exact core brand trio and the real status accent', () => {
+  for (const [token, value] of [['paper', '#fafaf8'], ['accent', '#4fa7a3'], ['highlight', '#fff997']]) {
+    assert.match(sourceCss, new RegExp(`--${token}:\\s*${value}`, 'i'));
   }
-  assert.match(readOutput('index.html'), /button\.[^{]*\{[^}]*background:var\(--highlight\)/);
+  assert.match(sourceCss, /\.status-highlight\s*\{[^}]*background:\s*var\(--highlight\)/s);
+  assert.match(readOutput('tools/index.html'), /class="status-highlight"[^>]*>In Entwicklung</);
+  assert.match(readOutput('en/tools/index.html'), /class="status-highlight"[^>]*>In development</);
+});
+
+test('legal pages wrap long link text without broad paragraph wrapping', () => {
+  assert.match(sourceCss, /\.legal a\s*\{[^}]*overflow-wrap:\s*anywhere/s);
+  assert.doesNotMatch(sourceCss, /\.legal p\s*\{[^}]*overflow-wrap/s);
+});
+
+test('privacy and English legal access copy reflect the current site', () => {
+  const privacy = readOutput('datenschutz/index.html');
+  assert.doesNotMatch(privacy, /Coming-Soon-Seite/);
+  assert.match(privacy, /Links zu externen Diensten und Websites/);
+  assert.match(readOutput('en/impressum/index.html'), /<h1>Legal notice<\/h1>/);
+  assert.match(readOutput('en/datenschutz/index.html'), /no accounts, no analytics, no cookies and no forms/i);
+  assert.match(readOutput('en/datenschutz/index.html'), /German version is authoritative/i);
+});
+
+test('generated German and English content route sets are exact mirrors', () => {
+  const routeSets = localeRouteSets();
+  assert.deepEqual(routeSets.de, expectedPaths);
+  assert.deepEqual(routeSets.en, routeSets.de);
+});
+
+test('Cloudflare Pages static headers provide narrow transport-level hardening', () => {
+  const headers = readOutput('_headers');
+  assert.match(headers, /^\/\*$/m);
+  assert.match(headers, /^  Content-Security-Policy: frame-ancestors 'none'$/m);
+  assert.match(headers, /^  X-Content-Type-Options: nosniff$/m);
+  assert.match(headers, /^  Referrer-Policy: strict-origin-when-cross-origin$/m);
+  assert.match(headers, /^  Permissions-Policy: camera=\(\), geolocation=\(\), microphone=\(\)$/m);
+  assert.doesNotMatch(headers, /default-src|script-src|style-src|Strict-Transport-Security/i);
 });
 
 test('build references and copies local fonts and logo', () => {

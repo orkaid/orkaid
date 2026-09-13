@@ -41,6 +41,10 @@ npm audit
 
 The production build is written to `dist/`.
 
+## Production integration gate
+
+Deployment configuration is managed separately from this repository. Releasing this Astro build to production requires explicit authorization and a deployment configuration that runs `npm run build`, publishes `dist`, and uses the Node version declared in `.node-version`. Repository changes do not modify deployment infrastructure.
+
 ## Attribution
 
 Orkaid software is open source and may be used, modified and redistributed under the MIT License.
