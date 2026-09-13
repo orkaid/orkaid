@@ -12,6 +12,7 @@ Thumbs.db
 !.env.example
 .dev.vars
 .dev.vars.*
+.claude/settings.local.json
 *.pem
 *.key
 *.p12
