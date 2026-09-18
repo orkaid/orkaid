@@ -4,16 +4,109 @@ import BaseLayout from '../../../layouts/BaseLayout.astro';
 
 <BaseLayout
   locale="en"
-  title="Privacy notice access — Orkaid"
-  description="Access notice for the legally authoritative German Orkaid privacy policy."
+  title="Privacy notice — Orkaid"
+  description="Privacy notice for Orkaid under GDPR Art. 13."
   pathname="/datenschutz/"
 >
-  <header class="page-heading">
-    <p class="eyebrow">Privacy</p>
-    <h1>Privacy notice</h1>
-    <p>In short: this static site processes standard hosting access data only — no accounts, no analytics, no cookies and no forms. The German version is authoritative.</p>
-  </header>
-  <section class="content-section access-notice">
-    <p><a href="/datenschutz/" hreflang="de-DE">Read the authoritative German Datenschutzerklärung</a>.</p>
-  </section>
+  <article class="legal">
+    <header>
+      <p class="eyebrow">GDPR Art. 13</p>
+      <h1>Privacy notice</h1>
+      <p>This privacy notice explains the nature, scope and purpose of processing personal data on the website <strong>orkaid.de</strong>.</p>
+      <p class="updated">Last updated: September 2026</p>
+    </header>
+
+    <section>
+      <h2>1. Controller</h2>
+      <p>
+        The controller for data processing on this website is:<br /><br />
+        <strong>Mihai-Adrian Mateescu</strong><br />
+        Bahnhofstraße 65b<br />
+        21218 Seevetal<br />
+        Germany<br /><br />
+        <strong>Phone:</strong> <a href="tel:+491704740121">+49 170 4740121</a><br />
+        <strong>Email:</strong> <a href="mailto:kontakt@orkaid.de">kontakt@orkaid.de</a>
+      </p>
+    </section>
+
+    <section>
+      <h2>2. Data collection on this website</h2>
+      <p>Orkaid is a static website with no server backend, user accounts or forms of its own. When you visit this website, my hosting and security provider Cloudflare processes technical data needed to deliver and protect the site (see section 3).</p>
+      <p><strong>For clarity — this website itself currently does not use:</strong></p>
+      <ul>
+        <li>no cookies of its own</li>
+        <li>no <code>localStorage</code> or comparable browser storage</li>
+        <li>no web analytics/tracking services</li>
+        <li>no forms or contact fields on the page itself</li>
+        <li>no optional third-party embeds or widgets</li>
+        <li>no AI-powered features</li>
+      </ul>
+      <p>Independently of this, Cloudflare may set a strictly necessary cookie as part of its own security mechanisms (e.g. when suspicious traffic is detected); this lies outside my own configuration of this website (see section 3).</p>
+      <p>Should this change — for example through future tools or features on orkaid.de — this notice will be updated accordingly (see section 8).</p>
+    </section>
+
+    <section>
+      <h2>3. Hosting and security processing by Cloudflare</h2>
+      <p>This website is delivered using Cloudflare's DNS, network/CDN and security functions, together with Cloudflare Pages. The provider is Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA.</p>
+      <p>Cloudflare processes technical connection and traffic information required to deliver and protect the website. According to Cloudflare's own privacy policy, this may include in particular IP addresses, traffic-routing information, system configuration information, and other information about traffic to and from this website; this list is deliberately non-exhaustive. Orkaid itself does not operate a separate application/origin-server access-logging system of its own.</p>
+      <p>Cloudflare's security functions may, in exceptional cases, use technically necessary security cookies, for example when a security check is triggered. Ordinary, unremarkable visits to this website showed no cookies during review. Orkaid itself does not use any analytics or marketing cookies.</p>
+      <p>How long Cloudflare retains technical, security-related or diagnostic information depends on the particular Cloudflare service and processing purpose. Orkaid does not define any additional retention period of its own for application/server-side logging, since none is operated.</p>
+      <p><strong>Legal basis:</strong> Art. 6(1)(f) GDPR (legitimate interest in the secure and reliable delivery of the website).</p>
+      <p><strong>Privacy policy:</strong> <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">https://www.cloudflare.com/privacypolicy/</a></p>
+      <p><strong>Transfer to the United States:</strong> for transfers to the US, Cloudflare relies on the EU-U.S. Data Privacy Framework and on EU Standard Contractual Clauses as safeguards.</p>
+    </section>
+
+    <section>
+      <h2>4. Email contact</h2>
+      <p>For email communication (<a href="mailto:kontakt@orkaid.de">kontakt@orkaid.de</a>) I use Zoho Mail in Zoho's EU data-center region (mail.zoho.eu). Sending an email processes your sender address, the content of your message and any other data you voluntarily provide, in order to handle your inquiry.</p>
+      <p>According to Zoho's own statements, data in the EU region is for the most part stored and processed within the EU. In rare support cases, employees of Zoho's Indian group company (Zoho Corporation Private Limited) may access the EU data center; according to Zoho this occurs under a data processing agreement based on EU Standard Contractual Clauses with supplementary measures (a Transfer Impact Assessment) and without physical transfer of the data out of the EU. For certain features, additional subprocessors may also be involved under comparable contractual safeguards.</p>
+      <p><strong>Legal basis:</strong> Art. 6(1)(f) GDPR (legitimate interest in handling incoming inquiries).</p>
+      <p><strong>Retention:</strong> correspondence is retained for as long as necessary to handle the inquiry and reasonably expected follow-up, unless longer retention is required by law or necessary for the establishment, exercise or defence of legal claims. After I delete a message, Zoho Mail's own provider-side Trash/recovery/deletion periods may continue to apply; details are set out in Zoho's current deletion and retention documentation.</p>
+      <p><strong>Further information:</strong> <a href="https://www.zoho.com/privacy.html" target="_blank" rel="noopener noreferrer">https://www.zoho.com/privacy.html</a> · <a href="https://www.zoho.com/mail/help/data-deletion-policy.html" target="_blank" rel="noopener noreferrer">Zoho Mail deletion policy</a></p>
+    </section>
+
+    <section>
+      <h2>5. HTTPS/TLS encryption</h2>
+      <p>This website is only reachable over an encrypted HTTPS connection; unencrypted HTTP requests are automatically redirected to HTTPS. Current transport encryption standards (TLS) are used.</p>
+    </section>
+
+    <section>
+      <h2>6. External links</h2>
+      <p>This website contains links to external services and websites (e.g. GitHub, Substack). Simply loading this page does not embed or retrieve any resource from a linked provider.</p>
+      <p>If you follow a link, your browser establishes a connection to the external provider; from that point on, that provider's own processing and privacy terms apply, and it alone is responsible for them. Clicking a link is not, by itself, consent to anything on Orkaid's part.</p>
+    </section>
+
+    <section>
+      <h2>7. Your rights under the GDPR</h2>
+      <p>Insofar as the applicable statutory conditions are met, you have in particular the following rights regarding your personal data:</p>
+      <ul>
+        <li><strong>Right of access</strong> (Art. 15 GDPR)</li>
+        <li><strong>Right to rectification</strong> (Art. 16 GDPR)</li>
+        <li><strong>Right to erasure</strong> (Art. 17 GDPR)</li>
+        <li><strong>Right to restriction of processing</strong> (Art. 18 GDPR)</li>
+        <li><strong>Right to data portability</strong> (Art. 20 GDPR)</li>
+        <li><strong>Right to object</strong> (Art. 21 GDPR)</li>
+        <li><strong>Right to withdraw consent</strong> with future effect, where processing is based on consent (Art. 7(3) GDPR)</li>
+        <li><strong>Right to lodge a complaint</strong> with a supervisory authority (Art. 77 GDPR)</li>
+      </ul>
+      <p>
+        <strong>Competent supervisory authority in Germany:</strong><br />
+        Der Landesbeauftragte für den Datenschutz Niedersachsen<br />
+        (Data Protection Commissioner of Lower Saxony)<br />
+        Prinzenstraße 5<br />
+        30159 Hannover, Germany<br />
+        <a href="https://lfd.niedersachsen.de" target="_blank" rel="noopener noreferrer">https://lfd.niedersachsen.de</a>
+      </p>
+    </section>
+
+    <section>
+      <h2>8. Changes to this privacy notice</h2>
+      <p>I reserve the right to update this privacy notice so that it continues to meet current legal requirements, or to reflect changes to my services — such as new tools on orkaid.de. The updated notice then applies on your next visit.</p>
+    </section>
+
+    <section>
+      <h2>9. Questions about privacy</h2>
+      <p>If you have questions about data protection, please email me:<br /><a href="mailto:kontakt@orkaid.de">kontakt@orkaid.de</a></p>
+    </section>
+  </article>
 </BaseLayout>

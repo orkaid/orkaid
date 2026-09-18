@@ -5,12 +5,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 <BaseLayout
   locale="de"
   title="Datenschutzerklärung — Orkaid"
-  description="Datenschutzerklärung von Orkaid gemäß DSGVO Art. 13, 14."
+  description="Datenschutzerklärung von Orkaid gemäß DSGVO Art. 13."
   pathname="/datenschutz/"
 >
   <article class="legal">
     <header>
-      <p class="eyebrow">DSGVO Art. 13, 14</p>
+      <p class="eyebrow">DSGVO Art. 13</p>
       <h1>Datenschutzerklärung</h1>
       <p>Diese Datenschutzerklärung klärt Sie über die Art, den Umfang und Zweck der Verarbeitung von personenbezogenen Daten auf der Website <strong>orkaid.de</strong> auf.</p>
       <p class="updated">Stand: September 2026</p>
@@ -31,51 +31,54 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 
     <section>
       <h2>2. Datenerfassung auf dieser Website</h2>
-      <p>Orkaid ist eine statische Website ohne Server-Backend, Nutzerkonten oder Formulare. Sie erhebt und verarbeitet ausschließlich:</p>
+      <p>Orkaid ist eine statische Website ohne eigenes Server-Backend, Nutzerkonten oder Formulare. Beim Aufruf dieser Website verarbeitet mein Hosting- und Sicherheitsanbieter Cloudflare technische Daten, die zur Bereitstellung und Absicherung der Seite erforderlich sind (siehe Abschnitt 3).</p>
+      <p><strong>Zur Klarheit — diese Seite selbst verwendet <em>aktuell nicht</em>:</strong></p>
       <ul>
-        <li>Server-Logdaten beim Hosting-Anbieter (siehe Abschnitt 3 und 4)</li>
-      </ul>
-      <p><strong>Zur Klarheit — diese Seite verwendet <em>aktuell nicht</em>:</strong></p>
-      <ul>
-        <li>keine Cookies</li>
+        <li>keine eigenen Cookies</li>
         <li>kein <code>localStorage</code> oder vergleichbare Speicherung im Browser</li>
         <li>keine Web-Analyse/Tracking-Dienste</li>
         <li>keine Formulare oder Kontaktfelder auf der Seite selbst</li>
-        <li>keine eingebetteten Drittanbieter-Skripte oder -Widgets</li>
+        <li>keine optionalen Drittanbieter-Embeds oder -Widgets</li>
         <li>keine KI-gestützten Funktionen</li>
       </ul>
-      <p>Sollte sich dies ändern — etwa durch spätere Werkzeuge oder Funktionen auf orkaid.de —, wird diese Erklärung entsprechend aktualisiert (siehe Abschnitt 8).</p>
+      <p>Unabhängig davon kann Cloudflare im Rahmen seiner Sicherheitsmechanismen (z. B. bei Erkennung verdächtigen Datenverkehrs) ein technisch unbedingt erforderliches Cookie setzen; dies liegt außerhalb meiner Konfiguration dieser Website (siehe Abschnitt 3).</p>
+      <p>Sollte sich das Vorstehende ändern — etwa durch spätere Werkzeuge oder Funktionen auf orkaid.de —, wird diese Erklärung entsprechend aktualisiert (siehe Abschnitt 8).</p>
     </section>
 
     <section>
-      <h2>3. Hosting</h2>
-      <p>Diese Website wird über Cloudflare bereitgestellt (DNS, Edge-Netzwerk und Hosting der statischen Seite). Der Anbieter ist Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA.</p>
-      <p><strong>Datenverarbeitung:</strong> Cloudflare verarbeitet Ihre IP-Adresse, Browser-Informationen und weitere technische Daten zur Bereitstellung der Website und zur Sicherheit (DDoS-Schutz, CDN).</p>
+      <h2>3. Hosting und Sicherheitsverarbeitung durch Cloudflare</h2>
+      <p>Diese Website wird über Cloudflare bereitgestellt: DNS, Netzwerk-/CDN- und Sicherheitsfunktionen sowie Cloudflare Pages. Der Anbieter ist Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA.</p>
+      <p>Cloudflare verarbeitet dabei technische Verbindungs- und Verkehrsdaten, die zur Bereitstellung und Absicherung der Website erforderlich sind. Nach Cloudflares eigener Datenschutzerklärung kann dies insbesondere IP-Adressen, Routing-Informationen des Datenverkehrs, Systemkonfigurationsdaten sowie weitere Informationen zum Datenverkehr von und zu dieser Website umfassen; diese Aufzählung ist bewusst nicht abschließend. Orkaid selbst betreibt kein gesondertes eigenes Zugriffsprotokoll auf Anwendungs-/Server-Ebene.</p>
+      <p>Die Sicherheitsfunktionen von Cloudflare können in Ausnahmefällen technisch notwendige Sicherheits-Cookies verwenden, etwa wenn eine Sicherheitsüberprüfung ausgelöst wird. Bei gewöhnlichen, unauffälligen Aufrufen dieser Website wurden bei der Überprüfung keine Cookies beobachtet. Orkaid selbst setzt keine Analyse- oder Marketing-Cookies ein.</p>
+      <p>Wie lange Cloudflare technische, sicherheitsbezogene bzw. diagnostische Informationen vorhält, richtet sich nach dem jeweiligen Cloudflare-Dienst und Verarbeitungszweck. Orkaid legt darüber hinaus keine eigene, gesonderte Aufbewahrungsfrist für eine Anwendungs-/Server-Protokollierung fest, da eine solche nicht betrieben wird.</p>
       <p><strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an sicherer und zuverlässiger Bereitstellung der Website).</p>
       <p><strong>Datenschutzerklärung:</strong> <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">https://www.cloudflare.com/privacypolicy/</a></p>
-      <p><strong>Datenübermittlung USA:</strong> Cloudflare ist nach dem EU-US Data Privacy Framework zertifiziert und bietet ein angemessenes Datenschutzniveau.</p>
+      <p><strong>Datenübermittlung USA:</strong> Für die Übermittlung in die USA stützt sich Cloudflare auf das EU-U.S. Data Privacy Framework sowie auf EU-Standardvertragsklauseln als Garantien.</p>
     </section>
 
     <section>
-      <h2>4. Server-Logdateien</h2>
-      <p>Bei jedem Aufruf dieser Website werden automatisch Informationen in Server-Logdateien gespeichert, die Ihr Browser übermittelt: IP-Adresse, Datum und Uhrzeit der Anfrage, aufgerufene Seite, übertragene Datenmenge, HTTP-Status-Code, Browser-Typ und -Version, Betriebssystem, Referrer-URL.</p>
-      <p><strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an technischer Bereitstellung und Sicherheit der Website).</p>
+      <h2>4. E-Mail-Kontakt</h2>
+      <p>Für die Kommunikation per E-Mail (<a href="mailto:kontakt@orkaid.de">kontakt@orkaid.de</a>) nutze ich Zoho Mail in der EU-Rechenzentrumsregion von Zoho (mail.zoho.eu). Beim Versand einer E-Mail werden Ihre Absenderadresse, der Inhalt Ihrer Nachricht und weitere von Ihnen freiwillig mitgeteilte Daten verarbeitet, um Ihre Anfrage zu bearbeiten.</p>
+      <p>Nach Zohos eigenen Angaben werden die Daten in der EU-Region überwiegend innerhalb der EU gespeichert und verarbeitet. In seltenen Supportfällen können Mitarbeitende der indischen Zoho-Konzerngesellschaft (Zoho Corporation Private Limited) auf das EU-Rechenzentrum zugreifen; dies erfolgt nach Angaben von Zoho auf Grundlage einer Auftragsverarbeitungsvereinbarung mit EU-Standardvertragsklauseln samt ergänzender Maßnahmen (Transfer Impact Assessment) und ohne physische Übertragung der Daten aus der EU heraus. Für einzelne Funktionen können zudem weitere Subunternehmer (Subprocessor) unter vergleichbaren vertraglichen Garantien beteiligt sein.</p>
+      <p><strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Bearbeitung eingehender Anfragen).</p>
+      <p><strong>Speicherdauer:</strong> Korrespondenz wird so lange aufbewahrt, wie es zur Bearbeitung der Anfrage und einer angemessenen Anschlusskommunikation erforderlich ist, es sei denn, eine längere Aufbewahrung ist gesetzlich vorgeschrieben oder zur Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen erforderlich. Nach einer Löschung durch mich können bei Zoho Mail anbieterseitige Papierkorb- bzw. Wiederherstellungs-/Löschfristen anschließend fortbestehen; Näheres regelt Zohos aktuelle Lösch- und Aufbewahrungsdokumentation.</p>
+      <p><strong>Weitere Informationen:</strong> <a href="https://www.zoho.com/privacy.html" target="_blank" rel="noopener noreferrer">https://www.zoho.com/privacy.html</a> · <a href="https://www.zoho.com/mail/help/data-deletion-policy.html" target="_blank" rel="noopener noreferrer">Zoho Mail – Löschrichtlinie</a></p>
     </section>
 
     <section>
       <h2>5. SSL- bzw. TLS-Verschlüsselung</h2>
-      <p>Diese Website nutzt aus Sicherheitsgründen und zum Schutz der Übertragung vertraulicher Inhalte eine SSL- bzw. TLS-Verschlüsselung. Eine verschlüsselte Verbindung erkennen Sie daran, dass die Adresszeile des Browsers von "http://" auf "https://" wechselt und an dem Schloss-Symbol in Ihrer Browserzeile.</p>
+      <p>Diese Website ist ausschließlich über eine verschlüsselte HTTPS-Verbindung erreichbar; unverschlüsselte HTTP-Aufrufe werden automatisch auf HTTPS umgeleitet. Es kommen aktuelle Transportverschlüsselungsstandards (TLS) zum Einsatz.</p>
     </section>
 
     <section>
       <h2>6. Externe Links</h2>
-      <p>Diese Website enthält Links zu externen Diensten und Websites. Beim bloßen Aufruf dieser Seite findet keine automatische Verbindung zu diesen externen Zielen statt. Erst wenn Sie einem solchen Link folgen, verlassen Sie orkaid.de; dann gelten die Datenschutzbestimmungen und die Datenverarbeitung des jeweiligen Anbieters.</p>
-      <p><strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. a DSGVO (Einwilligung durch den Klick).</p>
+      <p>Diese Website enthält Links zu externen Diensten und Websites (z. B. GitHub, Substack). Allein durch das Laden dieser Seite wird keine Ressource eines verlinkten Anbieters eingebunden oder abgerufen.</p>
+      <p>Wenn Sie einem Link folgen, baut Ihr Browser eine Verbindung zu dem externen Anbieter auf; ab diesem Zeitpunkt gilt dessen eigene Datenverarbeitung, für die ausschließlich der jeweilige Anbieter verantwortlich ist und dessen Datenschutzbestimmungen gelten. Das Anklicken eines Links stellt für sich genommen keine Einwilligung gegenüber Orkaid dar.</p>
     </section>
 
     <section>
       <h2>7. Ihre Rechte nach DSGVO</h2>
-      <p>Sie haben folgende Rechte bezüglich Ihrer personenbezogenen Daten:</p>
+      <p>Soweit die jeweiligen gesetzlichen Voraussetzungen erfüllt sind, haben Sie insbesondere folgende Rechte bezüglich Ihrer personenbezogenen Daten:</p>
       <ul>
         <li><strong>Auskunftsrecht</strong> (Art. 15 DSGVO)</li>
         <li><strong>Berichtigungsrecht</strong> (Art. 16 DSGVO)</li>
@@ -83,12 +86,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
         <li><strong>Einschränkung der Verarbeitung</strong> (Art. 18 DSGVO)</li>
         <li><strong>Datenübertragbarkeit</strong> (Art. 20 DSGVO)</li>
         <li><strong>Widerspruchsrecht</strong> (Art. 21 DSGVO)</li>
-        <li><strong>Widerruf von Einwilligungen</strong> mit Wirkung für die Zukunft (Art. 7 Abs. 3 DSGVO)</li>
+        <li><strong>Widerruf einer erteilten Einwilligung</strong> mit Wirkung für die Zukunft, soweit eine Verarbeitung auf Einwilligung beruht (Art. 7 Abs. 3 DSGVO)</li>
         <li><strong>Beschwerderecht</strong> bei einer Aufsichtsbehörde (Art. 77 DSGVO)</li>
       </ul>
       <p>
         <strong>Zuständige Aufsichtsbehörde in Deutschland:</strong><br />
-        Die Landesbeauftragte für Datenschutz Niedersachsen<br />
+        Der Landesbeauftragte für den Datenschutz Niedersachsen<br />
         Prinzenstraße 5<br />
         30159 Hannover<br />
         <a href="https://lfd.niedersachsen.de" target="_blank" rel="noopener noreferrer">https://lfd.niedersachsen.de</a>

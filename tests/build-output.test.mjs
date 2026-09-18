@@ -128,8 +128,16 @@ test('privacy and English legal access copy reflect the current site', () => {
   assert.doesNotMatch(privacy, /Coming-Soon-Seite/);
   assert.match(privacy, /Links zu externen Diensten und Websites/);
   assert.match(readOutput('en/impressum/index.html'), /<h1>Legal notice<\/h1>/);
-  assert.match(readOutput('en/datenschutz/index.html'), /no accounts, no analytics, no cookies and no forms/i);
-  assert.match(readOutput('en/datenschutz/index.html'), /German version is authoritative/i);
+
+  const enPrivacy = readOutput('en/datenschutz/index.html');
+  assert.doesNotMatch(enPrivacy, /German version is authoritative/i);
+  assert.match(enPrivacy, /<h1>Privacy notice<\/h1>/);
+  assert.match(enPrivacy, /GDPR Art\. 13/);
+  assert.doesNotMatch(enPrivacy, /GDPR Art\. 13, 14/);
+  assert.match(enPrivacy, /Hosting and security processing by Cloudflare/);
+  assert.match(enPrivacy, /Zoho Mail/);
+  assert.match(enPrivacy, /Your rights under the GDPR/);
+  assert.match(enPrivacy, /Insofar as the applicable statutory conditions are met/);
 });
 
 test('generated German and English content route sets are exact mirrors', () => {
