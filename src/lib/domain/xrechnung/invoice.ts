@@ -8,7 +8,8 @@
 //   BT-116 = sum of BT-131 per VAT category and rate
 //   BT-117 = round(BT-116 x BT-119 / 100, 2)          once per bucket (BR-CO-17), never summed per line
 //   BT-110 = sum of BT-117
-// Identification, parties, dates and payment data are not modelled yet; they belong to the serialization increment.
+//   BT-115 = BT-112, as BR-CO-16 with BT-113 and BT-114 absent
+// Identification, parties, dates and payment data belong to document.ts, which delegates every amount to this module.
 
 import { add, multiply, roundHalfUp, type Decimal, type DecimalErrorCode } from './decimal.ts';
 import { parseDecimalInput, type NumberNotation } from './number-notation.ts';
@@ -67,16 +68,34 @@ export type InvoiceTotals = {
   readonly totalWithoutVat: Decimal; // BT-109 (BT-107 = BT-108 = 0 in V1)
   readonly totalVat: Decimal; // BT-110
   readonly totalWithVat: Decimal; // BT-112
+  readonly amountDue: Decimal; // BT-115 (BT-113 = BT-114 = 0 in V1, BR-CO-16)
 };
+
+/** A line as parsed by the calculation, with the scale the caller typed. Its BT-131 is `totals.lines[i].netAmount`. */
+export type CalculatedLine = {
+  readonly quantity: Decimal; // BT-129
+  readonly unitPrice: Decimal; // BT-146
+  readonly vatRate: VatRate; // BT-152
+};
+
+export type CalculatedInvoice = { readonly lines: readonly CalculatedLine[]; readonly totals: InvoiceTotals };
+
+/**
+ * Field names that belong to a caller's own validation (for example document.ts). The calculation ignores them
+ * instead of reporting `unknown_field`; every other unknown field is still rejected.
+ */
+export type CallerFields = { readonly invoice?: readonly string[]; readonly line?: readonly string[] };
 
 /**
  * On failure, `truncated` says whether `errors` is incomplete. When true, line scanning stopped early and the last
  * entry is an 'error_list_truncated' error whose path is the first line that was not scanned: fixing the listed
  * errors may reveal more. When false, `errors` holds every error found.
  */
-export type InvoiceResult =
-  | { readonly ok: true; readonly value: InvoiceTotals }
-  | { readonly ok: false; readonly errors: readonly InvoiceError[]; readonly truncated: boolean };
+export type InvoiceFailure = { readonly ok: false; readonly errors: readonly InvoiceError[]; readonly truncated: boolean };
+
+export type InvoiceResult = { readonly ok: true; readonly value: InvoiceTotals } | InvoiceFailure;
+
+export type CalculationResult = { readonly ok: true; readonly value: CalculatedInvoice } | InvoiceFailure;
 
 const INVOICE_FIELDS = ['documentTypeCode', 'currency', 'lines'];
 const LINE_FIELDS = ['quantity', 'unitPrice', 'vatCategory', 'vatRate'];
@@ -91,17 +110,24 @@ type ParsedLine = { readonly quantity: Decimal; readonly unitPrice: Decimal; rea
 export const PROVISIONAL_MAX_REPORTED_ERRORS = 100;
 
 export function calculateInvoiceTotals(input: unknown, options: InvoiceOptions = {}): InvoiceResult {
+  const result = calculateInvoice(input, options);
+  return result.ok ? { ok: true, value: result.value.totals } : result;
+}
+
+/** The same validation and calculation as `calculateInvoiceTotals`, also returning the parsed line data. */
+export function calculateInvoice(input: unknown, options: InvoiceOptions = {}, callerFields: CallerFields = {}): CalculationResult {
   const errors: InvoiceError[] = [];
-  const validated = validate(input, options.notation ?? 'canonical', errors);
+  const validated = validate(input, options.notation ?? 'canonical', errors, callerFields);
   if (validated === undefined) return { ok: false, errors, truncated: false };
   if (errors.length > 0) return { ok: false, errors, truncated: validated.truncated };
-  return { ok: true, value: calculate(validated.lines) };
+  return { ok: true, value: { lines: validated.lines, totals: calculate(validated.lines) } };
 }
 
 function validate(
   input: unknown,
   notation: NumberNotation,
   errors: InvoiceError[],
+  callerFields: CallerFields,
 ): { lines: ParsedLine[]; truncated: boolean } | undefined {
   if (!isRecord(input)) {
     errors.push({ code: 'invalid_type', path: '' });
@@ -122,19 +148,25 @@ function validate(
     // A hole reads as undefined and is reported as an invalid line.
     let index = 0;
     for (; index < input.lines.length && errors.length < PROVISIONAL_MAX_REPORTED_ERRORS; index++) {
-      const parsed = validateLine(input.lines[index], `lines[${index}]`, notation, errors);
+      const parsed = validateLine(input.lines[index], `lines[${index}]`, notation, errors, callerFields.line ?? []);
       if (parsed) parsedLines.push(parsed);
     }
     if (index < input.lines.length) firstUnscanned = index;
   }
 
-  reportUnknownFields(input, INVOICE_FIELDS, '', errors);
+  reportUnknownFields(input, [...INVOICE_FIELDS, ...(callerFields.invoice ?? [])], '', errors);
   // Last on purpose: a caller that only reads `errors` still sees that the list is incomplete.
   if (firstUnscanned !== undefined) errors.push({ code: 'error_list_truncated', path: `lines[${firstUnscanned}]` });
   return { lines: parsedLines, truncated: firstUnscanned !== undefined };
 }
 
-function validateLine(line: unknown, path: string, notation: NumberNotation, errors: InvoiceError[]): ParsedLine | undefined {
+function validateLine(
+  line: unknown,
+  path: string,
+  notation: NumberNotation,
+  errors: InvoiceError[],
+  callerLineFields: readonly string[],
+): ParsedLine | undefined {
   if (!isRecord(line)) {
     errors.push({ code: 'invalid_type', path });
     return undefined;
@@ -146,7 +178,7 @@ function validateLine(line: unknown, path: string, notation: NumberNotation, err
   if (line.vatCategory !== 'S') errors.push({ code: 'unsupported_vat_category', path: `${path}.vatCategory` });
   const vatRate = normalizeVatRate(line.vatRate, notation);
   if (vatRate === undefined) errors.push({ code: 'unsupported_vat_rate', path: `${path}.vatRate` });
-  reportUnknownFields(line, LINE_FIELDS, path, errors);
+  reportUnknownFields(line, [...LINE_FIELDS, ...callerLineFields], path, errors);
 
   if (errors.length > errorsBefore || !quantity || !unitPrice || !vatRate) return undefined;
   return { quantity, unitPrice, vatRate };
@@ -190,13 +222,15 @@ function calculate(lines: readonly ParsedLine[]): InvoiceTotals {
 
   const sumOfLineNetAmounts = netAmounts.reduce(add, ZERO);
   const totalVat = vatBreakdown.reduce((sum, bucket) => add(sum, bucket.taxAmount), ZERO);
+  const totalWithVat = add(sumOfLineNetAmounts, totalVat);
   return {
     lines: netAmounts.map((netAmount) => ({ netAmount })),
     vatBreakdown,
     sumOfLineNetAmounts,
     totalWithoutVat: sumOfLineNetAmounts,
     totalVat,
-    totalWithVat: add(sumOfLineNetAmounts, totalVat),
+    totalWithVat,
+    amountDue: totalWithVat,
   };
 }
 
