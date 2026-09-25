@@ -1,0 +1,4 @@
+mdlGuid: mdl_vdsmjzk105a8jv8e
+mdlTitle: "Orkaid — Engineering & Product Decisions"
+mdlIntent: |-
+  Decision provenance for Orkaid, an open-source hub of professional tools at the intersection of finance, accounting, compliance and software, built in public. This ledger is the durable decision record from the 2026-09-11 governance cutover onward: it captures product, engineering and governance decisions, their rationale, expected outcomes, observed outcomes, formal settlements of open questions, and explicit corrections or amendments. Earlier decisions may exist only in historical sources; absence here does not mean they were never made. The ledger does not replace repository, implementation, deployment or authoritative external evidence. Correctness, verification and a clear separation of decided, open and proposed state take priority over narrative convenience.
