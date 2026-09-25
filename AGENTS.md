@@ -321,6 +321,7 @@ Tools are subordinate to project rules.
 
 - **Superpowers:** when installed/relevant, default process framework for planning, isolation, TDD, debugging, verification, and review. Do not use it to re-litigate DECIDED architecture.
 - **Ponytail:** capability-triggered only; use when it materially improves the task and does not duplicate the active workflow.
+- **Memolok:** `.memolok/mdl.yml` identifies the project's durable decision ledger. Accepted Memolok MDRs are durable project decision records under §1, item 5. This is separate from the execution `Ledger` below.
 - **Ledger:** execution evidence/checkpoints only. Ledger rulings are not project decisions. Keep scratch/ledger/orchestration artifacts out of the public repo unless intentionally public.
 - **Subagents:** use for genuinely parallel work, isolated context, or independent review; not for trivial grep/one-file/sequential work. High-risk/regulated changes should receive independent review by an agent that did not author the implementation.
 - Do not pin model names in repository policy; select current task-appropriate models.
