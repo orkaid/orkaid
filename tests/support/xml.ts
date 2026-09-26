@@ -1,7 +1,9 @@
 // A deliberately small, strict XML reader for tests. It exists so that the values in generated XML can be checked
-// independently of the serializer that wrote them. It reads the constrained output of serializeUblInvoice (elements,
-// attributes, the five predefined entities, no comments, CDATA or DTD) and throws on anything else, including a bare
-// ampersand. It is not a general XML parser. Well-formedness in the full sense is established by the KoSIT run.
+// independently of the serializer that wrote them. It reads the constrained output of serializeUblInvoice and
+// serializeCiiInvoice (elements, attributes, the five predefined entities, no comments, CDATA or DTD) and throws on
+// anything else, including a bare ampersand. It is not a general XML parser: names are matched with their literal
+// prefix, not by namespace, so callers that depend on a prefix check its namespace declaration themselves.
+// Well-formedness in the full sense is established by the KoSIT run.
 
 export type XmlNode = { name: string; attributes: Record<string, string>; children: XmlNode[]; text: string };
 
@@ -56,3 +58,17 @@ export function one(node: XmlNode, path: string): XmlNode {
 
 export const textAt = (node: XmlNode, path: string): string => one(node, path).text;
 export const childNames = (node: XmlNode): string[] => node.children.map((child) => child.name);
+
+// Writes a tree read by parseXml back in the exact layout of the serializers (XML declaration, two-space indentation,
+// LF newlines, leaf text on one line). Used to apply controlled mutations to generated XML: for unmutated output,
+// renderXml(parseXml(xml)) === xml, which the callers assert before trusting a mutation.
+export function renderXml(root: XmlNode): string {
+  const escapeText = (value: string): string => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  const lines = (node: XmlNode, depth: number): string[] => {
+    const padding = '  '.repeat(depth);
+    const attributes = Object.entries(node.attributes).map(([key, value]) => ` ${key}="${escapeText(value).replaceAll('"', '&quot;')}"`).join('');
+    if (node.children.length === 0) return [`${padding}<${node.name}${attributes}>${escapeText(node.text)}</${node.name}>`];
+    return [`${padding}<${node.name}${attributes}>`, ...node.children.flatMap((child) => lines(child, depth + 1)), `${padding}</${node.name}>`];
+  };
+  return `<?xml version="1.0" encoding="UTF-8"?>\n${lines(root, 0).join('\n')}\n`;
+}

@@ -23,7 +23,7 @@ import { serializeUblInvoice } from '../../src/lib/domain/xrechnung/ubl.ts';
 import { FIXTURE_NAMES, loadFixtureInput, type FixtureName } from '../../tests/support/fixtures.ts';
 import { parseReport, type ParsedReport } from './report.ts';
 
-type Manifest = {
+export type Manifest = {
   bundle: { file: string; sha256: string };
   validator: { version: string; archiveEntry: string; sha256: string; minimumJava: number };
   configuration: { version: string; archiveEntry: string; sha256: string; scenarios: string };
@@ -33,7 +33,7 @@ type Triage = Record<string, { code: string; level: string; disposition: string 
 
 // Everything is resolved from the repository root, so the harness works from any working directory.
 const ROOT = resolve(import.meta.dirname, '../..');
-const CACHE = join(ROOT, '.cache/kosit');
+export const CACHE = join(ROOT, '.cache/kosit');
 const GOLDEN = join(ROOT, 'tests/fixtures/xrechnung/golden');
 const CONTROL_NAME = 'control-missing-buyer-reference';
 const REQUIRED_STEPS = ['val-xsd', 'val-sch.1', 'val-sch.2', 'val-xml'];
@@ -46,7 +46,7 @@ function fail(message: string): never {
   process.exit(2);
 }
 
-function run(command: string, args: string[]): { status: number | null; stdout: string; stderr: string } {
+export function run(command: string, args: string[]): { status: number | null; stdout: string; stderr: string } {
   // A hung validator ends as a failed run (status null) instead of hanging the harness.
   const result = spawnSync(command, args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, timeout: 300_000 });
   if (result.error) fail(`cannot run ${command}: ${result.error.message}`);
@@ -60,7 +60,9 @@ function verifiedHash(file: string, expected: string, what: string): void {
 
 // ---------------------------------------------------------------------------------------------- tooling
 
-function prepareTooling(manifest: Manifest): { jar: string; configuration: string; javaVersion: string; configurationDirectory: string } {
+export type Tooling = { jar: string; configuration: string; javaVersion: string; configurationDirectory: string };
+
+export function prepareTooling(manifest: Manifest): Tooling {
   const bundle = process.env.ORKAID_KOSIT_BUNDLE;
   if (!bundle) fail('set ORKAID_KOSIT_BUNDLE to the local official bundle zip (see tools/kosit/kosit-manifest.json).');
   if (!existsSync(bundle)) fail(`ORKAID_KOSIT_BUNDLE does not exist: ${basename(bundle)}`);
@@ -134,19 +136,25 @@ function controlTarget(): Target {
 
 // ---------------------------------------------------------------------------------------------- validation
 
-function validate(target: Target, tooling: ReturnType<typeof prepareTooling>, manifest: Manifest, triage: Triage) {
+/** Runs the validator once on one file and reads its report. Shared with tools/cii-experiment/run.ts. */
+export function runValidator(name: string, xmlPath: string, tooling: Tooling): { executed: ReturnType<typeof run>; reportText: string | undefined; report: ParsedReport | undefined; problems: string[] } {
   // A report left by an earlier run must never be mistaken for this run's result.
-  const outputDirectory = join(CACHE, 'reports', target.name);
+  const outputDirectory = join(CACHE, 'reports', name);
   rmSync(outputDirectory, { recursive: true, force: true });
   mkdirSync(outputDirectory, { recursive: true });
-  const executed = run('java', ['-jar', tooling.jar, '-s', tooling.configuration, '-r', tooling.configurationDirectory, '-o', outputDirectory, '-h', resolve(target.xmlPath)]);
+  const executed = run('java', ['-jar', tooling.jar, '-s', tooling.configuration, '-r', tooling.configurationDirectory, '-o', outputDirectory, '-h', resolve(xmlPath)]);
 
-  const reportPath = join(outputDirectory, `${basename(target.xmlPath, '.xml')}-report.xml`);
+  const reportPath = join(outputDirectory, `${basename(xmlPath, '.xml')}-report.xml`);
   // A real report is a few tens of kilobytes; the parser is only meant for such machine-generated files.
   const reportText = existsSync(reportPath) ? readFileSync(reportPath, 'utf8') : undefined;
   const problems: string[] = [];
   if (reportText !== undefined && reportText.length > 2_000_000) problems.push('the validator report is unexpectedly large and was not parsed');
   const report: ParsedReport | undefined = reportText !== undefined && reportText.length <= 2_000_000 ? parseReport(reportText) : undefined;
+  return { executed, reportText, report, problems };
+}
+
+function validate(target: Target, tooling: Tooling, manifest: Manifest, triage: Triage) {
+  const { executed, reportText, report, problems } = runValidator(target.name, target.xmlPath, tooling);
   const triaged: { code: string; level: string; disposition: string }[] = [];
 
   // The exit code is a separate result. It does not prove acceptance, but a validator run that failed to complete
@@ -232,4 +240,4 @@ function main(): void {
   process.exit(allPassed ? 0 : 1);
 }
 
-main();
+if (import.meta.main) main();
