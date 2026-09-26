@@ -15,6 +15,7 @@ import {
 
 const DOMAIN_DIR = 'src/lib/domain';
 const UBL_FILE = 'src/lib/domain/xrechnung/ubl.ts';
+const CII_FILE = 'src/lib/domain/xrechnung/cii.ts';
 
 const rules = (violations: { rule: string }[]) => violations.map((v) => v.rule).sort();
 
@@ -68,7 +69,7 @@ test('float rules: integer scale arithmetic, bigint, comments and strings are no
 
 // ------------------------------------------------------------- the boundary rules detect violations
 
-test('boundary rules: framework, DOM, network and UBL strings are detected', () => {
+test('boundary rules: framework, DOM, network, UBL and CII strings are detected', () => {
   const cases: [string, string[]][] = [
     ["import { x } from 'astro:content';", ['framework-import']],
     ["import x from 'svelte';", ['framework-import']],
@@ -80,16 +81,21 @@ test('boundary rules: framework, DOM, network and UBL strings are detected', () 
     // A template literal is several literal pieces; each piece that carries UBL text is reported.
     ['const a = `<cac:Party>${x}</cac:Party>`;', ['ubl-outside-serializer', 'ubl-outside-serializer']],
     ["const a = 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2';", ['ubl-outside-serializer']],
+    ["const a = 'ram:IBANID';", ['cii-outside-serializer']],
+    ["const a = 'urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100';", ['cii-outside-serializer']],
   ];
   for (const [source, expected] of cases) {
-    assert.deepEqual(rules(findBoundaryViolations('x.ts', source, { allowUbl: false })), expected, source);
+    assert.deepEqual(rules(findBoundaryViolations('x.ts', source, { allowUbl: false, allowCii: false })), expected, source);
   }
 });
 
 test('boundary rules: the serializer file may contain UBL strings, everything else may not', () => {
   const ubl = "const a = '<cbc:ID>1</cbc:ID>';";
-  assert.deepEqual(findBoundaryViolations('ubl.ts', ubl, { allowUbl: true }), []);
-  assert.equal(findBoundaryViolations('other.ts', ubl, { allowUbl: false }).length, 1);
+  assert.deepEqual(findBoundaryViolations('ubl.ts', ubl, { allowUbl: true, allowCii: false }), []);
+  assert.equal(findBoundaryViolations('other.ts', ubl, { allowUbl: false, allowCii: false }).length, 1);
+  const cii = "const a = 'rsm:CrossIndustryInvoice';";
+  assert.deepEqual(findBoundaryViolations('cii.ts', cii, { allowUbl: false, allowCii: true }), []);
+  assert.equal(findBoundaryViolations('ubl.ts', cii, { allowUbl: true, allowCii: false }).length, 1);
 });
 
 test('serializer rules: arithmetic, Decimal internals and money-engine imports are detected', () => {
@@ -149,16 +155,18 @@ test('the domain money code contains no binary floating-point route', () => {
   }
 });
 
-test('the domain code is framework-independent and confines UBL knowledge to the serializer', () => {
+test('the domain code is framework-independent and confines UBL and CII knowledge to their serializers', () => {
   for (const { file, source } of domainSources()) {
-    assert.deepEqual(findBoundaryViolations(file, source, { allowUbl: file === UBL_FILE }), [], file);
+    assert.deepEqual(findBoundaryViolations(file, source, { allowUbl: file === UBL_FILE, allowCii: file === CII_FILE }), [], file);
   }
 });
 
 // A heuristic guard, not a proof: `+` is allowed (it also builds strings), so a summation through `+` on values that
 // were obtained some other way would pass. What actually establishes the amounts is the independent oracle in the
 // serializer tests and the local validator run; this check keeps the obvious routes closed.
-test('the UBL serializer passes the arithmetic and Decimal-internals heuristic guard', () => {
-  assert.ok(existsSync(UBL_FILE), 'the serializer file must exist');
-  assert.deepEqual(findSerializerArithmeticViolations(UBL_FILE, readFileSync(UBL_FILE, 'utf8')), []);
+test('the UBL and CII serializers pass the arithmetic and Decimal-internals heuristic guard', () => {
+  for (const file of [UBL_FILE, CII_FILE]) {
+    assert.ok(existsSync(file), 'the serializer file must exist');
+    assert.deepEqual(findSerializerArithmeticViolations(file, readFileSync(file, 'utf8')), [], file);
+  }
 });

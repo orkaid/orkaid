@@ -86,13 +86,14 @@ function isAllowedMathAccess(node: ts.Identifier): boolean {
 
 // ---------------------------------------------------------------------------------------------------------------
 // AGENTS.md section 7 and the syntax-independent semantic model: domain code is framework-independent, and
-// UBL-specific structures exist only in the serializer.
+// UBL- and CII-specific structures exist only in their serializers.
 
 const DOM_OR_NETWORK = new Set(['document', 'window', 'localStorage', 'sessionStorage', 'navigator', 'fetch', 'XMLHttpRequest']);
 const FRAMEWORK_IMPORT = /^(astro|svelte|@astrojs\/)/;
 const UBL_TEXT = /urn:oasis:names:specification:ubl|\bc[ab]c:/;
+const CII_TEXT = /urn:un:unece:uncefact|\b(?:rsm|ram|udt|qdt):[A-Z]/;
 
-export function findBoundaryViolations(fileName: string, source: string, options: { allowUbl: boolean }): Violation[] {
+export function findBoundaryViolations(fileName: string, source: string, options: { allowUbl: boolean; allowCii: boolean }): Violation[] {
   return scan(fileName, source, (node, report) => {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier) && FRAMEWORK_IMPORT.test(node.moduleSpecifier.text)) {
       report('framework-import');
@@ -102,6 +103,7 @@ export function findBoundaryViolations(fileName: string, source: string, options
 
     const text = literalText(node);
     if (text !== undefined && !options.allowUbl && UBL_TEXT.test(text)) report('ubl-outside-serializer');
+    if (text !== undefined && !options.allowCii && CII_TEXT.test(text)) report('cii-outside-serializer');
   });
 }
 
