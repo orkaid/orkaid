@@ -1,0 +1,225 @@
+{
+  "purpose": "Negative controls, the order-preserving control, the R120 probe and the MDR-14 lexical probes. Mutations are applied to the generated XML of the named base fixture, in each listed syntax, by editing only the named elements.",
+  "controls": [
+    {
+      "id": "V1",
+      "layer": "validator",
+      "base": "s1-interleaved-vat",
+      "syntaxes": [
+        "ubl",
+        "cii"
+      ],
+      "mutation": "remove the BT-10 element",
+      "expected": {
+        "kosit": "assessment reject, with a BR-DE-15 message at level error"
+      }
+    },
+    {
+      "id": "V2",
+      "layer": "validator (scenario gate)",
+      "base": "s1-interleaved-vat",
+      "syntaxes": [
+        "ubl",
+        "cii"
+      ],
+      "mutation": "set BT-24 to urn:cen.eu:en16931:2017",
+      "expected": {
+        "kosit": "scenario EN16931 (UBL Invoice) or EN16931 (CII) is matched; assessment is recorded without expectation",
+        "harness": "WRONG-SCENARIO: never counted as acceptance (INSUFFICIENT)"
+      }
+    },
+    {
+      "id": "V3",
+      "layer": "validator (scenario gate)",
+      "base": "s1-interleaved-vat",
+      "syntaxes": [
+        "ubl",
+        "cii"
+      ],
+      "mutation": "set BT-24 to urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_2.3",
+      "expected": {
+        "kosit": "no scenario matched (default report)",
+        "harness": "NO-SCENARIO (INSUFFICIENT)"
+      }
+    },
+    {
+      "id": "M1",
+      "layer": "monetary oracle",
+      "base": "s1-interleaved-vat",
+      "syntaxes": [
+        "ubl",
+        "cii"
+      ],
+      "mutation": {
+        "BG-23 S|7 BT-117": [
+          "3.53",
+          "3.54"
+        ],
+        "BT-110": [
+          "197.24",
+          "197.25"
+        ],
+        "BT-112": [
+          "1267.14",
+          "1267.15"
+        ],
+        "BT-115": [
+          "1267.14",
+          "1267.15"
+        ]
+      },
+      "coherence": "BR-CO-14 (193.71 + 3.54 = 197.25), BR-CO-15 (1069.90 + 197.25 = 1267.15) and BR-CO-16 stay consistent; only the BT-117 = BT-116 x BT-119 relation is off by 0.01",
+      "expected": {
+        "monetaryOracle": "reject: BT-117 (S|7), BT-110, BT-112 and BT-115 differ from expected-money.json",
+        "kosit": "observation only; no prediction"
+      }
+    },
+    {
+      "id": "N1",
+      "layer": "semantic comparator",
+      "base": "s2-date-roles",
+      "syntaxes": [
+        "ubl",
+        "cii"
+      ],
+      "mutation": "swap the values of BT-2 and BT-72 (2028-03-01 and 2028-02-29, in the syntax's own representation)",
+      "expected": {
+        "comparator": "FAIL on BT-2 and BT-72"
+      }
+    },
+    {
+      "id": "N2",
+      "layer": "semantic comparator",
+      "base": "s1-interleaved-vat",
+      "syntaxes": [
+        "ubl",
+        "cii"
+      ],
+      "mutation": "swap the values of BT-27 and BT-44; amounts unchanged",
+      "expected": {
+        "comparator": "FAIL on BT-27 and BT-44"
+      }
+    },
+    {
+      "id": "N3",
+      "layer": "semantic comparator",
+      "base": "s1-interleaved-vat",
+      "syntaxes": [
+        "ubl",
+        "cii"
+      ],
+      "mutation": "reorder the line elements to input lines 4, 2, 3, 1 and renumber BT-126 as 1, 2, 3, 4 in the new document order",
+      "expected": {
+        "comparator": "FAIL on BG-25 entries 1 and 4 (identity follows BT-126, not position)"
+      }
+    },
+    {
+      "id": "O1",
+      "layer": "semantic comparator (order-preserving control)",
+      "base": "s1-interleaved-vat",
+      "syntaxes": [
+        "ubl",
+        "cii"
+      ],
+      "mutation": "reorder the line elements to input lines 4, 2, 3, 1 keeping each BT-126, and reverse the order of the BG-23 elements",
+      "expected": {
+        "comparator": "PASS",
+        "kosit": "recorded, no requirement"
+      }
+    }
+  ],
+  "r120Probe": {
+    "base": "s4b-half-up",
+    "syntaxes": [
+      "ubl",
+      "cii"
+    ],
+    "rule": "PEPPOL-EN16931-R120 (XRechnung Schematron; static: flag warning, slackValue 0.02 for EUR)",
+    "documents": [
+      {
+        "id": "P0",
+        "mutation": "none",
+        "expected": {
+          "BG-25 1 BT-131": "1.50",
+          "BG-23 S|19": [
+            "1.50",
+            "0.29"
+          ],
+          "BT-106": "3.00",
+          "BT-109": "3.00",
+          "BT-110": "0.40",
+          "BT-112": "3.40",
+          "BT-115": "3.40"
+        },
+        "ruleCheck": "1 x 1.50 = 1.50 against 1.50, difference 0.00"
+      },
+      {
+        "id": "P1",
+        "mutation": "line 1 BT-131 1.50 -> 1.53, totals recomputed coherently",
+        "expected": {
+          "BG-25 1 BT-131": "1.53",
+          "BG-23 S|19": [
+            "1.53",
+            "0.29"
+          ],
+          "BT-106": "3.03",
+          "BT-109": "3.03",
+          "BT-110": "0.40",
+          "BT-112": "3.43",
+          "BT-115": "3.43"
+        },
+        "arithmetic": "1.53 x 0.19 = 0.2907 -> 0.29",
+        "ruleCheck": "1 x 1.50 = 1.50 against 1.53, difference 0.03 > 0.02"
+      },
+      {
+        "id": "P2",
+        "mutation": "line 1 BT-131 1.50 -> 1.52, totals recomputed coherently",
+        "expected": {
+          "BG-25 1 BT-131": "1.52",
+          "BG-23 S|19": [
+            "1.52",
+            "0.29"
+          ],
+          "BT-106": "3.02",
+          "BT-109": "3.02",
+          "BT-110": "0.40",
+          "BT-112": "3.42",
+          "BT-115": "3.42"
+        },
+        "arithmetic": "1.52 x 0.19 = 0.2888 -> 0.29",
+        "ruleCheck": "difference 0.02, inside the inclusive tolerance"
+      }
+    ],
+    "classification": {
+      "ENFORCED": "an R120 message (any level) in P1 of the syntax, and none in P0 and P2 of that syntax",
+      "NOT_ENFORCED": "no R120 message in CII P1 while UBL P1 shows R120 and UBL P0/P2 do not; intended scenario matched, all steps ran, no processing error. Means not observed in the report: the report does not expose fired rules",
+      "INCONCLUSIVE": "the UBL positive twin does not show R120 in P1; R120 appears in P0 or P2 (also recorded as VAL); wrong or no scenario; XSD failure, processing error or missing step"
+    },
+    "note": "P1 and P2 are expected to fail the monetary oracle by construction; only the validator result is under test."
+  },
+  "lexicalProbes": {
+    "base": "s4b-half-up",
+    "syntaxes": [
+      "ubl",
+      "cii"
+    ],
+    "target": "line 1 BT-131",
+    "probes": [
+      {
+        "id": "L1",
+        "value": "1,50",
+        "expected": "XSD step invalid (not xs:decimal)"
+      },
+      {
+        "id": "L2",
+        "value": "1.5E0",
+        "expected": "XSD step invalid (not xs:decimal)"
+      },
+      {
+        "id": "L3",
+        "value": "1.500",
+        "expected": "XSD valid; BR-DEC-23 error (more than two decimals); value unchanged"
+      }
+    ]
+  }
+}

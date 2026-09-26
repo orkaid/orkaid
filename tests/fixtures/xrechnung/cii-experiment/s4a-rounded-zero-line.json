@@ -1,0 +1,71 @@
+{
+  "documentTypeCode": "380",
+  "currency": "EUR",
+  "invoiceNumber": "RE-S4A-0001",
+  "issueDate": "2026-09-24",
+  "deliveryDate": "2026-09-20",
+  "paymentDueDate": "2026-10-24",
+  "buyerReference": "PO-2026-0815",
+  "seller": {
+    "name": "Beispiel Beratung GmbH",
+    "vatId": "DE123456789",
+    "electronicAddress": {
+      "schemeId": "EM",
+      "value": "rechnung@example.com"
+    },
+    "address": {
+      "street": "Musterstraße 1",
+      "city": "Berlin",
+      "postCode": "10115",
+      "country": "DE"
+    },
+    "contact": {
+      "name": "Erika Muster",
+      "telephone": "+49 30 1234567",
+      "email": "erika.muster@example.com"
+    }
+  },
+  "buyer": {
+    "name": "Beispiel Handel AG",
+    "electronicAddress": {
+      "schemeId": "EM",
+      "value": "einkauf@example.org"
+    },
+    "address": {
+      "street": "Beispielweg 2",
+      "city": "Hamburg",
+      "postCode": "20095",
+      "country": "DE"
+    }
+  },
+  "payment": {
+    "meansCode": "58",
+    "iban": "DE79000000001234567890"
+  },
+  "lines": [
+    {
+      "name": "S4a Kleinstmenge",
+      "unitCode": "C62",
+      "quantity": "0.001",
+      "unitPrice": "0.40",
+      "vatCategory": "S",
+      "vatRate": "19"
+    },
+    {
+      "name": "S4a Standard",
+      "unitCode": "C62",
+      "quantity": "2",
+      "unitPrice": "5.00",
+      "vatCategory": "S",
+      "vatRate": "19"
+    },
+    {
+      "name": "S4a Schüttgut",
+      "unitCode": "KGM",
+      "quantity": "1.6",
+      "unitPrice": "6.253",
+      "vatCategory": "S",
+      "vatRate": "19"
+    }
+  ]
+}

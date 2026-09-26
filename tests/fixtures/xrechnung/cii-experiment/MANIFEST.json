@@ -1,0 +1,144 @@
+{
+  "purpose": "Preregistration manifest of the Increment 3 CII experiment. See PROTOCOL.md section 12.",
+  "algorithm": "sha256",
+  "files": [
+    {
+      "path": "tests/fixtures/xrechnung/a-simple.json",
+      "bytes": 1375,
+      "sha256": "57d45443841be11a2c682ab269b3cb7281a1f81c31c34b996f20681a340a8e13"
+    },
+    {
+      "path": "tests/fixtures/xrechnung/b-ten-lines.json",
+      "bytes": 2668,
+      "sha256": "218586e2a4140a1fe4b9371f534d77a4f656fd85179b285865a5b8989239723e"
+    },
+    {
+      "path": "tests/fixtures/xrechnung/c-rounded-line-net.json",
+      "bytes": 1390,
+      "sha256": "1a59edc27f86dd1229dc261022eff7825c0b6b40e971064abc6b74ebcc06b9ec"
+    },
+    {
+      "path": "tests/fixtures/xrechnung/cii-experiment/PROTOCOL.md",
+      "bytes": 25624,
+      "sha256": "8d6dcaf53dd0916de91a581fc0e45b1f938be03d6f71197db86091ab4632f7f5"
+    },
+    {
+      "path": "tests/fixtures/xrechnung/cii-experiment/binding-choices.json",
+      "bytes": 3149,
+      "sha256": "818be2741f481b437484105dbc06e63d39c8dd8135c0f18d85f3823b11cb49b6"
+    },
+    {
+      "path": "tests/fixtures/xrechnung/cii-experiment/controls.json",
+      "bytes": 6732,
+      "sha256": "4383ce4b797bce7a8fa4daea6e22ca2ff294683385e625d916c8b71dc557a48a"
+    },
+    {
+      "path": "tests/fixtures/xrechnung/cii-experiment/expected-money.json",
+      "bytes": 8909,
+      "sha256": "eaec6c195b4baeac5bcc279dcd30423a70aa20271a030cab9caa61d9a6db40ac"
+    },
+    {
+      "path": "tests/fixtures/xrechnung/cii-experiment/expected-projections.json",
+      "bytes": 18005,
+      "sha256": "552bc44933e4d7e8f81a0afdfb0a3e04d523912cdcc5d41ae5520a8890e54fd8"
+    },
+    {
+      "path": "tests/fixtures/xrechnung/cii-experiment/rule-inventory.json",
+      "bytes": 87499,
+      "sha256": "ccec34df1f2dece72ad0fb2c4e9f7e17f6e383104c6adc3a334ce6b9571b2744"
+    },
+    {
+      "path": "tests/fixtures/xrechnung/cii-experiment/s1-interleaved-vat.json",
+      "bytes": 1711,
+      "sha256": "905f9fb4e1ddf3bfd55db71af1542a3832260853c2a382e35d78b06fd73014d0"
+    },
+    {
+      "path": "tests/fixtures/xrechnung/cii-experiment/s2-date-roles.json",
+      "bytes": 1373,
+      "sha256": "e0f6f04a0f363cf955c630556e4cf5a806ed8b22c565bb3f4438a73558592a32"
+    },
+    {
+      "path": "tests/fixtures/xrechnung/cii-experiment/s4a-rounded-zero-line.json",
+      "bytes": 1548,
+      "sha256": "3082c2b368cc154b202544fe368a8a2e41553fc45afa7074c484a71d2b68601d"
+    },
+    {
+      "path": "tests/fixtures/xrechnung/cii-experiment/s4b-half-up.json",
+      "bytes": 1371,
+      "sha256": "8d9eee3234dd83785f546b864cef30d7dd4c15c9971e27791110260811cca42c"
+    },
+    {
+      "path": "tests/fixtures/xrechnung/cii-experiment/unit-codes.json",
+      "bytes": 3544,
+      "sha256": "ac5c0a651755fdeab9b7964b9a182d6f3b2a8588d5e7954d7b39f159cf386a75"
+    },
+    {
+      "path": "tests/fixtures/xrechnung/d-mixed-rates.json",
+      "bytes": 1373,
+      "sha256": "e17d4c49f1d27de7c47fa98c36c8b2dcb5a83e724e578e9fcf4386730f6a898b"
+    },
+    {
+      "path": "tools/cii-experiment/manifest.ts",
+      "bytes": 3751,
+      "sha256": "8b6a666f26f134df1184f1ba1b5647245fc9ab51d144bb91c680c715e4caa464"
+    },
+    {
+      "path": "tools/kosit/kosit-manifest.json",
+      "bytes": 1224,
+      "sha256": "f6db0f0529d18eb947c3fb4e7c360d573c2ab5dbe6f57b918a437d26a5979d68"
+    },
+    {
+      "path": "tools/kosit/rule-inventory.ts",
+      "bytes": 19475,
+      "sha256": "89229f7dba06c933618fd49ce141860a1a7322feff726b985c1260ce9a45fb15"
+    }
+  ],
+  "recorded": {
+    "node": "24.20.0",
+    "kosit": {
+      "bundle": "xrechnung-3.0.2-bundle-2026-08-31.zip",
+      "bundleSha256": "5f5426741a03e0b9abc7de83acd97309c09498241d132fc035f9c830be7203de",
+      "validatorVersion": "1.6.3",
+      "validatorJarSha256": "799e64befca97d4080e03608c80b85dd5a5ecc5f4ae4f35d1116ec2855b9a7c9",
+      "configurationVersion": "2026-08-31",
+      "configurationSha256": "2530cd107c414511c5d0462ec10f886910395abfca820db82e83d70bf01221a8"
+    },
+    "files": [
+      {
+        "path": ".node-version",
+        "bytes": 8,
+        "sha256": "5b9d0e73029969ae9000117cb877f17bb9841c1279bfe8024e294acfcf017800"
+      },
+      {
+        "path": "package-lock.json",
+        "bytes": 192329,
+        "sha256": "0481d9654ec82b5bcdaa08b3b1fafbe99c0be70bd690fcc50a7e0f930ade552e"
+      },
+      {
+        "path": "src/lib/domain/xrechnung/decimal.ts",
+        "bytes": 2661,
+        "sha256": "8a1ab06e8971251740cebac4acf1931f3f116d89955929cbc155058e7819f112"
+      },
+      {
+        "path": "src/lib/domain/xrechnung/document.ts",
+        "bytes": 24169,
+        "sha256": "9fc10b758a4206f32e63ec5ba2bf50dc6b526c8322ad7d20ce068c58757ba7f5"
+      },
+      {
+        "path": "src/lib/domain/xrechnung/invoice.ts",
+        "bytes": 11306,
+        "sha256": "8d162ecdd647149f122683af4b1f583eed5d0f7a6733119be3407f10059be146"
+      },
+      {
+        "path": "src/lib/domain/xrechnung/number-notation.ts",
+        "bytes": 3610,
+        "sha256": "c9f98692ae5a27b9162a00f1d6b0a9460aa4c5472f6ae8bc204e617fd35956c8"
+      },
+      {
+        "path": "src/lib/domain/xrechnung/ubl.ts",
+        "bytes": 8318,
+        "sha256": "8f2092f775230809b5e72640d82e70745974fc392978b2b88296f053d35c636b"
+      }
+    ]
+  }
+}

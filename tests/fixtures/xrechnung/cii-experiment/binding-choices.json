@@ -1,0 +1,40 @@
+{
+  "purpose": "Structural binding choices for the Orkaid CII serializer, fixed before implementation. The projection compares semantic values; these checks are separate and must also pass.",
+  "choices": [
+    {
+      "term": "BT-41",
+      "required": "/rsm:CrossIndustryInvoice/rsm:SupplyChainTradeTransaction/ram:ApplicableHeaderTradeAgreement/ram:SellerTradeParty/ram:DefinedTradeContact/ram:PersonName",
+      "forbidden": [
+        "/rsm:CrossIndustryInvoice/rsm:SupplyChainTradeTransaction/ram:ApplicableHeaderTradeAgreement/ram:SellerTradeParty/ram:DefinedTradeContact/ram:DepartmentName"
+      ],
+      "evidence": "B: SeMoX binds BT-41 to PersonName | DepartmentName",
+      "onViolation": "SER (PROTOCOL.md section 9, step 2). New evidence that this choice was itself ambiguous or unsupported is recorded separately as a preregistration deviation with a BIND or SRC finding; the mismatch is not reclassified"
+    },
+    {
+      "term": "BT-84",
+      "required": "/rsm:CrossIndustryInvoice/rsm:SupplyChainTradeTransaction/ram:ApplicableHeaderTradeSettlement/ram:SpecifiedTradeSettlementPaymentMeans/ram:PayeePartyCreditorFinancialAccount/ram:IBANID",
+      "forbidden": [
+        "/rsm:CrossIndustryInvoice/rsm:SupplyChainTradeTransaction/ram:ApplicableHeaderTradeSettlement/ram:SpecifiedTradeSettlementPaymentMeans/ram:PayeePartyCreditorFinancialAccount/ram:ProprietaryID"
+      ],
+      "evidence": "B: SeMoX binds BT-84 to IBANID | ProprietaryID; the exercised account is an IBAN",
+      "onViolation": "SER (PROTOCOL.md section 9, step 2). New evidence that this choice was itself ambiguous or unsupported is recorded separately as a preregistration deviation with a BIND or SRC finding; the mismatch is not reclassified"
+    },
+    {
+      "term": "BT-34-1 / BT-49-1",
+      "required": "@schemeID on /rsm:CrossIndustryInvoice/rsm:SupplyChainTradeTransaction/ram:ApplicableHeaderTradeAgreement/ram:SellerTradeParty/ram:URIUniversalCommunication/ram:URIID and on the BuyerTradeParty equivalent, value EM",
+      "forbidden": [],
+      "evidence": "S + K: SeMoX components scheme-id-bt-34/-49; CII XSD udt:IDType declares schemeID; EN16931-CII BR-62/BR-63 (fatal) require a non-empty @schemeID on URIUniversalCommunication[1]/URIID; BR-CL-25 lists EM",
+      "onViolation": "SER (PROTOCOL.md section 9, step 2). New evidence that this choice was itself ambiguous or unsupported is recorded separately as a preregistration deviation with a BIND or SRC finding; the mismatch is not reclassified"
+    },
+    {
+      "term": "BT-2 / BT-9 / BT-72",
+      "required": "udt:DateTimeString with @format = 102 and an 8-digit YYYYMMDD value",
+      "forbidden": [
+        "any other format value",
+        "an absent format attribute"
+      ],
+      "evidence": "S + K: SeMoX binds each date to udt:DateTimeString[@format = '102']; XRechnung CII BR-TMP-7 (warning) defines 102 as YYYYMMDD",
+      "onViolation": "SER (PROTOCOL.md section 9, step 2). New evidence that this choice was itself ambiguous or unsupported is recorded separately as a preregistration deviation with a BIND or SRC finding; the mismatch is not reclassified"
+    }
+  ]
+}

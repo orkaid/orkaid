@@ -1,0 +1,698 @@
+{
+  "normalization": "See PROTOCOL.md section 5. Decimals are canonical exact values (no trailing fractional zeros); dates ISO YYYY-MM-DD; text exact; BG-25 keyed by BT-126; BG-23 keyed by category|rate.",
+  "fixtures": {
+    "a-simple": {
+      "BT-1": "RE-2026-0001",
+      "BT-2": "2026-09-24",
+      "BT-3": "380",
+      "BT-5": "EUR",
+      "BT-9": "2026-10-24",
+      "BT-10": "PO-2026-0815",
+      "BT-23": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+      "BT-24": "urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0",
+      "BT-72": "2026-09-20",
+      "BG-4": {
+        "BT-27": "Beispiel Beratung GmbH",
+        "BT-31": "DE123456789",
+        "BT-34": "rechnung@example.com",
+        "BT-34-1": "EM",
+        "BT-35": "Musterstraße 1",
+        "BT-37": "Berlin",
+        "BT-38": "10115",
+        "BT-40": "DE",
+        "BT-41": "Erika Muster",
+        "BT-42": "+49 30 1234567",
+        "BT-43": "erika.muster@example.com"
+      },
+      "BG-7": {
+        "BT-44": "Beispiel Handel AG",
+        "BT-49": "einkauf@example.org",
+        "BT-49-1": "EM",
+        "BT-50": "Beispielweg 2",
+        "BT-52": "Hamburg",
+        "BT-53": "20095",
+        "BT-55": "DE"
+      },
+      "BG-16": {
+        "BT-81": "58",
+        "BT-84": "DE79000000001234567890"
+      },
+      "BG-25": {
+        "1": {
+          "BT-153": "Beratungsleistung",
+          "BT-129": "2",
+          "BT-130": "C62",
+          "BT-146": "49.9",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "99.8"
+        },
+        "2": {
+          "BT-153": "Workshop",
+          "BT-129": "1.5",
+          "BT-130": "HUR",
+          "BT-146": "80",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "120"
+        }
+      },
+      "BG-23": {
+        "S|19": {
+          "BT-118": "S",
+          "BT-119": "19",
+          "BT-116": "219.8",
+          "BT-117": "41.76"
+        }
+      },
+      "BG-22": {
+        "BT-106": "219.8",
+        "BT-109": "219.8",
+        "BT-110": "41.76",
+        "BT-112": "261.56",
+        "BT-115": "261.56"
+      }
+    },
+    "b-ten-lines": {
+      "BT-1": "RE-2026-0002",
+      "BT-2": "2026-09-24",
+      "BT-3": "380",
+      "BT-5": "EUR",
+      "BT-9": "2026-10-24",
+      "BT-10": "PO-2026-0815",
+      "BT-23": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+      "BT-24": "urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0",
+      "BT-72": "2026-09-20",
+      "BG-4": {
+        "BT-27": "Beispiel Beratung GmbH",
+        "BT-31": "DE123456789",
+        "BT-34": "rechnung@example.com",
+        "BT-34-1": "EM",
+        "BT-35": "Musterstraße 1",
+        "BT-37": "Berlin",
+        "BT-38": "10115",
+        "BT-40": "DE",
+        "BT-41": "Erika Muster",
+        "BT-42": "+49 30 1234567",
+        "BT-43": "erika.muster@example.com"
+      },
+      "BG-7": {
+        "BT-44": "Beispiel Handel AG",
+        "BT-49": "einkauf@example.org",
+        "BT-49-1": "EM",
+        "BT-50": "Beispielweg 2",
+        "BT-52": "Hamburg",
+        "BT-53": "20095",
+        "BT-55": "DE"
+      },
+      "BG-16": {
+        "BT-81": "58",
+        "BT-84": "DE79000000001234567890"
+      },
+      "BG-25": {
+        "1": {
+          "BT-153": "Kleinteil",
+          "BT-129": "1",
+          "BT-130": "C62",
+          "BT-146": "0.03",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "0.03"
+        },
+        "2": {
+          "BT-153": "Kleinteil",
+          "BT-129": "1",
+          "BT-130": "C62",
+          "BT-146": "0.03",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "0.03"
+        },
+        "3": {
+          "BT-153": "Kleinteil",
+          "BT-129": "1",
+          "BT-130": "C62",
+          "BT-146": "0.03",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "0.03"
+        },
+        "4": {
+          "BT-153": "Kleinteil",
+          "BT-129": "1",
+          "BT-130": "C62",
+          "BT-146": "0.03",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "0.03"
+        },
+        "5": {
+          "BT-153": "Kleinteil",
+          "BT-129": "1",
+          "BT-130": "C62",
+          "BT-146": "0.03",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "0.03"
+        },
+        "6": {
+          "BT-153": "Kleinteil",
+          "BT-129": "1",
+          "BT-130": "C62",
+          "BT-146": "0.03",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "0.03"
+        },
+        "7": {
+          "BT-153": "Kleinteil",
+          "BT-129": "1",
+          "BT-130": "C62",
+          "BT-146": "0.03",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "0.03"
+        },
+        "8": {
+          "BT-153": "Kleinteil",
+          "BT-129": "1",
+          "BT-130": "C62",
+          "BT-146": "0.03",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "0.03"
+        },
+        "9": {
+          "BT-153": "Kleinteil",
+          "BT-129": "1",
+          "BT-130": "C62",
+          "BT-146": "0.03",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "0.03"
+        },
+        "10": {
+          "BT-153": "Kleinteil",
+          "BT-129": "1",
+          "BT-130": "C62",
+          "BT-146": "0.03",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "0.03"
+        }
+      },
+      "BG-23": {
+        "S|19": {
+          "BT-118": "S",
+          "BT-119": "19",
+          "BT-116": "0.3",
+          "BT-117": "0.06"
+        }
+      },
+      "BG-22": {
+        "BT-106": "0.3",
+        "BT-109": "0.3",
+        "BT-110": "0.06",
+        "BT-112": "0.36",
+        "BT-115": "0.36"
+      }
+    },
+    "c-rounded-line-net": {
+      "BT-1": "RE-2026-0003",
+      "BT-2": "2026-09-24",
+      "BT-3": "380",
+      "BT-5": "EUR",
+      "BT-9": "2026-10-24",
+      "BT-10": "PO-2026-0815",
+      "BT-23": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+      "BT-24": "urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0",
+      "BT-72": "2026-09-20",
+      "BG-4": {
+        "BT-27": "Beispiel Beratung GmbH",
+        "BT-31": "DE123456789",
+        "BT-34": "rechnung@example.com",
+        "BT-34-1": "EM",
+        "BT-35": "Musterstraße 1",
+        "BT-37": "Berlin",
+        "BT-38": "10115",
+        "BT-40": "DE",
+        "BT-41": "Erika Muster",
+        "BT-42": "+49 30 1234567",
+        "BT-43": "erika.muster@example.com"
+      },
+      "BG-7": {
+        "BT-44": "Beispiel Handel AG",
+        "BT-49": "einkauf@example.org",
+        "BT-49-1": "EM",
+        "BT-50": "Beispielweg 2",
+        "BT-52": "Hamburg",
+        "BT-53": "20095",
+        "BT-55": "DE"
+      },
+      "BG-16": {
+        "BT-81": "58",
+        "BT-84": "DE79000000001234567890"
+      },
+      "BG-25": {
+        "1": {
+          "BT-153": "Lieferung Kleinmaterial",
+          "BT-129": "3",
+          "BT-130": "C62",
+          "BT-146": "0.335",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "1.01"
+        },
+        "2": {
+          "BT-153": "Sonderanfertigung",
+          "BT-129": "2.5",
+          "BT-130": "KGM",
+          "BT-146": "1.999",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "5"
+        }
+      },
+      "BG-23": {
+        "S|19": {
+          "BT-118": "S",
+          "BT-119": "19",
+          "BT-116": "6.01",
+          "BT-117": "1.14"
+        }
+      },
+      "BG-22": {
+        "BT-106": "6.01",
+        "BT-109": "6.01",
+        "BT-110": "1.14",
+        "BT-112": "7.15",
+        "BT-115": "7.15"
+      }
+    },
+    "d-mixed-rates": {
+      "BT-1": "RE-2026-0004",
+      "BT-2": "2026-09-24",
+      "BT-3": "380",
+      "BT-5": "EUR",
+      "BT-9": "2026-10-24",
+      "BT-10": "PO-2026-0815",
+      "BT-23": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+      "BT-24": "urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0",
+      "BT-72": "2026-09-20",
+      "BG-4": {
+        "BT-27": "Beispiel Beratung GmbH",
+        "BT-31": "DE123456789",
+        "BT-34": "rechnung@example.com",
+        "BT-34-1": "EM",
+        "BT-35": "Musterstraße 1",
+        "BT-37": "Berlin",
+        "BT-38": "10115",
+        "BT-40": "DE",
+        "BT-41": "Erika Muster",
+        "BT-42": "+49 30 1234567",
+        "BT-43": "erika.muster@example.com"
+      },
+      "BG-7": {
+        "BT-44": "Beispiel Handel AG",
+        "BT-49": "einkauf@example.org",
+        "BT-49-1": "EM",
+        "BT-50": "Beispielweg 2",
+        "BT-52": "Hamburg",
+        "BT-53": "20095",
+        "BT-55": "DE"
+      },
+      "BG-16": {
+        "BT-81": "58",
+        "BT-84": "DE79000000001234567890"
+      },
+      "BG-25": {
+        "1": {
+          "BT-153": "Beratung Software",
+          "BT-129": "1",
+          "BT-130": "HUR",
+          "BT-146": "100",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "100"
+        },
+        "2": {
+          "BT-153": "Fachbuch",
+          "BT-129": "3",
+          "BT-130": "C62",
+          "BT-146": "33.33",
+          "BT-151": "S",
+          "BT-152": "7",
+          "BT-131": "99.99"
+        }
+      },
+      "BG-23": {
+        "S|19": {
+          "BT-118": "S",
+          "BT-119": "19",
+          "BT-116": "100",
+          "BT-117": "19"
+        },
+        "S|7": {
+          "BT-118": "S",
+          "BT-119": "7",
+          "BT-116": "99.99",
+          "BT-117": "7"
+        }
+      },
+      "BG-22": {
+        "BT-106": "199.99",
+        "BT-109": "199.99",
+        "BT-110": "26",
+        "BT-112": "225.99",
+        "BT-115": "225.99"
+      }
+    },
+    "s1-interleaved-vat": {
+      "BT-1": "RE-S1-0001",
+      "BT-2": "2026-09-24",
+      "BT-3": "380",
+      "BT-5": "EUR",
+      "BT-9": "2026-10-24",
+      "BT-10": "PO-2026-0815",
+      "BT-23": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+      "BT-24": "urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0",
+      "BT-72": "2026-09-20",
+      "BG-4": {
+        "BT-27": "Beispiel Beratung GmbH",
+        "BT-31": "DE123456789",
+        "BT-34": "rechnung@example.com",
+        "BT-34-1": "EM",
+        "BT-35": "Musterstraße 1",
+        "BT-37": "Berlin",
+        "BT-38": "10115",
+        "BT-40": "DE",
+        "BT-41": "Erika Muster",
+        "BT-42": "+49 30 1234567",
+        "BT-43": "erika.muster@example.com"
+      },
+      "BG-7": {
+        "BT-44": "Beispiel Handel AG",
+        "BT-49": "einkauf@example.org",
+        "BT-49-1": "EM",
+        "BT-50": "Beispielweg 2",
+        "BT-52": "Hamburg",
+        "BT-53": "20095",
+        "BT-55": "DE"
+      },
+      "BG-16": {
+        "BT-81": "58",
+        "BT-84": "DE79000000001234567890"
+      },
+      "BG-25": {
+        "1": {
+          "BT-153": "S1 Zubehör A",
+          "BT-129": "3",
+          "BT-130": "C62",
+          "BT-146": "12.347",
+          "BT-151": "S",
+          "BT-152": "7",
+          "BT-131": "37.04"
+        },
+        "2": {
+          "BT-153": "S1 Beratung B",
+          "BT-129": "2.25",
+          "BT-130": "HUR",
+          "BT-146": "84.99",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "191.23"
+        },
+        "3": {
+          "BT-153": "S1 Material C",
+          "BT-129": "1.333",
+          "BT-130": "KGM",
+          "BT-146": "9.99",
+          "BT-151": "S",
+          "BT-152": "7",
+          "BT-131": "13.32"
+        },
+        "4": {
+          "BT-153": "S1 Miete D",
+          "BT-129": "7",
+          "BT-130": "DAY",
+          "BT-146": "118.33",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "828.31"
+        }
+      },
+      "BG-23": {
+        "S|19": {
+          "BT-118": "S",
+          "BT-119": "19",
+          "BT-116": "1019.54",
+          "BT-117": "193.71"
+        },
+        "S|7": {
+          "BT-118": "S",
+          "BT-119": "7",
+          "BT-116": "50.36",
+          "BT-117": "3.53"
+        }
+      },
+      "BG-22": {
+        "BT-106": "1069.9",
+        "BT-109": "1069.9",
+        "BT-110": "197.24",
+        "BT-112": "1267.14",
+        "BT-115": "1267.14"
+      }
+    },
+    "s2-date-roles": {
+      "BT-1": "RE-S2-0001",
+      "BT-2": "2028-03-01",
+      "BT-3": "380",
+      "BT-5": "EUR",
+      "BT-9": "2029-01-02",
+      "BT-10": "PO-2026-0815",
+      "BT-23": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+      "BT-24": "urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0",
+      "BT-72": "2028-02-29",
+      "BG-4": {
+        "BT-27": "Beispiel Beratung GmbH",
+        "BT-31": "DE123456789",
+        "BT-34": "rechnung@example.com",
+        "BT-34-1": "EM",
+        "BT-35": "Musterstraße 1",
+        "BT-37": "Berlin",
+        "BT-38": "10115",
+        "BT-40": "DE",
+        "BT-41": "Erika Muster",
+        "BT-42": "+49 30 1234567",
+        "BT-43": "erika.muster@example.com"
+      },
+      "BG-7": {
+        "BT-44": "Beispiel Handel AG",
+        "BT-49": "einkauf@example.org",
+        "BT-49-1": "EM",
+        "BT-50": "Beispielweg 2",
+        "BT-52": "Hamburg",
+        "BT-53": "20095",
+        "BT-55": "DE"
+      },
+      "BG-16": {
+        "BT-81": "58",
+        "BT-84": "DE79000000001234567890"
+      },
+      "BG-25": {
+        "1": {
+          "BT-153": "Beratungsleistung",
+          "BT-129": "2",
+          "BT-130": "C62",
+          "BT-146": "49.9",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "99.8"
+        },
+        "2": {
+          "BT-153": "Workshop",
+          "BT-129": "1.5",
+          "BT-130": "HUR",
+          "BT-146": "80",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "120"
+        }
+      },
+      "BG-23": {
+        "S|19": {
+          "BT-118": "S",
+          "BT-119": "19",
+          "BT-116": "219.8",
+          "BT-117": "41.76"
+        }
+      },
+      "BG-22": {
+        "BT-106": "219.8",
+        "BT-109": "219.8",
+        "BT-110": "41.76",
+        "BT-112": "261.56",
+        "BT-115": "261.56"
+      }
+    },
+    "s4a-rounded-zero-line": {
+      "BT-1": "RE-S4A-0001",
+      "BT-2": "2026-09-24",
+      "BT-3": "380",
+      "BT-5": "EUR",
+      "BT-9": "2026-10-24",
+      "BT-10": "PO-2026-0815",
+      "BT-23": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+      "BT-24": "urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0",
+      "BT-72": "2026-09-20",
+      "BG-4": {
+        "BT-27": "Beispiel Beratung GmbH",
+        "BT-31": "DE123456789",
+        "BT-34": "rechnung@example.com",
+        "BT-34-1": "EM",
+        "BT-35": "Musterstraße 1",
+        "BT-37": "Berlin",
+        "BT-38": "10115",
+        "BT-40": "DE",
+        "BT-41": "Erika Muster",
+        "BT-42": "+49 30 1234567",
+        "BT-43": "erika.muster@example.com"
+      },
+      "BG-7": {
+        "BT-44": "Beispiel Handel AG",
+        "BT-49": "einkauf@example.org",
+        "BT-49-1": "EM",
+        "BT-50": "Beispielweg 2",
+        "BT-52": "Hamburg",
+        "BT-53": "20095",
+        "BT-55": "DE"
+      },
+      "BG-16": {
+        "BT-81": "58",
+        "BT-84": "DE79000000001234567890"
+      },
+      "BG-25": {
+        "1": {
+          "BT-153": "S4a Kleinstmenge",
+          "BT-129": "0.001",
+          "BT-130": "C62",
+          "BT-146": "0.4",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "0"
+        },
+        "2": {
+          "BT-153": "S4a Standard",
+          "BT-129": "2",
+          "BT-130": "C62",
+          "BT-146": "5",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "10"
+        },
+        "3": {
+          "BT-153": "S4a Schüttgut",
+          "BT-129": "1.6",
+          "BT-130": "KGM",
+          "BT-146": "6.253",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "10"
+        }
+      },
+      "BG-23": {
+        "S|19": {
+          "BT-118": "S",
+          "BT-119": "19",
+          "BT-116": "20",
+          "BT-117": "3.8"
+        }
+      },
+      "BG-22": {
+        "BT-106": "20",
+        "BT-109": "20",
+        "BT-110": "3.8",
+        "BT-112": "23.8",
+        "BT-115": "23.8"
+      }
+    },
+    "s4b-half-up": {
+      "BT-1": "RE-S4B-0001",
+      "BT-2": "2026-09-24",
+      "BT-3": "380",
+      "BT-5": "EUR",
+      "BT-9": "2026-10-24",
+      "BT-10": "PO-2026-0815",
+      "BT-23": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+      "BT-24": "urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0",
+      "BT-72": "2026-09-20",
+      "BG-4": {
+        "BT-27": "Beispiel Beratung GmbH",
+        "BT-31": "DE123456789",
+        "BT-34": "rechnung@example.com",
+        "BT-34-1": "EM",
+        "BT-35": "Musterstraße 1",
+        "BT-37": "Berlin",
+        "BT-38": "10115",
+        "BT-40": "DE",
+        "BT-41": "Erika Muster",
+        "BT-42": "+49 30 1234567",
+        "BT-43": "erika.muster@example.com"
+      },
+      "BG-7": {
+        "BT-44": "Beispiel Handel AG",
+        "BT-49": "einkauf@example.org",
+        "BT-49-1": "EM",
+        "BT-50": "Beispielweg 2",
+        "BT-52": "Hamburg",
+        "BT-53": "20095",
+        "BT-55": "DE"
+      },
+      "BG-16": {
+        "BT-81": "58",
+        "BT-84": "DE79000000001234567890"
+      },
+      "BG-25": {
+        "1": {
+          "BT-153": "S4b Artikel 19",
+          "BT-129": "1",
+          "BT-130": "C62",
+          "BT-146": "1.5",
+          "BT-151": "S",
+          "BT-152": "19",
+          "BT-131": "1.5"
+        },
+        "2": {
+          "BT-153": "S4b Artikel 7",
+          "BT-129": "1",
+          "BT-130": "C62",
+          "BT-146": "1.5",
+          "BT-151": "S",
+          "BT-152": "7",
+          "BT-131": "1.5"
+        }
+      },
+      "BG-23": {
+        "S|19": {
+          "BT-118": "S",
+          "BT-119": "19",
+          "BT-116": "1.5",
+          "BT-117": "0.29"
+        },
+        "S|7": {
+          "BT-118": "S",
+          "BT-119": "7",
+          "BT-116": "1.5",
+          "BT-117": "0.11"
+        }
+      },
+      "BG-22": {
+        "BT-106": "3",
+        "BT-109": "3",
+        "BT-110": "0.4",
+        "BT-112": "3.4",
+        "BT-115": "3.4"
+      }
+    }
+  }
+}

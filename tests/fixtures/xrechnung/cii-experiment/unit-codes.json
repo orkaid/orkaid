@@ -1,0 +1,67 @@
+{
+  "purpose": "Table-driven unit-code cases (BT-130). Verifies the current bounded profile; does not widen it.",
+  "base": {
+    "fixture": "tests/fixtures/xrechnung/a-simple.json",
+    "mutation": "replace lines[0].unitCode with the case value; nothing else changes"
+  },
+  "bindings": {
+    "ubl": "/Invoice/cac:InvoiceLine/cbc:InvoicedQuantity/@unitCode",
+    "cii": "/rsm:CrossIndustryInvoice/rsm:SupplyChainTradeTransaction/ram:IncludedSupplyChainTradeLineItem/ram:SpecifiedLineTradeDelivery/ram:BilledQuantity/@unitCode",
+    "confidence": "S (SeMoX ubl-inv and cii bindings, bundle 2026-08-31)"
+  },
+  "positive": [
+    {
+      "code": "C62",
+      "expected": "accepted by buildInvoice; BT-130 of line 1 equals the code exactly in the UBL, CII and expected projections",
+      "restriction": "profile (UNIT_CODES); the code is in the BR-CL-23 list of the pinned configuration for UBL and CII"
+    },
+    {
+      "code": "HUR",
+      "expected": "accepted by buildInvoice; BT-130 of line 1 equals the code exactly in the UBL, CII and expected projections",
+      "restriction": "profile (UNIT_CODES); the code is in the BR-CL-23 list of the pinned configuration for UBL and CII"
+    },
+    {
+      "code": "DAY",
+      "expected": "accepted by buildInvoice; BT-130 of line 1 equals the code exactly in the UBL, CII and expected projections",
+      "restriction": "profile (UNIT_CODES); the code is in the BR-CL-23 list of the pinned configuration for UBL and CII"
+    },
+    {
+      "code": "MON",
+      "expected": "accepted by buildInvoice; BT-130 of line 1 equals the code exactly in the UBL, CII and expected projections",
+      "restriction": "profile (UNIT_CODES); the code is in the BR-CL-23 list of the pinned configuration for UBL and CII"
+    },
+    {
+      "code": "KGM",
+      "expected": "accepted by buildInvoice; BT-130 of line 1 equals the code exactly in the UBL, CII and expected projections",
+      "restriction": "profile (UNIT_CODES); the code is in the BR-CL-23 list of the pinned configuration for UBL and CII"
+    },
+    {
+      "code": "LTR",
+      "expected": "accepted by buildInvoice; BT-130 of line 1 equals the code exactly in the UBL, CII and expected projections",
+      "restriction": "profile (UNIT_CODES); the code is in the BR-CL-23 list of the pinned configuration for UBL and CII"
+    },
+    {
+      "code": "MTR",
+      "expected": "accepted by buildInvoice; BT-130 of line 1 equals the code exactly in the UBL, CII and expected projections",
+      "restriction": "profile (UNIT_CODES); the code is in the BR-CL-23 list of the pinned configuration for UBL and CII"
+    }
+  ],
+  "boundaryNegative": [
+    {
+      "code": "H87",
+      "expected": "rejected by buildInvoice with unsupported_unit_code at lines[0].unitCode; no UBL or CII is produced",
+      "restriction": "profile only: H87 is in the BR-CL-23 list, so the validator would not reject it"
+    },
+    {
+      "code": "c62",
+      "expected": "rejected by buildInvoice with unsupported_unit_code at lines[0].unitCode; no UBL or CII is produced",
+      "restriction": "profile; the BR-CL-23 list is case-sensitive and contains C62 only in upper case (validator: BR-CL-23 at customLevel warning)"
+    },
+    {
+      "code": "",
+      "expected": "rejected by buildInvoice with unsupported_unit_code at lines[0].unitCode; no UBL or CII is produced",
+      "restriction": "profile"
+    }
+  ],
+  "kosit": "Not run per case. The presence of every positive code in the BR-CL-23 list is checked mechanically against the pinned configuration."
+}
