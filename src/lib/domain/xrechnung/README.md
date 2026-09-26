@@ -19,8 +19,10 @@ semantic input (strings)
 | `document.ts` | business fields, the implemented profile, runtime protection |
 | `ubl.ts` | the only file that knows UBL element names and namespaces; performs no arithmetic |
 
-The semantic model contains no UBL or CII structures. A later CII serializer would consume the same `Invoice`
-(parties, dates, payment, typed lines, totals) and reuse `formatXmlDecimal`; the monetary engine does not change.
+The semantic model contains no UBL or CII structures, and the semantic model and the monetary engine are designed to
+be syntax-independent. UBL is currently the only syntax that consumes them. Future CII work is meant to test whether
+the same `Invoice` is sufficient for CII without changes to the model or drift in the monetary policy; that has not
+yet been demonstrated.
 
 ## Implemented profile
 
