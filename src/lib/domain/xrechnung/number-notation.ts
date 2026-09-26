@@ -3,7 +3,7 @@
 //   B. the locale-independent canonical decimal "1234.56" (what the arithmetic engine works on);
 //   C. the XML decimal lexical form, also "1234.56".
 // Localized text is parsed by grammar into exact digits; it never passes through Number or parseFloat, and a
-// separator is never guessed or globally replaced. Text that does not fit the chosen notation is rejected.
+// separator is never guessed or globally replaced. Text that does not fit the chosen notation is rejected (MDR-14).
 
 import {
   formatDecimal,

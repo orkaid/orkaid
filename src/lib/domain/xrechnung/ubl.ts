@@ -1,10 +1,11 @@
 // UBL 2.1 Invoice serializer for the XRechnung CIUS. A pure function from a validated Invoice to an XML string.
 //
 // This is the only file that knows UBL element names and namespaces. It performs no arithmetic: every amount is a
-// Decimal produced by the monetary calculation and is only formatted (formatXmlDecimal). Element order follows the
-// UBL 2.1 XSD sequences, paths and cardinalities follow the official SeMoX CIUS model (binding ubl-inv), both taken
-// from the KoSIT configuration 2026-08-31. CEN/TS 16931-3-2 was not available, so no exhaustive verification against
-// it is claimed. The output is deterministic: fixed order, two-space indentation, LF newlines, UTF-8, no timestamps.
+// Decimal produced by the monetary calculation and is only formatted, by formatXmlDecimal (MDR-15). Element order
+// follows the UBL 2.1 XSD sequences, paths and cardinalities follow the official SeMoX CIUS model (binding ubl-inv),
+// both taken from the KoSIT configuration 2026-08-31. CEN/TS 16931-3-2 was not available, so no exhaustive
+// verification against it is claimed. The output is deterministic: fixed order, two-space indentation, LF newlines,
+// UTF-8, no timestamps.
 
 import { isValidatedInvoice, type Invoice, type InvoiceLine, type InvoiceParty } from './document.ts';
 import type { Decimal } from './decimal.ts';

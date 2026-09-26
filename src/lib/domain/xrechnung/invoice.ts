@@ -1,9 +1,9 @@
 // V1 XRechnung semantic invoice model and monetary calculation.
 // Scope: domestic German B2B invoice, EUR, BT-3 = 380, VAT category S at 19% or 7%, non-negative amounts.
-// Syntax-independent: no UBL/CII structures. Anything outside the scope is an explicit failure, never a fallback.
+// Syntax-independent: no UBL/CII structures. Anything outside the scope is an explicit failure, never a fallback (MDR-12).
 //
-// Calculation contract (project engineering policy for V1; HALF_UP is not an EN 16931/XRechnung mandate;
-// BR-CO-17 itself only requires rounding BT-117 to two decimals):
+// Calculation contract, a project engineering policy for V1 (MDR-13). HALF_UP is not an EN 16931/XRechnung mandate;
+// BR-CO-17 itself only requires rounding BT-117 to two decimals:
 //   BT-131 = round(quantity x unit price, 2)          per line
 //   BT-116 = sum of BT-131 per VAT category and rate
 //   BT-117 = round(BT-116 x BT-119 / 100, 2)          once per bucket (BR-CO-17), never summed per line
