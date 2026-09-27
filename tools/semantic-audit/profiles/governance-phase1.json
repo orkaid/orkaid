@@ -1,8 +1,25 @@
 {
   "profile_id": "governance-phase1",
-  "version": "0.1.0-uncalibrated",
+  "version": "0.2.0",
   "model": "jev-1.13.0",
-  "bands": null,
+  "bands": {
+    "actionability": {
+      "review": 0.15,
+      "finding": 0.2
+    },
+    "authority_presented": {
+      "review": 0.05,
+      "finding": 0.1
+    },
+    "failure_behavior": {
+      "review": 0.05,
+      "finding": 0.1
+    },
+    "pair_relation": {
+      "review": 0.3,
+      "finding": 0.5
+    }
+  },
   "unit_questions": {
     "actionability": {
       "type": "choice",

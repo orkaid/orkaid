@@ -125,6 +125,9 @@ function perQuestionBands(profile: Record<string, any>): Record<string, { review
   return Object.fromEntries([...Object.keys(profile.unit_questions), ...Object.keys(profile.pair_questions)].map((id) => [id, { review: 0.3, finding: 0.7 }]));
 }
 
+/** Resets a temporary root's profile to the uncalibrated state, to test behaviour that only exists without bands. */
+const uncalibrated = (root: string) => editJson(root, PROFILE_PATH, (p) => { p.bands = null; });
+
 const quiet = () => {};
 const outDir = () => mkdtempSync(join(tmpdir(), 'semantic-audit-out-'));
 
@@ -305,9 +308,15 @@ test('preflight: foreign text, secrets, local paths, the key itself and oversize
 
 // ------------------------------------------------------------------------------------------------ profile
 
-test('profile: the Phase-1 profile is valid, pinned and uncalibrated', () => {
+test('profile: the Phase-1 profile is valid, pinned and carries the calibration-derived bands', () => {
   assert.equal(PROFILE.model, 'jev-1.13.0');
-  assert.equal(PROFILE.bands, null);
+  assert.equal(PROFILE.version, '0.2.0');
+  assert.deepEqual(PROFILE.bands, {
+    actionability: { review: 0.15, finding: 0.2 },
+    authority_presented: { review: 0.05, finding: 0.1 },
+    failure_behavior: { review: 0.05, finding: 0.1 },
+    pair_relation: { review: 0.3, finding: 0.5 },
+  });
 });
 
 test('profile: a contradiction settled by precedence is surfaced, never a pass; an unresolved one is a CONFLICT', () => {
@@ -480,7 +489,7 @@ test('run: no live request of any corpus before the owner-authored holdout cases
 
 test('run: --plan on the holdout works before calibration, offline, with the exact future bodies; live stays blocked', async () => {
   const api = fakeApi();
-  const root = tempRoot();
+  const root = tempRoot(uncalibrated);
   const plan = await runAudit({ corpus: 'holdout', plan: true, root, env: {}, fetchImpl: api.fetchImpl, git: CLEAN_GIT, outDir: outDir(), log: quiet });
   assert.equal(plan.exitCode, EXIT.REQUIRES_HUMAN_REVIEW);
   const written = JSON.parse(readFileSync(plan.outputPath as string, 'utf8'));
@@ -496,7 +505,7 @@ test('run: --plan on the holdout works before calibration, offline, with the exa
   const refused = await runAudit({ corpus: 'holdout', plan: true, root: leaky, env: {}, fetchImpl: api.fetchImpl, git: CLEAN_GIT, outDir: outDir(), log: quiet });
   assert.equal(refused.exitCode, EXIT.BLOCKED_EGRESS_OR_PREFLIGHT);
 
-  const live = await runAudit({ corpus: 'holdout', root: readyRoot(), env: { TYPESAFE_API_KEY: KEY }, fetchImpl: api.fetchImpl, git: CLEAN_GIT, outDir: outDir(), log: quiet });
+  const live = await runAudit({ corpus: 'holdout', root: readyRoot(uncalibrated), env: { TYPESAFE_API_KEY: KEY }, fetchImpl: api.fetchImpl, git: CLEAN_GIT, outDir: outDir(), log: quiet });
   assert.equal(live.exitCode, EXIT.BLOCKED_PROFILE_OR_RESPONSE_INVALID);
   assert.equal(api.calls.length, 0);
 });
@@ -513,7 +522,7 @@ test('run: a live repository run is refused in Phase 1 even with bands and owner
 
 test('run: an uncalibrated calibration run records full provenance, never passes and never contains the key', async () => {
   const api = fakeApi();
-  const result = await runAudit({ corpus: 'calibration', caseIds: ['cal-01', 'cal-17'], repeat: 2, root: readyRoot(), env: { TYPESAFE_API_KEY: KEY }, fetchImpl: api.fetchImpl, git: CLEAN_GIT, outDir: outDir(), log: quiet });
+  const result = await runAudit({ corpus: 'calibration', caseIds: ['cal-01', 'cal-17'], repeat: 2, root: readyRoot(uncalibrated), env: { TYPESAFE_API_KEY: KEY }, fetchImpl: api.fetchImpl, git: CLEAN_GIT, outDir: outDir(), log: quiet });
   assert.equal(result.exitCode, EXIT.REQUIRES_HUMAN_REVIEW);
   assert.equal(api.calls.length, 4);
   const content = readFileSync(result.outputPath as string, 'utf8');
@@ -559,7 +568,7 @@ test('run: a missing answer, an extra answer or a model mismatch blocks at the f
 test('run: the holdout and repository corpora refuse an uncalibrated profile', async () => {
   for (const corpus of ['holdout', 'repository'] as const) {
     const api = fakeApi();
-    const result = await runAudit({ corpus, env: { TYPESAFE_API_KEY: KEY }, fetchImpl: api.fetchImpl, git: CLEAN_GIT, outDir: outDir(), log: quiet });
+    const result = await runAudit({ corpus, root: readyRoot(uncalibrated), env: { TYPESAFE_API_KEY: KEY }, fetchImpl: api.fetchImpl, git: CLEAN_GIT, outDir: outDir(), log: quiet });
     assert.equal(result.exitCode, EXIT.BLOCKED_PROFILE_OR_RESPONSE_INVALID);
     assert.equal(api.calls.length, 0);
   }

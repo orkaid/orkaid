@@ -49,8 +49,8 @@
     },
     {
       "path": "tools/semantic-audit/profiles/governance-phase1.json",
-      "bytes": 5571,
-      "sha256": "abdde8c814a09f8ccf8bc2737c5c69436a7d86631b2c7b6a4e19fb22664d2e1b"
+      "bytes": 5858,
+      "sha256": "f6d71354e681218afa0cf069ddda9f9077c201d023c25c6f02846701dc65eb26"
     },
     {
       "path": "tools/semantic-audit/run.ts",
