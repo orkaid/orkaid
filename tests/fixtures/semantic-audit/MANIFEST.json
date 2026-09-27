@@ -19,8 +19,8 @@
     },
     {
       "path": "tests/fixtures/semantic-audit/holdout/owner-cases.json",
-      "bytes": 6759,
-      "sha256": "18a1f3f708a7a0696c84330bbac37bc036218ddd6897548e620c76814cfa0925"
+      "bytes": 6627,
+      "sha256": "23e02a268dafc6b76c7b8e9251b5db65a4fd2f3bfa88ed3facee04d2d76f808a"
     },
     {
       "path": "tools/semantic-audit/extract-governance.ts",

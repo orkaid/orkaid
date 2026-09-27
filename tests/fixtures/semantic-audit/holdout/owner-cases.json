@@ -33,10 +33,9 @@
       "expected_outcome": [
         "CONFLICT"
       ],
-      "origin": "synthetic",
+      "origin": "mutated",
       "dimension": "pair_relation",
-      "rationale": "Both rules govern the same public external mutation. One requires a separate owner confirmation and the other explicitly removes that requirement, so both cannot be followed as written.",
-      "origin_as_given": "synthetic owner governance scenario"
+      "rationale": "Both rules govern the same public external mutation. One requires a separate owner confirmation and the other explicitly removes that requirement, so both cannot be followed as written."
     },
     {
       "id": "OWNER-02",
@@ -68,10 +67,9 @@
       "expected_outcome": [
         "CONFLICT"
       ],
-      "origin": "synthetic",
+      "origin": "mutated",
       "dimension": "pair_relation",
-      "rationale": "One rule permits external services only for an approved current requirement; the other explicitly permits speculative integration for possible future use.",
-      "origin_as_given": "synthetic owner governance scenario"
+      "rationale": "One rule permits external services only for an approved current requirement; the other explicitly permits speculative integration for possible future use."
     },
     {
       "id": "OWNER-03",
