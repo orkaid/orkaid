@@ -1,0 +1,83 @@
+{
+  "purpose": "Targets and expected labels of the real-code pilot v1, frozen before any live request (PROTOCOL.md).",
+  "targets": [
+    {
+      "id": "REAL",
+      "file": "targets/REAL.ts.txt",
+      "intended_invariant": null,
+      "change": "byte-for-byte copy of the committed src/lib/domain/xrechnung/document.ts",
+      "expected": {
+        "inv1_no_money_arithmetic": "satisfies_invariant",
+        "inv2_explicit_failure": "satisfies_invariant",
+        "inv3_validated_only_by_registration": "satisfies_invariant",
+        "inv4_rule_kinds_separated": "UNKNOWN_BASELINE",
+        "inv5_snapshot_no_accessors": "satisfies_invariant"
+      }
+    },
+    {
+      "id": "CONTROL",
+      "file": "targets/CONTROL.ts.txt",
+      "intended_invariant": null,
+      "change": "readTelephone counts digits with text.replace(/[^0-9]/g, '').length instead of (text.match(/[0-9]/g) ?? []).length: the same count for every string",
+      "expected": {
+        "inv1_no_money_arithmetic": "satisfies_invariant",
+        "inv2_explicit_failure": "satisfies_invariant",
+        "inv3_validated_only_by_registration": "satisfies_invariant",
+        "inv4_rule_kinds_separated": "UNKNOWN_BASELINE",
+        "inv5_snapshot_no_accessors": "satisfies_invariant"
+      }
+    },
+    {
+      "id": "MUTANT-01",
+      "file": "targets/MUTANT-01.ts.txt",
+      "intended_invariant": "inv1_no_money_arithmetic",
+      "change": "the line net amount is computed in document.ts as roundHalfUp(multiply(quantity, unitPrice), 2) instead of being taken from the monetary calculation",
+      "expected": {
+        "inv1_no_money_arithmetic": "violates_invariant",
+        "inv2_explicit_failure": "satisfies_invariant",
+        "inv3_validated_only_by_registration": "satisfies_invariant",
+        "inv4_rule_kinds_separated": "UNKNOWN_BASELINE",
+        "inv5_snapshot_no_accessors": "satisfies_invariant"
+      }
+    },
+    {
+      "id": "MUTANT-02",
+      "file": "targets/MUTANT-02.ts.txt",
+      "intended_invariant": "inv2_explicit_failure",
+      "change": "readChoice returns the first allowed value instead of reporting an unsupported_* error for a value outside the profile",
+      "expected": {
+        "inv1_no_money_arithmetic": "satisfies_invariant",
+        "inv2_explicit_failure": "violates_invariant",
+        "inv3_validated_only_by_registration": "satisfies_invariant",
+        "inv4_rule_kinds_separated": "UNKNOWN_BASELINE",
+        "inv5_snapshot_no_accessors": "satisfies_invariant"
+      }
+    },
+    {
+      "id": "MUTANT-03",
+      "file": "targets/MUTANT-03.ts.txt",
+      "intended_invariant": "inv3_validated_only_by_registration",
+      "change": "isValidatedInvoice also accepts any frozen object, not only registered ones",
+      "expected": {
+        "inv1_no_money_arithmetic": "satisfies_invariant",
+        "inv2_explicit_failure": "satisfies_invariant",
+        "inv3_validated_only_by_registration": "violates_invariant",
+        "inv4_rule_kinds_separated": "UNKNOWN_BASELINE",
+        "inv5_snapshot_no_accessors": "satisfies_invariant"
+      }
+    },
+    {
+      "id": "MUTANT-04",
+      "file": "targets/MUTANT-04.ts.txt",
+      "intended_invariant": "inv4_rule_kinds_separated",
+      "change": "the comment on the payment means restriction presents the profile choice 58 as an XRechnung requirement (EXTERNAL) instead of PROFILE",
+      "expected": {
+        "inv1_no_money_arithmetic": "satisfies_invariant",
+        "inv2_explicit_failure": "satisfies_invariant",
+        "inv3_validated_only_by_registration": "satisfies_invariant",
+        "inv4_rule_kinds_separated": "violates_invariant",
+        "inv5_snapshot_no_accessors": "satisfies_invariant"
+      }
+    }
+  ]
+}

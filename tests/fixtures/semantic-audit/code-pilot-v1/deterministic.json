@@ -1,0 +1,160 @@
+{
+  "scope": "tsc --noEmit on the whole project and node --test tests/domain/*.test.ts (includes the AST static checks), with the target in place of document.ts in a copy of HEAD",
+  "results": [
+    {
+      "id": "REAL",
+      "typecheck": {
+        "exit": 0,
+        "errors": []
+      },
+      "domain_tests": {
+        "files": [
+          "tests/domain/xrechnung-cii.test.ts",
+          "tests/domain/xrechnung-decimal.test.ts",
+          "tests/domain/xrechnung-document.test.ts",
+          "tests/domain/xrechnung-invoice-details.test.ts",
+          "tests/domain/xrechnung-invoice-input.test.ts",
+          "tests/domain/xrechnung-invoice.test.ts",
+          "tests/domain/xrechnung-number-notation.test.ts",
+          "tests/domain/xrechnung-static-checks.test.ts",
+          "tests/domain/xrechnung-ubl.test.ts"
+        ],
+        "exit": 0,
+        "tests": 181,
+        "pass": 181,
+        "fail": 0,
+        "failing": []
+      }
+    },
+    {
+      "id": "CONTROL",
+      "typecheck": {
+        "exit": 0,
+        "errors": []
+      },
+      "domain_tests": {
+        "files": [
+          "tests/domain/xrechnung-cii.test.ts",
+          "tests/domain/xrechnung-decimal.test.ts",
+          "tests/domain/xrechnung-document.test.ts",
+          "tests/domain/xrechnung-invoice-details.test.ts",
+          "tests/domain/xrechnung-invoice-input.test.ts",
+          "tests/domain/xrechnung-invoice.test.ts",
+          "tests/domain/xrechnung-number-notation.test.ts",
+          "tests/domain/xrechnung-static-checks.test.ts",
+          "tests/domain/xrechnung-ubl.test.ts"
+        ],
+        "exit": 0,
+        "tests": 181,
+        "pass": 181,
+        "fail": 0,
+        "failing": []
+      }
+    },
+    {
+      "id": "MUTANT-01",
+      "typecheck": {
+        "exit": 0,
+        "errors": []
+      },
+      "domain_tests": {
+        "files": [
+          "tests/domain/xrechnung-cii.test.ts",
+          "tests/domain/xrechnung-decimal.test.ts",
+          "tests/domain/xrechnung-document.test.ts",
+          "tests/domain/xrechnung-invoice-details.test.ts",
+          "tests/domain/xrechnung-invoice-input.test.ts",
+          "tests/domain/xrechnung-invoice.test.ts",
+          "tests/domain/xrechnung-number-notation.test.ts",
+          "tests/domain/xrechnung-static-checks.test.ts",
+          "tests/domain/xrechnung-ubl.test.ts"
+        ],
+        "exit": 0,
+        "tests": 181,
+        "pass": 181,
+        "fail": 0,
+        "failing": []
+      }
+    },
+    {
+      "id": "MUTANT-02",
+      "typecheck": {
+        "exit": 0,
+        "errors": []
+      },
+      "domain_tests": {
+        "files": [
+          "tests/domain/xrechnung-cii.test.ts",
+          "tests/domain/xrechnung-decimal.test.ts",
+          "tests/domain/xrechnung-document.test.ts",
+          "tests/domain/xrechnung-invoice-details.test.ts",
+          "tests/domain/xrechnung-invoice-input.test.ts",
+          "tests/domain/xrechnung-invoice.test.ts",
+          "tests/domain/xrechnung-number-notation.test.ts",
+          "tests/domain/xrechnung-static-checks.test.ts",
+          "tests/domain/xrechnung-ubl.test.ts"
+        ],
+        "exit": 1,
+        "tests": 181,
+        "pass": 177,
+        "fail": 4,
+        "failing": [
+          "unit-code matrix: seven profile codes pass in both syntaxes, three boundary cases are rejected by the profile",
+          "input outside the implemented profile fails explicitly, per field, without being called legally invalid",
+          "every supported unit code is accepted, and a code that is not on the list is not",
+          "out-of-profile errors say \"unsupported\", never that the input is legally invalid"
+        ]
+      }
+    },
+    {
+      "id": "MUTANT-03",
+      "typecheck": {
+        "exit": 0,
+        "errors": []
+      },
+      "domain_tests": {
+        "files": [
+          "tests/domain/xrechnung-cii.test.ts",
+          "tests/domain/xrechnung-decimal.test.ts",
+          "tests/domain/xrechnung-document.test.ts",
+          "tests/domain/xrechnung-invoice-details.test.ts",
+          "tests/domain/xrechnung-invoice-input.test.ts",
+          "tests/domain/xrechnung-invoice.test.ts",
+          "tests/domain/xrechnung-number-notation.test.ts",
+          "tests/domain/xrechnung-static-checks.test.ts",
+          "tests/domain/xrechnung-ubl.test.ts"
+        ],
+        "exit": 0,
+        "tests": 181,
+        "pass": 181,
+        "fail": 0,
+        "failing": []
+      }
+    },
+    {
+      "id": "MUTANT-04",
+      "typecheck": {
+        "exit": 0,
+        "errors": []
+      },
+      "domain_tests": {
+        "files": [
+          "tests/domain/xrechnung-cii.test.ts",
+          "tests/domain/xrechnung-decimal.test.ts",
+          "tests/domain/xrechnung-document.test.ts",
+          "tests/domain/xrechnung-invoice-details.test.ts",
+          "tests/domain/xrechnung-invoice-input.test.ts",
+          "tests/domain/xrechnung-invoice.test.ts",
+          "tests/domain/xrechnung-number-notation.test.ts",
+          "tests/domain/xrechnung-static-checks.test.ts",
+          "tests/domain/xrechnung-ubl.test.ts"
+        ],
+        "exit": 0,
+        "tests": 181,
+        "pass": 181,
+        "fail": 0,
+        "failing": []
+      }
+    }
+  ]
+}
