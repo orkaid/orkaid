@@ -1,0 +1,42 @@
+{
+  "purpose": "Egress allowlist and authority map of the Phase-1 governance audit. Only the documents listed under `audited` are extracted, and only their committed text may leave the machine. `role` says whether a source states policy of its own (`independent`) or routes to another source (`delegating`); a delegating source is never paired with the source it delegates to, and its classification holds only for the exact bytes in `classified_sha256`. Human-controlled policy input: see SOURCE_MAP.md.",
+  "authority_order_source": "AGENTS.md section 1",
+  "precedence_rule": "AGENTS.md#1.1",
+  "pair_tags": [
+    "external-mutation",
+    "dependency",
+    "secrets",
+    "ai",
+    "decision-state",
+    "failure",
+    "infrastructure",
+    "regulatory",
+    "authority"
+  ],
+  "audited": [
+    {
+      "path": "AGENTS.md",
+      "authority": {
+        "rank": 4,
+        "label": "root repository instruction file (AGENTS.md), rank 4 of 7 in the AGENTS.md section 1 order"
+      },
+      "status": "normative",
+      "role": {
+        "kind": "independent"
+      }
+    },
+    {
+      "path": "CLAUDE.md",
+      "authority": {
+        "rank": 3,
+        "label": "tool-native repository instruction file (CLAUDE.md), rank 3 of 7 in the AGENTS.md section 1 order"
+      },
+      "status": "normative",
+      "role": {
+        "kind": "delegating",
+        "delegates_to": "AGENTS.md",
+        "classified_sha256": "0a1269a9564a0b4cbdf48872e21f3f6f88fff3b8e085728a021aa3e504c8ca0e"
+      }
+    }
+  ]
+}

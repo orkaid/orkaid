@@ -10,6 +10,9 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+# Local semantic-audit credential (tools/semantic-audit): the real file is never tracked, only its template.
+.env.semantic-audit
+!.env.semantic-audit.example
 .dev.vars
 .dev.vars.*
 .claude/settings.local.json
@@ -25,6 +28,8 @@ dist/
 .wrangler/
 coverage/
 .cache/
+# Semantic-audit reports and request plans; covered by .cache/ above, listed so the intent is explicit.
+.cache/semantic-audit/
 
 # Logs
 *.log
