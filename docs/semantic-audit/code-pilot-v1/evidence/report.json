@@ -1,0 +1,1897 @@
+{
+  "report_version": "1",
+  "audit": "code-pilot-v1",
+  "mode": "live",
+  "timestamp": "2026-09-27T12:56:56.456Z",
+  "interpretation": [
+    "Jev answers are probabilistic typed judgments about one source file against stated invariants: evidence for human review, not proof of code correctness.",
+    "This pilot concerns one file, five invariants, one baseline, one control and four constructed mutants. It says nothing about the rest of the repository, about regulatory correctness or about production readiness, and certifies nothing."
+  ],
+  "profile": {
+    "path": "tools/semantic-audit/profiles/code-audit-document-pilot-v1.json",
+    "sha256": "2a22cd066b17f0a3aa62dac4236ef73a9071092256ab1633e502d3f7e9c9667b",
+    "profile_id": "code-audit-document-pilot-v1",
+    "version": "1.0.0"
+  },
+  "manifest": {
+    "path": "tests/fixtures/semantic-audit/code-pilot-v1/MANIFEST.json",
+    "sha256": "3fba1f75d178070089737394f9ee8b11a93af02a6ed0767bb0128b9968ee079f"
+  },
+  "requested_model": "jev-1.13.0",
+  "repeat": 5,
+  "repository": {
+    "commit": "dd63b64e8381d050737e830b7adfabe88121d65f",
+    "dirty": false
+  },
+  "outcome": "COMPLETED",
+  "requests": 30,
+  "results": [
+    {
+      "id": "REAL",
+      "source_sha256": "9fc10b758a4206f32e63ec5ba2bf50dc6b526c8322ad7d20ce068c58757ba7f5",
+      "repeats": [
+        {
+          "repeat": 1,
+          "latency_ms": 477,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8315,
+            "output_tokens": 309
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.99,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "violates_invariant": 0,
+                "satisfies_invariant": 1
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.46,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.35,
+                "satisfies_invariant": 0.64
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.97,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.02,
+                "satisfies_invariant": 0.97
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.46,
+              "probabilities": {
+                "insufficient_evidence": 0.14,
+                "violates_invariant": 0.22,
+                "satisfies_invariant": 0.64
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.81,
+              "probabilities": {
+                "insufficient_evidence": 0.03,
+                "violates_invariant": 0.1,
+                "satisfies_invariant": 0.87
+              }
+            }
+          }
+        },
+        {
+          "repeat": 2,
+          "latency_ms": 370,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8315,
+            "output_tokens": 309
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.99,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "violates_invariant": 0,
+                "satisfies_invariant": 1
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.47,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "satisfies_invariant": 0.64,
+                "violates_invariant": 0.35
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.96,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.02,
+                "satisfies_invariant": 0.97
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.47,
+              "probabilities": {
+                "insufficient_evidence": 0.11,
+                "satisfies_invariant": 0.65,
+                "violates_invariant": 0.24
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.86,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "satisfies_invariant": 0.91,
+                "violates_invariant": 0.08
+              }
+            }
+          }
+        },
+        {
+          "repeat": 3,
+          "latency_ms": 310,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8315,
+            "output_tokens": 309
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.99,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "violates_invariant": 0,
+                "satisfies_invariant": 1
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.45,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.36,
+                "satisfies_invariant": 0.63
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.97,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.02,
+                "satisfies_invariant": 0.98
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.51,
+              "probabilities": {
+                "insufficient_evidence": 0.11,
+                "violates_invariant": 0.22,
+                "satisfies_invariant": 0.67
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.85,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.09,
+                "satisfies_invariant": 0.9
+              }
+            }
+          }
+        },
+        {
+          "repeat": 4,
+          "latency_ms": 339,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8315,
+            "output_tokens": 309
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.99,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "violates_invariant": 0,
+                "satisfies_invariant": 1
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.48,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.34,
+                "satisfies_invariant": 0.65
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.97,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.01,
+                "satisfies_invariant": 0.98
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.51,
+              "probabilities": {
+                "insufficient_evidence": 0.07,
+                "violates_invariant": 0.25,
+                "satisfies_invariant": 0.68
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.83,
+              "probabilities": {
+                "insufficient_evidence": 0.02,
+                "violates_invariant": 0.09,
+                "satisfies_invariant": 0.89
+              }
+            }
+          }
+        },
+        {
+          "repeat": 5,
+          "latency_ms": 330,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8315,
+            "output_tokens": 309
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.99,
+              "probabilities": {
+                "violates_invariant": 0.01,
+                "insufficient_evidence": 0,
+                "satisfies_invariant": 0.99
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.48,
+              "probabilities": {
+                "violates_invariant": 0.34,
+                "insufficient_evidence": 0.01,
+                "satisfies_invariant": 0.65
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.97,
+              "probabilities": {
+                "violates_invariant": 0.02,
+                "insufficient_evidence": 0.01,
+                "satisfies_invariant": 0.97
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.49,
+              "probabilities": {
+                "satisfies_invariant": 0.66,
+                "insufficient_evidence": 0.13,
+                "violates_invariant": 0.21
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.8,
+              "probabilities": {
+                "violates_invariant": 0.11,
+                "insufficient_evidence": 0.02,
+                "satisfies_invariant": 0.87
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "CONTROL",
+      "source_sha256": "4c6b18e72a83865cc394d74fc5bed62dee8bbb36045deb15d8e4f834a685e275",
+      "repeats": [
+        {
+          "repeat": 1,
+          "latency_ms": 314,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8314,
+            "output_tokens": 309
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.99,
+              "probabilities": {
+                "violates_invariant": 0,
+                "satisfies_invariant": 1,
+                "insufficient_evidence": 0
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.5,
+              "probabilities": {
+                "violates_invariant": 0.32,
+                "satisfies_invariant": 0.67,
+                "insufficient_evidence": 0.01
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.97,
+              "probabilities": {
+                "violates_invariant": 0.02,
+                "satisfies_invariant": 0.97,
+                "insufficient_evidence": 0.01
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.44,
+              "probabilities": {
+                "violates_invariant": 0.22,
+                "satisfies_invariant": 0.63,
+                "insufficient_evidence": 0.15
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.8,
+              "probabilities": {
+                "violates_invariant": 0.1,
+                "satisfies_invariant": 0.87,
+                "insufficient_evidence": 0.03
+              }
+            }
+          }
+        },
+        {
+          "repeat": 2,
+          "latency_ms": 317,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8314,
+            "output_tokens": 309
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.99,
+              "probabilities": {
+                "satisfies_invariant": 1,
+                "insufficient_evidence": 0,
+                "violates_invariant": 0
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.48,
+              "probabilities": {
+                "satisfies_invariant": 0.65,
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.34
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.96,
+              "probabilities": {
+                "satisfies_invariant": 0.97,
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.02
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.52,
+              "probabilities": {
+                "satisfies_invariant": 0.68,
+                "insufficient_evidence": 0.09,
+                "violates_invariant": 0.23
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.88,
+              "probabilities": {
+                "satisfies_invariant": 0.92,
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.07
+              }
+            }
+          }
+        },
+        {
+          "repeat": 3,
+          "latency_ms": 309,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8314,
+            "output_tokens": 309
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.99,
+              "probabilities": {
+                "satisfies_invariant": 1,
+                "violates_invariant": 0,
+                "insufficient_evidence": 0
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.43,
+              "probabilities": {
+                "satisfies_invariant": 0.62,
+                "violates_invariant": 0.37,
+                "insufficient_evidence": 0.01
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.96,
+              "probabilities": {
+                "satisfies_invariant": 0.97,
+                "violates_invariant": 0.02,
+                "insufficient_evidence": 0.01
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.53,
+              "probabilities": {
+                "satisfies_invariant": 0.6799999999999999,
+                "violates_invariant": 0.23,
+                "insufficient_evidence": 0.09
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.76,
+              "probabilities": {
+                "satisfies_invariant": 0.85,
+                "violates_invariant": 0.14,
+                "insufficient_evidence": 0.01
+              }
+            }
+          }
+        },
+        {
+          "repeat": 4,
+          "latency_ms": 331,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8314,
+            "output_tokens": 309
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.99,
+              "probabilities": {
+                "violates_invariant": 0,
+                "satisfies_invariant": 1,
+                "insufficient_evidence": 0
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.46,
+              "probabilities": {
+                "violates_invariant": 0.35,
+                "satisfies_invariant": 0.64,
+                "insufficient_evidence": 0.01
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.96,
+              "probabilities": {
+                "violates_invariant": 0.02,
+                "satisfies_invariant": 0.97,
+                "insufficient_evidence": 0.01
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.51,
+              "probabilities": {
+                "violates_invariant": 0.19,
+                "satisfies_invariant": 0.68,
+                "insufficient_evidence": 0.13
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.85,
+              "probabilities": {
+                "violates_invariant": 0.09,
+                "satisfies_invariant": 0.9,
+                "insufficient_evidence": 0.01
+              }
+            }
+          }
+        },
+        {
+          "repeat": 5,
+          "latency_ms": 301,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8314,
+            "output_tokens": 309
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.98,
+              "probabilities": {
+                "violates_invariant": 0.01,
+                "satisfies_invariant": 0.98,
+                "insufficient_evidence": 0.01
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.43,
+              "probabilities": {
+                "violates_invariant": 0.37,
+                "satisfies_invariant": 0.62,
+                "insufficient_evidence": 0.01
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.98,
+              "probabilities": {
+                "violates_invariant": 0.01,
+                "satisfies_invariant": 0.99,
+                "insufficient_evidence": 0
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.51,
+              "probabilities": {
+                "violates_invariant": 0.24,
+                "satisfies_invariant": 0.67,
+                "insufficient_evidence": 0.09
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.82,
+              "probabilities": {
+                "violates_invariant": 0.1,
+                "satisfies_invariant": 0.88,
+                "insufficient_evidence": 0.02
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "MUTANT-01",
+      "source_sha256": "1dd27d6949cd98c139479d604f479563d80312aaae90b3773157c6e2a053fd36",
+      "repeats": [
+        {
+          "repeat": 1,
+          "latency_ms": 367,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8337,
+            "output_tokens": 308
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "violates_invariant",
+              "confidence": 0.88,
+              "probabilities": {
+                "satisfies_invariant": 0.08,
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.92
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.42,
+              "probabilities": {
+                "satisfies_invariant": 0.61,
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.38
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.96,
+              "probabilities": {
+                "satisfies_invariant": 0.98,
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.02
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.43,
+              "probabilities": {
+                "satisfies_invariant": 0.62,
+                "insufficient_evidence": 0.13,
+                "violates_invariant": 0.25
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.75,
+              "probabilities": {
+                "satisfies_invariant": 0.83,
+                "insufficient_evidence": 0.03,
+                "violates_invariant": 0.14
+              }
+            }
+          }
+        },
+        {
+          "repeat": 2,
+          "latency_ms": 382,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8337,
+            "output_tokens": 308
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "violates_invariant",
+              "confidence": 0.91,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.94,
+                "satisfies_invariant": 0.06
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.51,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.32,
+                "satisfies_invariant": 0.67
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.97,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.02,
+                "satisfies_invariant": 0.98
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.52,
+              "probabilities": {
+                "insufficient_evidence": 0.1,
+                "violates_invariant": 0.22,
+                "satisfies_invariant": 0.68
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.81,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.12,
+                "satisfies_invariant": 0.87
+              }
+            }
+          }
+        },
+        {
+          "repeat": 3,
+          "latency_ms": 332,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8337,
+            "output_tokens": 308
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "violates_invariant",
+              "confidence": 0.89,
+              "probabilities": {
+                "satisfies_invariant": 0.07,
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.93
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.43,
+              "probabilities": {
+                "satisfies_invariant": 0.61,
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.38
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.97,
+              "probabilities": {
+                "satisfies_invariant": 0.97,
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.02
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.53,
+              "probabilities": {
+                "satisfies_invariant": 0.69,
+                "insufficient_evidence": 0.07,
+                "violates_invariant": 0.24
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.79,
+              "probabilities": {
+                "satisfies_invariant": 0.86,
+                "insufficient_evidence": 0.02,
+                "violates_invariant": 0.12
+              }
+            }
+          }
+        },
+        {
+          "repeat": 4,
+          "latency_ms": 344,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8337,
+            "output_tokens": 308
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "violates_invariant",
+              "confidence": 0.92,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.95,
+                "satisfies_invariant": 0.05
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.48,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.34,
+                "satisfies_invariant": 0.65
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.97,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.02,
+                "satisfies_invariant": 0.98
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.51,
+              "probabilities": {
+                "insufficient_evidence": 0.09,
+                "violates_invariant": 0.23,
+                "satisfies_invariant": 0.68
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.82,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.11,
+                "satisfies_invariant": 0.88
+              }
+            }
+          }
+        },
+        {
+          "repeat": 5,
+          "latency_ms": 322,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8337,
+            "output_tokens": 308
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "violates_invariant",
+              "confidence": 0.88,
+              "probabilities": {
+                "satisfies_invariant": 0.08,
+                "violates_invariant": 0.92,
+                "insufficient_evidence": 0
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.38,
+              "probabilities": {
+                "satisfies_invariant": 0.59,
+                "violates_invariant": 0.4,
+                "insufficient_evidence": 0.01
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.96,
+              "probabilities": {
+                "satisfies_invariant": 0.97,
+                "violates_invariant": 0.02,
+                "insufficient_evidence": 0.01
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.48,
+              "probabilities": {
+                "satisfies_invariant": 0.65,
+                "violates_invariant": 0.26,
+                "insufficient_evidence": 0.09
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.82,
+              "probabilities": {
+                "satisfies_invariant": 0.88,
+                "violates_invariant": 0.11,
+                "insufficient_evidence": 0.01
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "MUTANT-02",
+      "source_sha256": "88a81d6a2636e061f12f9173126cb643ef713028f9cb2ebb74fea86c7bde8016",
+      "repeats": [
+        {
+          "repeat": 1,
+          "latency_ms": 315,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8312,
+            "output_tokens": 308
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.98,
+              "probabilities": {
+                "satisfies_invariant": 0.98,
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.01
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "violates_invariant",
+              "confidence": 0.91,
+              "probabilities": {
+                "satisfies_invariant": 0.06,
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.94
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.95,
+              "probabilities": {
+                "satisfies_invariant": 0.96,
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.03
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.39,
+              "probabilities": {
+                "satisfies_invariant": 0.59,
+                "insufficient_evidence": 0.1,
+                "violates_invariant": 0.31
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.83,
+              "probabilities": {
+                "satisfies_invariant": 0.88,
+                "insufficient_evidence": 0.02,
+                "violates_invariant": 0.1
+              }
+            }
+          }
+        },
+        {
+          "repeat": 2,
+          "latency_ms": 357,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8312,
+            "output_tokens": 308
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.98,
+              "probabilities": {
+                "violates_invariant": 0.01,
+                "insufficient_evidence": 0.01,
+                "satisfies_invariant": 0.98
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "violates_invariant",
+              "confidence": 0.9,
+              "probabilities": {
+                "violates_invariant": 0.94,
+                "insufficient_evidence": 0,
+                "satisfies_invariant": 0.06
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.94,
+              "probabilities": {
+                "violates_invariant": 0.03,
+                "insufficient_evidence": 0.01,
+                "satisfies_invariant": 0.96
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.37,
+              "probabilities": {
+                "violates_invariant": 0.36,
+                "insufficient_evidence": 0.06,
+                "satisfies_invariant": 0.58
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.82,
+              "probabilities": {
+                "violates_invariant": 0.11,
+                "insufficient_evidence": 0.01,
+                "satisfies_invariant": 0.88
+              }
+            }
+          }
+        },
+        {
+          "repeat": 3,
+          "latency_ms": 322,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8312,
+            "output_tokens": 308
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.98,
+              "probabilities": {
+                "satisfies_invariant": 0.98,
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.01
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "violates_invariant",
+              "confidence": 0.9,
+              "probabilities": {
+                "satisfies_invariant": 0.06,
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.94
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.95,
+              "probabilities": {
+                "satisfies_invariant": 0.96,
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.03
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.39,
+              "probabilities": {
+                "satisfies_invariant": 0.59,
+                "insufficient_evidence": 0.08,
+                "violates_invariant": 0.33
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.67,
+              "probabilities": {
+                "satisfies_invariant": 0.78,
+                "insufficient_evidence": 0.02,
+                "violates_invariant": 0.2
+              }
+            }
+          }
+        },
+        {
+          "repeat": 4,
+          "latency_ms": 351,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8312,
+            "output_tokens": 308
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.99,
+              "probabilities": {
+                "satisfies_invariant": 0.99,
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.01
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "violates_invariant",
+              "confidence": 0.89,
+              "probabilities": {
+                "satisfies_invariant": 0.07,
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.93
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.95,
+              "probabilities": {
+                "satisfies_invariant": 0.96,
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.03
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.35,
+              "probabilities": {
+                "satisfies_invariant": 0.57,
+                "insufficient_evidence": 0.08,
+                "violates_invariant": 0.35
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.8,
+              "probabilities": {
+                "satisfies_invariant": 0.87,
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.12
+              }
+            }
+          }
+        },
+        {
+          "repeat": 5,
+          "latency_ms": 299,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8312,
+            "output_tokens": 308
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.98,
+              "probabilities": {
+                "violates_invariant": 0.01,
+                "satisfies_invariant": 0.98,
+                "insufficient_evidence": 0.01
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "violates_invariant",
+              "confidence": 0.89,
+              "probabilities": {
+                "violates_invariant": 0.93,
+                "satisfies_invariant": 0.07,
+                "insufficient_evidence": 0
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.92,
+              "probabilities": {
+                "violates_invariant": 0.05,
+                "satisfies_invariant": 0.95,
+                "insufficient_evidence": 0
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.33,
+              "probabilities": {
+                "violates_invariant": 0.36,
+                "satisfies_invariant": 0.55,
+                "insufficient_evidence": 0.09
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.77,
+              "probabilities": {
+                "violates_invariant": 0.13,
+                "satisfies_invariant": 0.84,
+                "insufficient_evidence": 0.03
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "MUTANT-03",
+      "source_sha256": "2209fdba249a3497d037ba32d0ca793aa00fec2c313f6d9dc61fe3f7468d9f51",
+      "repeats": [
+        {
+          "repeat": 1,
+          "latency_ms": 358,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8324,
+            "output_tokens": 308
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.99,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "violates_invariant": 0,
+                "satisfies_invariant": 1
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.48,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.34,
+                "satisfies_invariant": 0.65
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "violates_invariant",
+              "confidence": 0.87,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.92,
+                "satisfies_invariant": 0.08
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.49,
+              "probabilities": {
+                "insufficient_evidence": 0.1,
+                "violates_invariant": 0.24,
+                "satisfies_invariant": 0.66
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.81,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.12,
+                "satisfies_invariant": 0.87
+              }
+            }
+          }
+        },
+        {
+          "repeat": 2,
+          "latency_ms": 294,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8324,
+            "output_tokens": 308
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.98,
+              "probabilities": {
+                "satisfies_invariant": 0.99,
+                "violates_invariant": 0.01,
+                "insufficient_evidence": 0
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.45,
+              "probabilities": {
+                "satisfies_invariant": 0.63,
+                "violates_invariant": 0.36,
+                "insufficient_evidence": 0.01
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "violates_invariant",
+              "confidence": 0.88,
+              "probabilities": {
+                "satisfies_invariant": 0.08,
+                "violates_invariant": 0.92,
+                "insufficient_evidence": 0
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.44,
+              "probabilities": {
+                "satisfies_invariant": 0.63,
+                "violates_invariant": 0.23,
+                "insufficient_evidence": 0.14
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.77,
+              "probabilities": {
+                "satisfies_invariant": 0.85,
+                "violates_invariant": 0.13,
+                "insufficient_evidence": 0.02
+              }
+            }
+          }
+        },
+        {
+          "repeat": 3,
+          "latency_ms": 341,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8324,
+            "output_tokens": 308
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.98,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.01,
+                "satisfies_invariant": 0.99
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.46,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.35,
+                "satisfies_invariant": 0.64
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "violates_invariant",
+              "confidence": 0.85,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.91,
+                "satisfies_invariant": 0.09
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.54,
+              "probabilities": {
+                "insufficient_evidence": 0.1,
+                "violates_invariant": 0.2,
+                "satisfies_invariant": 0.7
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.7,
+              "probabilities": {
+                "insufficient_evidence": 0.03,
+                "violates_invariant": 0.17,
+                "satisfies_invariant": 0.8
+              }
+            }
+          }
+        },
+        {
+          "repeat": 4,
+          "latency_ms": 380,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8324,
+            "output_tokens": 308
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.99,
+              "probabilities": {
+                "satisfies_invariant": 1,
+                "insufficient_evidence": 0,
+                "violates_invariant": 0
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.42,
+              "probabilities": {
+                "satisfies_invariant": 0.61,
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.38
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "violates_invariant",
+              "confidence": 0.83,
+              "probabilities": {
+                "satisfies_invariant": 0.11,
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.89
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.51,
+              "probabilities": {
+                "satisfies_invariant": 0.67,
+                "insufficient_evidence": 0.1,
+                "violates_invariant": 0.23
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.78,
+              "probabilities": {
+                "satisfies_invariant": 0.86,
+                "insufficient_evidence": 0.02,
+                "violates_invariant": 0.12
+              }
+            }
+          }
+        },
+        {
+          "repeat": 5,
+          "latency_ms": 332,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8324,
+            "output_tokens": 308
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.99,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.01,
+                "satisfies_invariant": 0.99
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.34,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.43,
+                "satisfies_invariant": 0.56
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "violates_invariant",
+              "confidence": 0.89,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "violates_invariant": 0.93,
+                "satisfies_invariant": 0.07
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.47,
+              "probabilities": {
+                "insufficient_evidence": 0.09,
+                "violates_invariant": 0.27,
+                "satisfies_invariant": 0.64
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.75,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.15,
+                "satisfies_invariant": 0.84
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "MUTANT-04",
+      "source_sha256": "c9c34f0cecac22ac609181c7ddea34eb51f6f6c2f720733b1a1eced617da5d1f",
+      "repeats": [
+        {
+          "repeat": 1,
+          "latency_ms": 324,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8320,
+            "output_tokens": 309
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.99,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "satisfies_invariant": 0.99,
+                "violates_invariant": 0
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.37,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "satisfies_invariant": 0.58,
+                "violates_invariant": 0.41
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.97,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "satisfies_invariant": 0.98,
+                "violates_invariant": 0.02
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.28,
+              "probabilities": {
+                "insufficient_evidence": 0.09,
+                "satisfies_invariant": 0.52,
+                "violates_invariant": 0.39
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.79,
+              "probabilities": {
+                "insufficient_evidence": 0.02,
+                "satisfies_invariant": 0.86,
+                "violates_invariant": 0.12
+              }
+            }
+          }
+        },
+        {
+          "repeat": 2,
+          "latency_ms": 391,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8320,
+            "output_tokens": 309
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.99,
+              "probabilities": {
+                "insufficient_evidence": 0,
+                "violates_invariant": 0,
+                "satisfies_invariant": 1
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.46,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.35,
+                "satisfies_invariant": 0.64
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.97,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.02,
+                "satisfies_invariant": 0.97
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.4,
+              "probabilities": {
+                "insufficient_evidence": 0.07,
+                "violates_invariant": 0.33,
+                "satisfies_invariant": 0.6
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.83,
+              "probabilities": {
+                "insufficient_evidence": 0.03,
+                "satisfies_invariant": 0.88,
+                "violates_invariant": 0.09
+              }
+            }
+          }
+        },
+        {
+          "repeat": 3,
+          "latency_ms": 300,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8320,
+            "output_tokens": 309
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.99,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0,
+                "satisfies_invariant": 0.99
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.47,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.34,
+                "satisfies_invariant": 0.65
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.96,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.02,
+                "satisfies_invariant": 0.97
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.33,
+              "probabilities": {
+                "insufficient_evidence": 0.08,
+                "violates_invariant": 0.37,
+                "satisfies_invariant": 0.55
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.79,
+              "probabilities": {
+                "insufficient_evidence": 0.02,
+                "violates_invariant": 0.12,
+                "satisfies_invariant": 0.86
+              }
+            }
+          }
+        },
+        {
+          "repeat": 4,
+          "latency_ms": 330,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8320,
+            "output_tokens": 309
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.98,
+              "probabilities": {
+                "satisfies_invariant": 0.98,
+                "violates_invariant": 0.01,
+                "insufficient_evidence": 0.01
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.44,
+              "probabilities": {
+                "satisfies_invariant": 0.63,
+                "violates_invariant": 0.36,
+                "insufficient_evidence": 0.01
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.96,
+              "probabilities": {
+                "satisfies_invariant": 0.97,
+                "violates_invariant": 0.02,
+                "insufficient_evidence": 0.01
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.39,
+              "probabilities": {
+                "satisfies_invariant": 0.59,
+                "violates_invariant": 0.32,
+                "insufficient_evidence": 0.09
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.82,
+              "probabilities": {
+                "satisfies_invariant": 0.88,
+                "violates_invariant": 0.11,
+                "insufficient_evidence": 0.01
+              }
+            }
+          }
+        },
+        {
+          "repeat": 5,
+          "latency_ms": 316,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 8320,
+            "output_tokens": 309
+          },
+          "answers": {
+            "inv1_no_money_arithmetic": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.98,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.01,
+                "satisfies_invariant": 0.98
+              }
+            },
+            "inv2_explicit_failure": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.47,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.35,
+                "satisfies_invariant": 0.64
+              }
+            },
+            "inv3_validated_only_by_registration": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.97,
+              "probabilities": {
+                "insufficient_evidence": 0.01,
+                "violates_invariant": 0.02,
+                "satisfies_invariant": 0.97
+              }
+            },
+            "inv4_rule_kinds_separated": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.43,
+              "probabilities": {
+                "insufficient_evidence": 0.14,
+                "violates_invariant": 0.24,
+                "satisfies_invariant": 0.62
+              }
+            },
+            "inv5_snapshot_no_accessors": {
+              "type": "choice",
+              "choice": "satisfies_invariant",
+              "confidence": 0.81,
+              "probabilities": {
+                "insufficient_evidence": 0.03,
+                "violates_invariant": 0.1,
+                "satisfies_invariant": 0.87
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "report_sha256": "913e562aa4b29361210ac7d5dee50b5272d3e5814ac625e90705ef2403c9895b"
+}

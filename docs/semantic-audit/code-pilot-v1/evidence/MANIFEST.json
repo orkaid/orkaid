@@ -1,0 +1,61 @@
+{
+  "purpose": "Real-code semantic audit pilot v1 manifest. See PROTOCOL.md next to it.",
+  "algorithm": "sha256",
+  "files": [
+    {
+      "path": "tools/semantic-audit/profiles/code-audit-document-pilot-v1.json",
+      "bytes": 6314,
+      "sha256": "2a22cd066b17f0a3aa62dac4236ef73a9071092256ab1633e502d3f7e9c9667b"
+    },
+    {
+      "path": "tools/semantic-audit/code-pilot.ts",
+      "bytes": 25326,
+      "sha256": "c26cf4663c58336204f132a794f5770ffbeb51300781709b96fab57ed866b0d2"
+    },
+    {
+      "path": "tests/fixtures/semantic-audit/code-pilot-v1/PROTOCOL.md",
+      "bytes": 9849,
+      "sha256": "fde64de464e47c027da05cec9d4eb6faa50a399392b340217370d801b077a06a"
+    },
+    {
+      "path": "tests/fixtures/semantic-audit/code-pilot-v1/targets.json",
+      "bytes": 3698,
+      "sha256": "0449c19c448b8e9883d40af78abd58a5f576de92aa1c8dc24a30983ba34eade1"
+    },
+    {
+      "path": "tests/fixtures/semantic-audit/code-pilot-v1/deterministic.json",
+      "bytes": 5198,
+      "sha256": "019025b5222186eb7ed26d1ea90aa9d27c958a985ee0bd68e1f85795379d35a2"
+    },
+    {
+      "path": "tests/fixtures/semantic-audit/code-pilot-v1/targets/REAL.ts.txt",
+      "bytes": 24169,
+      "sha256": "9fc10b758a4206f32e63ec5ba2bf50dc6b526c8322ad7d20ce068c58757ba7f5"
+    },
+    {
+      "path": "tests/fixtures/semantic-audit/code-pilot-v1/targets/CONTROL.ts.txt",
+      "bytes": 24168,
+      "sha256": "4c6b18e72a83865cc394d74fc5bed62dee8bbb36045deb15d8e4f834a685e275"
+    },
+    {
+      "path": "tests/fixtures/semantic-audit/code-pilot-v1/targets/MUTANT-01.ts.txt",
+      "bytes": 24239,
+      "sha256": "1dd27d6949cd98c139479d604f479563d80312aaae90b3773157c6e2a053fd36"
+    },
+    {
+      "path": "tests/fixtures/semantic-audit/code-pilot-v1/targets/MUTANT-02.ts.txt",
+      "bytes": 24146,
+      "sha256": "88a81d6a2636e061f12f9173126cb643ef713028f9cb2ebb74fea86c7bde8016"
+    },
+    {
+      "path": "tests/fixtures/semantic-audit/code-pilot-v1/targets/MUTANT-03.ts.txt",
+      "bytes": 24197,
+      "sha256": "2209fdba249a3497d037ba32d0ca793aa00fec2c313f6d9dc61fe3f7468d9f51"
+    },
+    {
+      "path": "tests/fixtures/semantic-audit/code-pilot-v1/targets/MUTANT-04.ts.txt",
+      "bytes": 24184,
+      "sha256": "c9c34f0cecac22ac609181c7ddea34eb51f6f6c2f720733b1a1eced617da5d1f"
+    }
+  ]
+}
