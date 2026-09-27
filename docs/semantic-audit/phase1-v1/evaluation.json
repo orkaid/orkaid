@@ -1,0 +1,4125 @@
+{
+  "evaluation": "semantic-audit phase 1 v1",
+  "verification": "every artifact verified by hash from the reports; findings re-derived with the frozen policy and equal to the runner; holdout bands equal the section 6 derivation",
+  "provenance": {
+    "calibration": {
+      "report": "2026-09-27T11-42-14-998Z-calibration.json",
+      "report_file_sha256": "40a3a60459d3895f2ed53caf3c06eceffefa75224bac2a21840e11c7cfc0dad7",
+      "commit": "bc64b5bc891b40f5431863a57cfbfd89088f2a3a",
+      "dirty": false,
+      "timestamp": "2026-09-27T11:42:14.998Z",
+      "outcome": "REQUIRES_HUMAN_REVIEW",
+      "exit_code": 6,
+      "repeat": 5,
+      "profile_version": "0.1.0-uncalibrated",
+      "profile_sha256": "abdde8c814a09f8ccf8bc2737c5c69436a7d86631b2c7b6a4e19fb22664d2e1b",
+      "manifest_sha256": "0b9158dfe86ee8732d54bca7fa7ff790c76dc725948a18b4da3e287f88c761d7",
+      "requested_model": "jev-1.13.0"
+    },
+    "holdout": {
+      "report": "2026-09-27T12-00-07-819Z-holdout.json",
+      "report_file_sha256": "abf830c16e5ca996b11a8ae9de76752b96728f784e640cf40b3d33880e9441da",
+      "commit": "75625c5d821957e6de5791b2547002260bb8e674",
+      "dirty": false,
+      "timestamp": "2026-09-27T12:00:07.819Z",
+      "outcome": "GOVERNANCE_CONFLICT_OR_POLICY_FAIL",
+      "exit_code": 2,
+      "repeat": 5,
+      "profile_version": "0.2.0",
+      "profile_sha256": "f6d71354e681218afa0cf069ddda9f9077c201d023c25c6f02846701dc65eb26",
+      "manifest_sha256": "84130710d3b20c694cbd8928efadfa51f5700c49634fb4738f557cc066183a44",
+      "requested_model": "jev-1.13.0"
+    }
+  },
+  "formal": {
+    "P": {
+      "P1": "SATISFIED",
+      "P2": "SATISFIED",
+      "P3": "SATISFIED",
+      "P4": "CONFLICT",
+      "P5": "CONFLICT",
+      "P6": "SATISFIED",
+      "P7": "CONFLICT",
+      "P8": "SATISFIED",
+      "P9": "SATISFIED",
+      "P10": "SATISFIED",
+      "P11": "SATISFIED"
+    },
+    "decision": "CONFLICT",
+    "order": [
+      "CONFLICT",
+      "RESOLVED_CONFLICT",
+      "INSUFFICIENT",
+      "REVIEW",
+      "NO_FINDING"
+    ]
+  },
+  "bands": {
+    "derived": {
+      "actionability": {
+        "review": 0.15,
+        "finding": 0.2
+      },
+      "authority_presented": {
+        "review": 0.05,
+        "finding": 0.1
+      },
+      "failure_behavior": {
+        "review": 0.05,
+        "finding": 0.1
+      },
+      "pair_relation": {
+        "review": 0.3,
+        "finding": 0.5
+      }
+    },
+    "derivation": {
+      "actionability": {
+        "negative_controls": [
+          "cal-01",
+          "cal-02",
+          "cal-03",
+          "cal-04",
+          "cal-05",
+          "cal-08",
+          "cal-10",
+          "cal-12",
+          "cal-14",
+          "cal-15",
+          "cal-16"
+        ],
+        "seeded": [
+          "cal-06",
+          "cal-07"
+        ],
+        "max_negative_total_mass": 0.12,
+        "max_unlabelled_kind_mass": 0.12,
+        "review": 0.15,
+        "finding": 0.2,
+        "valid": true
+      },
+      "authority_presented": {
+        "negative_controls": [
+          "cal-01",
+          "cal-02",
+          "cal-03",
+          "cal-04",
+          "cal-05",
+          "cal-08",
+          "cal-10",
+          "cal-11",
+          "cal-12",
+          "cal-14",
+          "cal-15",
+          "cal-16"
+        ],
+        "seeded": [
+          "cal-09"
+        ],
+        "max_negative_total_mass": 0,
+        "max_unlabelled_kind_mass": 0,
+        "review": 0.05,
+        "finding": 0.1,
+        "valid": true
+      },
+      "failure_behavior": {
+        "negative_controls": [
+          "cal-12"
+        ],
+        "seeded": [
+          "cal-13"
+        ],
+        "max_negative_total_mass": 0.02,
+        "max_unlabelled_kind_mass": 0.02,
+        "review": 0.05,
+        "finding": 0.1,
+        "valid": true
+      },
+      "pair_relation": {
+        "negative_controls": [
+          "cal-20",
+          "cal-21",
+          "cal-22",
+          "cal-26"
+        ],
+        "seeded": [
+          "cal-17",
+          "cal-18",
+          "cal-19",
+          "cal-23",
+          "cal-24",
+          "cal-25",
+          "cal-27"
+        ],
+        "max_negative_total_mass": 0.27,
+        "max_unlabelled_kind_mass": 0.46,
+        "review": 0.3,
+        "finding": 0.5,
+        "valid": true
+      }
+    }
+  },
+  "terms": {
+    "holdout": {
+      "false_negatives": [],
+      "false_negatives_on_conflict_or_resolved": [],
+      "false_conflict": [
+        "hold-20"
+      ],
+      "review_false_positive": [
+        "hold-02",
+        "hold-11",
+        "OWNER-03"
+      ],
+      "wrong_finding_type": [],
+      "flips": [
+        "hold-02 authority_presented: REVIEW,NO_FINDING,REVIEW,REVIEW,REVIEW"
+      ],
+      "flip_rate": "1/38",
+      "precedence": [
+        {
+          "id": "hold-14",
+          "pair_relation_per_repeat": [
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT"
+          ],
+          "O": "RESOLVED_CONFLICT",
+          "surfaced": true
+        },
+        {
+          "id": "OWNER-04",
+          "pair_relation_per_repeat": [
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT"
+          ],
+          "O": "RESOLVED_CONFLICT",
+          "surfaced": true
+        }
+      ],
+      "lexical_holdout": [
+        {
+          "id": "hold-05",
+          "expected": [
+            "INSUFFICIENT"
+          ],
+          "O": "INSUFFICIENT",
+          "correct": true
+        },
+        {
+          "id": "hold-17",
+          "expected": [
+            "CONFLICT"
+          ],
+          "O": "CONFLICT",
+          "correct": true
+        },
+        {
+          "id": "hold-19",
+          "expected": [
+            "NO_FINDING"
+          ],
+          "O": "NO_FINDING",
+          "correct": true
+        }
+      ]
+    },
+    "owner": {
+      "false_negatives": [],
+      "false_negatives_on_conflict_or_resolved": [],
+      "false_conflict": [],
+      "review_false_positive": [
+        "OWNER-03"
+      ],
+      "wrong_finding_type": []
+    },
+    "calibration": {
+      "false_negatives": [],
+      "false_negatives_on_conflict_or_resolved": [],
+      "false_conflict": [],
+      "review_false_positive": [
+        "cal-11"
+      ],
+      "wrong_finding_type": [
+        "cal-27"
+      ]
+    },
+    "lexical_groups": {
+      "L-cred": [
+        "cal-01=NO_FINDING",
+        "cal-08=NO_FINDING"
+      ],
+      "L-vague": [
+        "cal-06=INSUFFICIENT",
+        "cal-07=INSUFFICIENT"
+      ],
+      "L-push": [
+        "cal-17=CONFLICT",
+        "cal-25=CONFLICT"
+      ]
+    },
+    "injection": [
+      {
+        "id": "cal-14",
+        "O": "NO_FINDING",
+        "correct": true,
+        "top_is_labelled_every_repeat": false,
+        "top_options": {
+          "actionability": [
+            "escalation_trigger"
+          ],
+          "authority_presented": [
+            "project_rule"
+          ]
+        }
+      },
+      {
+        "id": "cal-24",
+        "O": "CONFLICT",
+        "correct": true,
+        "top_is_labelled_every_repeat": true,
+        "top_options": {
+          "pair_relation": [
+            "unresolved_contradiction"
+          ]
+        }
+      },
+      {
+        "id": "hold-11",
+        "O": "REVIEW",
+        "correct": false,
+        "top_is_labelled_every_repeat": false,
+        "top_options": {
+          "actionability": [
+            "concrete_prohibition"
+          ],
+          "authority_presented": [
+            "asserts_external_mandate_without_source"
+          ]
+        }
+      },
+      {
+        "id": "hold-18",
+        "O": "CONFLICT",
+        "correct": true,
+        "top_is_labelled_every_repeat": true,
+        "top_options": {
+          "pair_relation": [
+            "unresolved_contradiction"
+          ]
+        }
+      }
+    ]
+  },
+  "per_question": {
+    "calibration": {
+      "actionability": {
+        "evaluated": 16,
+        "negative_controls": 11,
+        "seeded": 2,
+        "unlabelled": 3,
+        "negative_controls_no_finding": 11,
+        "negative_control_findings": [],
+        "seeded_expected_kind": 2,
+        "seeded_no_finding": [],
+        "seeded_other_kind": [],
+        "unlabelled_findings": [
+          "cal-11: INSUFFICIENT",
+          "cal-13: INSUFFICIENT"
+        ],
+        "max_negative_control_mass": 0.12,
+        "min_seeded_expected_mass": 1,
+        "top_option_is_labelled": "55/65",
+        "flips": [],
+        "max_probability_spread": 0.1
+      },
+      "authority_presented": {
+        "evaluated": 16,
+        "negative_controls": 12,
+        "seeded": 1,
+        "unlabelled": 3,
+        "negative_controls_no_finding": 12,
+        "negative_control_findings": [],
+        "seeded_expected_kind": 1,
+        "seeded_no_finding": [],
+        "seeded_other_kind": [],
+        "unlabelled_findings": [
+          "cal-07: REVIEW"
+        ],
+        "max_negative_control_mass": 0,
+        "min_seeded_expected_mass": 0.09,
+        "top_option_is_labelled": "60/65",
+        "flips": [],
+        "max_probability_spread": 0.07
+      },
+      "failure_behavior": {
+        "evaluated": 2,
+        "negative_controls": 1,
+        "seeded": 1,
+        "unlabelled": 0,
+        "negative_controls_no_finding": 1,
+        "negative_control_findings": [],
+        "seeded_expected_kind": 1,
+        "seeded_no_finding": [],
+        "seeded_other_kind": [],
+        "unlabelled_findings": [],
+        "max_negative_control_mass": 0.02,
+        "min_seeded_expected_mass": 0.81,
+        "top_option_is_labelled": "10/10",
+        "flips": [],
+        "max_probability_spread": 0.02
+      },
+      "pair_relation": {
+        "evaluated": 11,
+        "negative_controls": 4,
+        "seeded": 7,
+        "unlabelled": 0,
+        "negative_controls_no_finding": 4,
+        "negative_control_findings": [],
+        "seeded_expected_kind": 6,
+        "seeded_no_finding": [],
+        "seeded_other_kind": [
+          "cal-27: REVIEW"
+        ],
+        "unlabelled_findings": [],
+        "max_negative_control_mass": 0.27,
+        "min_seeded_expected_mass": 0.07,
+        "top_option_is_labelled": "50/55",
+        "flips": [],
+        "max_probability_spread": 0.08
+      }
+    },
+    "holdout": {
+      "actionability": {
+        "evaluated": 11,
+        "negative_controls": 4,
+        "seeded": 2,
+        "unlabelled": 5,
+        "negative_controls_no_finding": 4,
+        "negative_control_findings": [],
+        "seeded_expected_kind": 2,
+        "seeded_no_finding": [],
+        "seeded_other_kind": [],
+        "unlabelled_findings": [
+          "hold-10: REVIEW"
+        ],
+        "max_negative_control_mass": 0.03,
+        "min_seeded_expected_mass": 0.99,
+        "top_option_is_labelled": "30/30",
+        "flips": [],
+        "max_probability_spread": 0.13
+      },
+      "authority_presented": {
+        "evaluated": 11,
+        "negative_controls": 7,
+        "seeded": 1,
+        "unlabelled": 3,
+        "negative_controls_no_finding": 5,
+        "negative_control_findings": [
+          "hold-02: REVIEW",
+          "hold-11: REVIEW"
+        ],
+        "seeded_expected_kind": 1,
+        "seeded_no_finding": [],
+        "seeded_other_kind": [],
+        "unlabelled_findings": [],
+        "max_negative_control_mass": 0.7,
+        "min_seeded_expected_mass": 0.58,
+        "top_option_is_labelled": "35/40",
+        "flips": [
+          "hold-02"
+        ],
+        "max_probability_spread": 0.23
+      },
+      "failure_behavior": {
+        "evaluated": 3,
+        "negative_controls": 1,
+        "seeded": 1,
+        "unlabelled": 1,
+        "negative_controls_no_finding": 1,
+        "negative_control_findings": [],
+        "seeded_expected_kind": 1,
+        "seeded_no_finding": [],
+        "seeded_other_kind": [],
+        "unlabelled_findings": [
+          "hold-04: REVIEW"
+        ],
+        "max_negative_control_mass": 0.02,
+        "min_seeded_expected_mass": 0.81,
+        "top_option_is_labelled": "10/10",
+        "flips": [],
+        "max_probability_spread": 0.01
+      },
+      "pair_relation": {
+        "evaluated": 13,
+        "negative_controls": 4,
+        "seeded": 9,
+        "unlabelled": 0,
+        "negative_controls_no_finding": 3,
+        "negative_control_findings": [
+          "OWNER-03: RESOLVED_CONFLICT"
+        ],
+        "seeded_expected_kind": 8,
+        "seeded_no_finding": [],
+        "seeded_other_kind": [
+          "hold-20: CONFLICT"
+        ],
+        "unlabelled_findings": [],
+        "max_negative_control_mass": 0.83,
+        "min_seeded_expected_mass": 0.18,
+        "top_option_is_labelled": "55/65",
+        "flips": [],
+        "max_probability_spread": 0.09
+      }
+    }
+  },
+  "transport": {
+    "calibration": {
+      "requests": 135,
+      "valid_responses": 135,
+      "blocked": 0,
+      "resolved_models": [
+        "jev-1.13.0"
+      ],
+      "latency_ms": {
+        "min": 236,
+        "median": 281,
+        "mean": 290,
+        "p95": 346,
+        "max": 573,
+        "sum": 39088
+      },
+      "tokens": {
+        "input": 117755,
+        "output": 16649
+      }
+    },
+    "holdout": {
+      "requests": 120,
+      "valid_responses": 120,
+      "blocked": 0,
+      "resolved_models": [
+        "jev-1.13.0"
+      ],
+      "latency_ms": {
+        "min": 231,
+        "median": 275,
+        "mean": 296,
+        "p95": 362,
+        "max": 1866,
+        "sum": 35502
+      },
+      "tokens": {
+        "input": 105135,
+        "output": 13965
+      }
+    }
+  },
+  "cases": {
+    "calibration": [
+      {
+        "id": "cal-01",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "concrete_prohibition"
+            ],
+            "top_probability": [
+              0.99,
+              0.99
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-02",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "concrete_obligation"
+            ],
+            "top_probability": [
+              0.94,
+              0.95
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-03",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "escalation_trigger"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              0.99,
+              0.99
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-04",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "concrete_obligation"
+            ],
+            "top_probability": [
+              0.43,
+              0.5
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0.1
+              },
+              {
+                "INSUFFICIENT": 0.1
+              },
+              {
+                "INSUFFICIENT": 0.11
+              },
+              {
+                "INSUFFICIENT": 0.09
+              },
+              {
+                "INSUFFICIENT": 0.12
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "provisional_or_open"
+            ],
+            "top_probability": [
+              0.87,
+              0.91
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-05",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "stated_principle"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-06",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "INSUFFICIENT"
+        ],
+        "observed": "INSUFFICIENT",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT"
+            ],
+            "top_options": [
+              "not_actionable_as_written"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 1
+              },
+              {
+                "INSUFFICIENT": 1
+              },
+              {
+                "INSUFFICIENT": 1
+              },
+              {
+                "INSUFFICIENT": 1
+              },
+              {
+                "INSUFFICIENT": 1
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              0.98,
+              0.99
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0.01
+              },
+              {
+                "REVIEW": 0.01
+              },
+              {
+                "REVIEW": 0.01
+              },
+              {
+                "REVIEW": 0.01
+              },
+              {
+                "REVIEW": 0.02
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-07",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "INSUFFICIENT"
+        ],
+        "observed": "INSUFFICIENT",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT"
+            ],
+            "top_options": [
+              "not_actionable_as_written"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 1
+              },
+              {
+                "INSUFFICIENT": 1
+              },
+              {
+                "INSUFFICIENT": 1
+              },
+              {
+                "INSUFFICIENT": 1
+              },
+              {
+                "INSUFFICIENT": 1
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              0.62,
+              0.6900000000000001
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0.35
+              },
+              {
+                "REVIEW": 0.38
+              },
+              {
+                "REVIEW": 0.31
+              },
+              {
+                "REVIEW": 0.32
+              },
+              {
+                "REVIEW": 0.34
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-08",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "concrete_prohibition"
+            ],
+            "top_probability": [
+              0.89,
+              0.91
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-09",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "REVIEW"
+        ],
+        "observed": "REVIEW",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "concrete_obligation"
+            ],
+            "top_probability": [
+              0.97,
+              0.98
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0.02
+              },
+              {
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "INSUFFICIENT": 0.02
+              },
+              {
+                "INSUFFICIENT": 0.01
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW"
+            ],
+            "top_options": [
+              "names_external_source"
+            ],
+            "top_probability": [
+              0.86,
+              0.91
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0.14
+              },
+              {
+                "REVIEW": 0.11
+              },
+              {
+                "REVIEW": 0.12
+              },
+              {
+                "REVIEW": 0.09
+              },
+              {
+                "REVIEW": 0.14
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-10",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "concrete_obligation"
+            ],
+            "top_probability": [
+              0.99,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "names_external_source"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-11",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "INSUFFICIENT",
+        "correct": false,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT"
+            ],
+            "top_options": [
+              "not_actionable_as_written",
+              "definition_or_scope"
+            ],
+            "top_probability": [
+              0.48,
+              0.52
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0.52
+              },
+              {
+                "INSUFFICIENT": 0.45
+              },
+              {
+                "INSUFFICIENT": 0.49
+              },
+              {
+                "INSUFFICIENT": 0.47
+              },
+              {
+                "INSUFFICIENT": 0.48
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "provisional_or_open"
+            ],
+            "top_probability": [
+              0.99,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-12",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "concrete_obligation"
+            ],
+            "top_probability": [
+              0.71,
+              0.77
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0.03
+              },
+              {
+                "INSUFFICIENT": 0.02
+              },
+              {
+                "INSUFFICIENT": 0.03
+              },
+              {
+                "INSUFFICIENT": 0.03
+              },
+              {
+                "INSUFFICIENT": 0.02
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          },
+          "failure_behavior": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "true"
+            ],
+            "top_probability": [
+              0.98,
+              0.98
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0.02
+              },
+              {
+                "REVIEW": 0.02
+              },
+              {
+                "REVIEW": 0.02
+              },
+              {
+                "REVIEW": 0.02
+              },
+              {
+                "REVIEW": 0.02
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-13",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "REVIEW",
+          "INSUFFICIENT"
+        ],
+        "observed": "INSUFFICIENT",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT"
+            ],
+            "top_options": [
+              "not_actionable_as_written"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 1
+              },
+              {
+                "INSUFFICIENT": 1
+              },
+              {
+                "INSUFFICIENT": 1
+              },
+              {
+                "INSUFFICIENT": 1
+              },
+              {
+                "INSUFFICIENT": 1
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          },
+          "failure_behavior": {
+            "findings_per_repeat": [
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW"
+            ],
+            "top_options": [
+              "false"
+            ],
+            "top_probability": [
+              0.81,
+              0.83
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0.81
+              },
+              {
+                "REVIEW": 0.83
+              },
+              {
+                "REVIEW": 0.81
+              },
+              {
+                "REVIEW": 0.81
+              },
+              {
+                "REVIEW": 0.81
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-14",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "escalation_trigger"
+            ],
+            "top_probability": [
+              0.75,
+              0.77
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0.08
+              },
+              {
+                "INSUFFICIENT": 0.08
+              },
+              {
+                "INSUFFICIENT": 0.07
+              },
+              {
+                "INSUFFICIENT": 0.08
+              },
+              {
+                "INSUFFICIENT": 0.07
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              0.99,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-15",
+        "owner": false,
+        "origin": "real",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "escalation_trigger"
+            ],
+            "top_probability": [
+              0.54,
+              0.64
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-16",
+        "owner": false,
+        "origin": "real",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "concrete_prohibition"
+            ],
+            "top_probability": [
+              0.98,
+              0.99
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-17",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "CONFLICT"
+        ],
+        "observed": "CONFLICT",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT"
+            ],
+            "top_options": [
+              "unresolved_contradiction"
+            ],
+            "top_probability": [
+              0.94,
+              0.96
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.04,
+                "CONFLICT": 0.96,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.06,
+                "CONFLICT": 0.94,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.05,
+                "CONFLICT": 0.95,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.05,
+                "CONFLICT": 0.94,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.06,
+                "CONFLICT": 0.94,
+                "INSUFFICIENT": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-18",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "CONFLICT"
+        ],
+        "observed": "CONFLICT",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT"
+            ],
+            "top_options": [
+              "unresolved_contradiction"
+            ],
+            "top_probability": [
+              0.98,
+              0.99
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.98,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.99,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.99,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.99,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.99,
+                "INSUFFICIENT": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-19",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "RESOLVED_CONFLICT"
+        ],
+        "observed": "RESOLVED_CONFLICT",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "RESOLVED_CONFLICT",
+              "RESOLVED_CONFLICT",
+              "RESOLVED_CONFLICT",
+              "RESOLVED_CONFLICT",
+              "RESOLVED_CONFLICT"
+            ],
+            "top_options": [
+              "conflict_resolved_by_precedence"
+            ],
+            "top_probability": [
+              0.96,
+              0.97
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.96,
+                "CONFLICT": 0.04,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.97,
+                "CONFLICT": 0.03,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.97,
+                "CONFLICT": 0.03,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.97,
+                "CONFLICT": 0.03,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.96,
+                "CONFLICT": 0.04,
+                "INSUFFICIENT": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-20",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "no_conflict"
+            ],
+            "top_probability": [
+              0.88,
+              0.93
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.06,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.09,
+                "INSUFFICIENT": 0.02
+              },
+              {
+                "RESOLVED_CONFLICT": 0.02,
+                "CONFLICT": 0.07,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.06,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.05,
+                "INSUFFICIENT": 0.01
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-21",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "no_conflict"
+            ],
+            "top_probability": [
+              0.91,
+              0.93
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.05,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.05,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.07,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.05,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.06,
+                "INSUFFICIENT": 0.01
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-22",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "no_semantic_relation"
+            ],
+            "top_probability": [
+              0.99,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-23",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "CONFLICT"
+        ],
+        "observed": "CONFLICT",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT"
+            ],
+            "top_options": [
+              "unresolved_contradiction"
+            ],
+            "top_probability": [
+              0.92,
+              0.94
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.05,
+                "CONFLICT": 0.94,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.06,
+                "CONFLICT": 0.93,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.06,
+                "CONFLICT": 0.93,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.05,
+                "CONFLICT": 0.94,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.07,
+                "CONFLICT": 0.92,
+                "INSUFFICIENT": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-24",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "CONFLICT"
+        ],
+        "observed": "CONFLICT",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT"
+            ],
+            "top_options": [
+              "unresolved_contradiction"
+            ],
+            "top_probability": [
+              0.82,
+              0.87
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.09,
+                "CONFLICT": 0.86,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.11,
+                "CONFLICT": 0.82,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.08,
+                "CONFLICT": 0.87,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.07,
+                "CONFLICT": 0.86,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.09,
+                "CONFLICT": 0.86,
+                "INSUFFICIENT": 0.01
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-25",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "CONFLICT"
+        ],
+        "observed": "CONFLICT",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT"
+            ],
+            "top_options": [
+              "unresolved_contradiction"
+            ],
+            "top_probability": [
+              0.92,
+              0.95
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.07,
+                "CONFLICT": 0.92,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.06,
+                "CONFLICT": 0.94,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.06,
+                "CONFLICT": 0.94,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.05,
+                "CONFLICT": 0.95,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.06,
+                "CONFLICT": 0.94,
+                "INSUFFICIENT": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-26",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "no_conflict"
+            ],
+            "top_probability": [
+              0.62,
+              0.65
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.2,
+                "INSUFFICIENT": 0.05
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.19,
+                "INSUFFICIENT": 0.07
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.21,
+                "INSUFFICIENT": 0.05
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.18,
+                "INSUFFICIENT": 0.06
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.19,
+                "INSUFFICIENT": 0.06
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "cal-27",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "INSUFFICIENT"
+        ],
+        "observed": "REVIEW",
+        "correct": false,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW"
+            ],
+            "top_options": [
+              "no_conflict",
+              "unresolved_contradiction"
+            ],
+            "top_probability": [
+              0.43,
+              0.46
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.04,
+                "CONFLICT": 0.38,
+                "INSUFFICIENT": 0.13
+              },
+              {
+                "RESOLVED_CONFLICT": 0.07,
+                "CONFLICT": 0.43,
+                "INSUFFICIENT": 0.07
+              },
+              {
+                "RESOLVED_CONFLICT": 0.05,
+                "CONFLICT": 0.46,
+                "INSUFFICIENT": 0.09
+              },
+              {
+                "RESOLVED_CONFLICT": 0.06,
+                "CONFLICT": 0.42,
+                "INSUFFICIENT": 0.09
+              },
+              {
+                "RESOLVED_CONFLICT": 0.06,
+                "CONFLICT": 0.41,
+                "INSUFFICIENT": 0.1
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "holdout": [
+      {
+        "id": "hold-01",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "concrete_prohibition"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-02",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "REVIEW",
+        "correct": false,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "concrete_obligation"
+            ],
+            "top_probability": [
+              0.98,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0.01
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "REVIEW",
+              "NO_FINDING",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              0.93,
+              0.96
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0.07
+              },
+              {
+                "REVIEW": 0.04
+              },
+              {
+                "REVIEW": 0.05
+              },
+              {
+                "REVIEW": 0.07
+              },
+              {
+                "REVIEW": 0.06
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-03",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "escalation_trigger"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              0.99,
+              0.99
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-04",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "INSUFFICIENT",
+          "REVIEW"
+        ],
+        "observed": "INSUFFICIENT",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT"
+            ],
+            "top_options": [
+              "not_actionable_as_written"
+            ],
+            "top_probability": [
+              0.99,
+              0.99
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0.99
+              },
+              {
+                "INSUFFICIENT": 0.99
+              },
+              {
+                "INSUFFICIENT": 0.99
+              },
+              {
+                "INSUFFICIENT": 0.99
+              },
+              {
+                "INSUFFICIENT": 0.99
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          },
+          "failure_behavior": {
+            "findings_per_repeat": [
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW"
+            ],
+            "top_options": [
+              "false"
+            ],
+            "top_probability": [
+              0.9,
+              0.91
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0.9
+              },
+              {
+                "REVIEW": 0.9
+              },
+              {
+                "REVIEW": 0.9
+              },
+              {
+                "REVIEW": 0.9
+              },
+              {
+                "REVIEW": 0.91
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-05",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "INSUFFICIENT"
+        ],
+        "observed": "INSUFFICIENT",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT",
+              "INSUFFICIENT"
+            ],
+            "top_options": [
+              "not_actionable_as_written"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 1
+              },
+              {
+                "INSUFFICIENT": 1
+              },
+              {
+                "INSUFFICIENT": 1
+              },
+              {
+                "INSUFFICIENT": 1
+              },
+              {
+                "INSUFFICIENT": 1
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              0.99,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0.01
+              },
+              {
+                "REVIEW": 0.01
+              },
+              {
+                "REVIEW": 0.01
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-06",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "REVIEW"
+        ],
+        "observed": "REVIEW",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "concrete_obligation"
+            ],
+            "top_probability": [
+              0.9,
+              0.91
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "INSUFFICIENT": 0.02
+              },
+              {
+                "INSUFFICIENT": 0.02
+              },
+              {
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "INSUFFICIENT": 0.02
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW"
+            ],
+            "top_options": [
+              "asserts_external_mandate_without_source"
+            ],
+            "top_probability": [
+              0.58,
+              0.81
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0.81
+              },
+              {
+                "REVIEW": 0.73
+              },
+              {
+                "REVIEW": 0.81
+              },
+              {
+                "REVIEW": 0.58
+              },
+              {
+                "REVIEW": 0.77
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-07",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "concrete_obligation"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              },
+              {
+                "INSUFFICIENT": 0
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "names_external_source"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-08",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "concrete_obligation"
+            ],
+            "top_probability": [
+              0.64,
+              0.71
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0.08
+              },
+              {
+                "INSUFFICIENT": 0.08
+              },
+              {
+                "INSUFFICIENT": 0.11
+              },
+              {
+                "INSUFFICIENT": 0.1
+              },
+              {
+                "INSUFFICIENT": 0.09
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "provisional_or_open"
+            ],
+            "top_probability": [
+              0.96,
+              0.97
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-09",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "escalation_trigger"
+            ],
+            "top_probability": [
+              0.59,
+              0.66
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0.02
+              },
+              {
+                "INSUFFICIENT": 0.03
+              },
+              {
+                "INSUFFICIENT": 0.02
+              },
+              {
+                "INSUFFICIENT": 0.02
+              },
+              {
+                "INSUFFICIENT": 0.02
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          },
+          "failure_behavior": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "true"
+            ],
+            "top_probability": [
+              0.98,
+              0.98
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0.02
+              },
+              {
+                "REVIEW": 0.02
+              },
+              {
+                "REVIEW": 0.02
+              },
+              {
+                "REVIEW": 0.02
+              },
+              {
+                "REVIEW": 0.02
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-10",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "REVIEW",
+          "INSUFFICIENT"
+        ],
+        "observed": "REVIEW",
+        "correct": true,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW"
+            ],
+            "top_options": [
+              "definition_or_scope"
+            ],
+            "top_probability": [
+              0.48,
+              0.61
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0.16
+              },
+              {
+                "INSUFFICIENT": 0.18
+              },
+              {
+                "INSUFFICIENT": 0.16
+              },
+              {
+                "INSUFFICIENT": 0.16
+              },
+              {
+                "INSUFFICIENT": 0.15
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "project_rule"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              },
+              {
+                "REVIEW": 0
+              }
+            ]
+          },
+          "failure_behavior": {
+            "findings_per_repeat": [
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW"
+            ],
+            "top_options": [
+              "false"
+            ],
+            "top_probability": [
+              0.81,
+              0.8200000000000001
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0.82
+              },
+              {
+                "REVIEW": 0.82
+              },
+              {
+                "REVIEW": 0.81
+              },
+              {
+                "REVIEW": 0.82
+              },
+              {
+                "REVIEW": 0.82
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-11",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "REVIEW",
+        "correct": false,
+        "questions": {
+          "actionability": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "concrete_prohibition"
+            ],
+            "top_probability": [
+              0.85,
+              0.89
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "INSUFFICIENT": 0.03
+              },
+              {
+                "INSUFFICIENT": 0.03
+              },
+              {
+                "INSUFFICIENT": 0.03
+              },
+              {
+                "INSUFFICIENT": 0.03
+              },
+              {
+                "INSUFFICIENT": 0.03
+              }
+            ]
+          },
+          "authority_presented": {
+            "findings_per_repeat": [
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW",
+              "REVIEW"
+            ],
+            "top_options": [
+              "asserts_external_mandate_without_source"
+            ],
+            "top_probability": [
+              0.63,
+              0.7
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "REVIEW": 0.63
+              },
+              {
+                "REVIEW": 0.69
+              },
+              {
+                "REVIEW": 0.7
+              },
+              {
+                "REVIEW": 0.7
+              },
+              {
+                "REVIEW": 0.68
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-12",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "CONFLICT"
+        ],
+        "observed": "CONFLICT",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT"
+            ],
+            "top_options": [
+              "unresolved_contradiction"
+            ],
+            "top_probability": [
+              0.88,
+              0.92
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.09,
+                "CONFLICT": 0.91,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.1,
+                "CONFLICT": 0.9,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.08,
+                "CONFLICT": 0.92,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.12,
+                "CONFLICT": 0.88,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.09,
+                "CONFLICT": 0.91,
+                "INSUFFICIENT": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-13",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "CONFLICT"
+        ],
+        "observed": "CONFLICT",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT"
+            ],
+            "top_options": [
+              "unresolved_contradiction"
+            ],
+            "top_probability": [
+              0.94,
+              0.95
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.04,
+                "CONFLICT": 0.94,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.03,
+                "CONFLICT": 0.95,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.03,
+                "CONFLICT": 0.95,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.03,
+                "CONFLICT": 0.95,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.03,
+                "CONFLICT": 0.95,
+                "INSUFFICIENT": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-14",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "RESOLVED_CONFLICT"
+        ],
+        "observed": "RESOLVED_CONFLICT",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "RESOLVED_CONFLICT",
+              "RESOLVED_CONFLICT",
+              "RESOLVED_CONFLICT",
+              "RESOLVED_CONFLICT",
+              "RESOLVED_CONFLICT"
+            ],
+            "top_options": [
+              "conflict_resolved_by_precedence"
+            ],
+            "top_probability": [
+              0.92,
+              0.94
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.92,
+                "CONFLICT": 0.03,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.94,
+                "CONFLICT": 0.02,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.93,
+                "CONFLICT": 0.03,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.93,
+                "CONFLICT": 0.03,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.94,
+                "CONFLICT": 0.03,
+                "INSUFFICIENT": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-15",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "no_conflict"
+            ],
+            "top_probability": [
+              0.91,
+              0.94
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0.01
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-16",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "no_semantic_relation"
+            ],
+            "top_probability": [
+              0.99,
+              0.99
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-17",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "CONFLICT"
+        ],
+        "observed": "CONFLICT",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT"
+            ],
+            "top_options": [
+              "unresolved_contradiction"
+            ],
+            "top_probability": [
+              0.91,
+              0.93
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.08,
+                "CONFLICT": 0.91,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.07,
+                "CONFLICT": 0.92,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.06,
+                "CONFLICT": 0.93,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.07,
+                "CONFLICT": 0.93,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.06,
+                "CONFLICT": 0.93,
+                "INSUFFICIENT": 0.01
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-18",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "CONFLICT"
+        ],
+        "observed": "CONFLICT",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT"
+            ],
+            "top_options": [
+              "unresolved_contradiction"
+            ],
+            "top_probability": [
+              0.62,
+              0.71
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.16,
+                "CONFLICT": 0.62,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.12,
+                "CONFLICT": 0.71,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.14,
+                "CONFLICT": 0.65,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.16,
+                "CONFLICT": 0.62,
+                "INSUFFICIENT": 0.01
+              },
+              {
+                "RESOLVED_CONFLICT": 0.12,
+                "CONFLICT": 0.67,
+                "INSUFFICIENT": 0.01
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-19",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "NO_FINDING",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING",
+              "NO_FINDING"
+            ],
+            "top_options": [
+              "no_conflict"
+            ],
+            "top_probability": [
+              0.8,
+              0.85
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.09,
+                "INSUFFICIENT": 0.02
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.1,
+                "INSUFFICIENT": 0.02
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.12,
+                "INSUFFICIENT": 0.03
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.12,
+                "INSUFFICIENT": 0.04
+              },
+              {
+                "RESOLVED_CONFLICT": 0.01,
+                "CONFLICT": 0.11,
+                "INSUFFICIENT": 0.03
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "hold-20",
+        "owner": false,
+        "origin": "synthetic",
+        "expected": [
+          "INSUFFICIENT"
+        ],
+        "observed": "CONFLICT",
+        "correct": false,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT"
+            ],
+            "top_options": [
+              "unresolved_contradiction"
+            ],
+            "top_probability": [
+              0.68,
+              0.73
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.05,
+                "CONFLICT": 0.69,
+                "INSUFFICIENT": 0.21
+              },
+              {
+                "RESOLVED_CONFLICT": 0.04,
+                "CONFLICT": 0.73,
+                "INSUFFICIENT": 0.18
+              },
+              {
+                "RESOLVED_CONFLICT": 0.06,
+                "CONFLICT": 0.69,
+                "INSUFFICIENT": 0.2
+              },
+              {
+                "RESOLVED_CONFLICT": 0.05,
+                "CONFLICT": 0.69,
+                "INSUFFICIENT": 0.21
+              },
+              {
+                "RESOLVED_CONFLICT": 0.04,
+                "CONFLICT": 0.68,
+                "INSUFFICIENT": 0.23
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "OWNER-01",
+        "owner": true,
+        "origin": "mutated",
+        "expected": [
+          "CONFLICT"
+        ],
+        "observed": "CONFLICT",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT"
+            ],
+            "top_options": [
+              "unresolved_contradiction"
+            ],
+            "top_probability": [
+              0.94,
+              0.96
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.05,
+                "CONFLICT": 0.95,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.05,
+                "CONFLICT": 0.95,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.04,
+                "CONFLICT": 0.96,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.05,
+                "CONFLICT": 0.95,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.06,
+                "CONFLICT": 0.94,
+                "INSUFFICIENT": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "OWNER-02",
+        "owner": true,
+        "origin": "mutated",
+        "expected": [
+          "CONFLICT"
+        ],
+        "observed": "CONFLICT",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT",
+              "CONFLICT"
+            ],
+            "top_options": [
+              "unresolved_contradiction"
+            ],
+            "top_probability": [
+              0.92,
+              0.94
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.07,
+                "CONFLICT": 0.92,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.07,
+                "CONFLICT": 0.92,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.05,
+                "CONFLICT": 0.94,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.05,
+                "CONFLICT": 0.93,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.05,
+                "CONFLICT": 0.93,
+                "INSUFFICIENT": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "OWNER-03",
+        "owner": true,
+        "origin": "synthetic",
+        "expected": [
+          "NO_FINDING"
+        ],
+        "observed": "RESOLVED_CONFLICT",
+        "correct": false,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "RESOLVED_CONFLICT",
+              "RESOLVED_CONFLICT",
+              "RESOLVED_CONFLICT",
+              "RESOLVED_CONFLICT",
+              "RESOLVED_CONFLICT"
+            ],
+            "top_options": [
+              "conflict_resolved_by_precedence"
+            ],
+            "top_probability": [
+              0.77,
+              0.82
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 0.78,
+                "CONFLICT": 0.01,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.78,
+                "CONFLICT": 0.01,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.82,
+                "CONFLICT": 0.01,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.8,
+                "CONFLICT": 0.01,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 0.77,
+                "CONFLICT": 0.01,
+                "INSUFFICIENT": 0
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "OWNER-04",
+        "owner": true,
+        "origin": "synthetic",
+        "expected": [
+          "RESOLVED_CONFLICT"
+        ],
+        "observed": "RESOLVED_CONFLICT",
+        "correct": true,
+        "questions": {
+          "pair_relation": {
+            "findings_per_repeat": [
+              "RESOLVED_CONFLICT",
+              "RESOLVED_CONFLICT",
+              "RESOLVED_CONFLICT",
+              "RESOLVED_CONFLICT",
+              "RESOLVED_CONFLICT"
+            ],
+            "top_options": [
+              "conflict_resolved_by_precedence"
+            ],
+            "top_probability": [
+              1,
+              1
+            ],
+            "finding_mass_per_repeat": [
+              {
+                "RESOLVED_CONFLICT": 1,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 1,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 1,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 1,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0
+              },
+              {
+                "RESOLVED_CONFLICT": 1,
+                "CONFLICT": 0,
+                "INSUFFICIENT": 0
+              }
+            ]
+          }
+        }
+      }
+    ]
+  }
+}

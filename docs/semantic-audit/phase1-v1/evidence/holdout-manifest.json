@@ -1,0 +1,61 @@
+{
+  "purpose": "Semantic-audit policy manifest. See tests/fixtures/semantic-audit/PROTOCOL.md.",
+  "algorithm": "sha256",
+  "files": [
+    {
+      "path": "tests/fixtures/semantic-audit/PROTOCOL.md",
+      "bytes": 16082,
+      "sha256": "60b821e5d142814dc85839fe2becf7e8281aab2c2001be747fb70bae4f58fd11"
+    },
+    {
+      "path": "tests/fixtures/semantic-audit/calibration/cases.json",
+      "bytes": 29355,
+      "sha256": "07d12d4c8a5d71d67a2a85744d1544363b5380b5992e0359a4c36149d5f7d9c6"
+    },
+    {
+      "path": "tests/fixtures/semantic-audit/holdout/cases.json",
+      "bytes": 20507,
+      "sha256": "0a6671790e26a2693303272231babcce62508d2982a8ef4489626477791c78f2"
+    },
+    {
+      "path": "tests/fixtures/semantic-audit/holdout/owner-cases.json",
+      "bytes": 6627,
+      "sha256": "23e02a268dafc6b76c7b8e9251b5db65a4fd2f3bfa88ed3facee04d2d76f808a"
+    },
+    {
+      "path": "tools/semantic-audit/extract-governance.ts",
+      "bytes": 13295,
+      "sha256": "867f4c290b599a09b5ea8d28c8f614a9cbf085ba69e541825630e2258fb0bcff"
+    },
+    {
+      "path": "tools/semantic-audit/governance/SOURCE_MAP.md",
+      "bytes": 8905,
+      "sha256": "08469f68fc671ddc650a599f300bd33ed9812dfc13e7d95bc6c4c02c76557dc3"
+    },
+    {
+      "path": "tools/semantic-audit/governance/sources.json",
+      "bytes": 1503,
+      "sha256": "e937204b992bf297e0672f0226e521236f37c64f930685eac170eb1d4201d732"
+    },
+    {
+      "path": "tools/semantic-audit/manifest.ts",
+      "bytes": 2474,
+      "sha256": "4fd946600c379749061d4fdf7e40225929878f15c67c89f779ca81fe9d0721ae"
+    },
+    {
+      "path": "tools/semantic-audit/policy.ts",
+      "bytes": 14991,
+      "sha256": "5a480a4479cd66009e8957e71214a201cb15a6724d9664dd20ceb9f7886081e1"
+    },
+    {
+      "path": "tools/semantic-audit/profiles/governance-phase1.json",
+      "bytes": 5858,
+      "sha256": "f6d71354e681218afa0cf069ddda9f9077c201d023c25c6f02846701dc65eb26"
+    },
+    {
+      "path": "tools/semantic-audit/run.ts",
+      "bytes": 32080,
+      "sha256": "ff7dc6035b51e84ca16a73fc1ecf4419afbd9bd6a57b6f5423aaf8d25a7a7d94"
+    }
+  ]
+}

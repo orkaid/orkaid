@@ -1,0 +1,146 @@
+{
+  "set": "holdout-owner",
+  "purpose": "Holdout cases authored by the project owner. The owner supplies each case's input text, expected outcome and labels, and rationale explicitly; an agent may transcribe those instructions into this file mechanically, but may not rewrite the content, change a label, add assumptions, improve an example, or tune the profile against these cases (PROTOCOL.md section 3). At least 4 must be present before any live request of any corpus (tools/semantic-audit/run.ts); after the freeze commit this file is frozen like holdout/cases.json.",
+  "authored_by": "project owner",
+  "cases": [
+    {
+      "id": "OWNER-01",
+      "category": "owner-authored",
+      "kind": "pair",
+      "rule_a": {
+        "document": "owner-authored governance scenario",
+        "section": "OWNER-01 rule A",
+        "authority": {
+          "rank": 4,
+          "label": "root repository instruction file (AGENTS.md), rank 4 of 7 in the AGENTS.md section 1 order"
+        },
+        "text": "Creating or updating a public GitHub release requires a separate explicit confirmation from the project owner for that release."
+      },
+      "rule_b": {
+        "document": "owner-authored governance scenario",
+        "section": "OWNER-01 rule B",
+        "authority": {
+          "rank": 4,
+          "label": "root repository instruction file (AGENTS.md), rank 4 of 7 in the AGENTS.md section 1 order"
+        },
+        "text": "Once local verification is green, release automation publishes the GitHub release automatically without any further confirmation."
+      },
+      "expect": {
+        "pair_relation": [
+          "unresolved_contradiction"
+        ]
+      },
+      "expected_outcome": [
+        "CONFLICT"
+      ],
+      "origin": "mutated",
+      "dimension": "pair_relation",
+      "rationale": "Both rules govern the same public external mutation. One requires a separate owner confirmation and the other explicitly removes that requirement, so both cannot be followed as written."
+    },
+    {
+      "id": "OWNER-02",
+      "category": "owner-authored",
+      "kind": "pair",
+      "rule_a": {
+        "document": "owner-authored governance scenario",
+        "section": "OWNER-02 rule A",
+        "authority": {
+          "rank": 4,
+          "label": "root repository instruction file (AGENTS.md), rank 4 of 7 in the AGENTS.md section 1 order"
+        },
+        "text": "A third-party service may be introduced only for a requirement that is already approved and currently in scope."
+      },
+      "rule_b": {
+        "document": "owner-authored governance scenario",
+        "section": "OWNER-02 rule B",
+        "authority": {
+          "rank": 4,
+          "label": "root repository instruction file (AGENTS.md), rank 4 of 7 in the AGENTS.md section 1 order"
+        },
+        "text": "The project may integrate dormant third-party services in advance when they are likely to become useful later."
+      },
+      "expect": {
+        "pair_relation": [
+          "unresolved_contradiction"
+        ]
+      },
+      "expected_outcome": [
+        "CONFLICT"
+      ],
+      "origin": "mutated",
+      "dimension": "pair_relation",
+      "rationale": "One rule permits external services only for an approved current requirement; the other explicitly permits speculative integration for possible future use."
+    },
+    {
+      "id": "OWNER-03",
+      "category": "owner-authored",
+      "kind": "pair",
+      "rule_a": {
+        "document": "owner-authored governance scenario",
+        "section": "OWNER-03 rule A",
+        "authority": {
+          "rank": 4,
+          "label": "root repository instruction file (AGENTS.md), rank 4 of 7 in the AGENTS.md section 1 order"
+        },
+        "text": "Repository policy must not pin coding-agent model names."
+      },
+      "rule_b": {
+        "document": "owner-authored governance scenario",
+        "section": "OWNER-03 rule B",
+        "authority": {
+          "rank": 1,
+          "label": "current explicit instruction from Mihai, rank 1 of 7 in the AGENTS.md section 1 order"
+        },
+        "text": "For this local semantic-governance experiment only, use Jev 1.13.0. This approval does not change the standing rule for coding-agent model selection and authorizes no other model or use."
+      },
+      "expect": {
+        "pair_relation": [
+          "no_conflict"
+        ]
+      },
+      "expected_outcome": [
+        "NO_FINDING"
+      ],
+      "origin": "synthetic",
+      "dimension": "pair_relation",
+      "rationale": "The two rules have different scopes. The second is an explicitly bounded experiment-specific approval.",
+      "origin_as_given": "synthetic owner governance scenario"
+    },
+    {
+      "id": "OWNER-04",
+      "category": "owner-authored",
+      "kind": "pair",
+      "rule_a": {
+        "document": "owner-authored governance scenario",
+        "section": "OWNER-04 rule A",
+        "authority": {
+          "rank": 6,
+          "label": "existing implementation pattern, rank 6 of 7 in the AGENTS.md section 1 order"
+        },
+        "text": "The TypeSafe semantic audit runs automatically in CI on every pull request."
+      },
+      "rule_b": {
+        "document": "owner-authored governance scenario",
+        "section": "OWNER-04 rule B",
+        "authority": {
+          "rank": 1,
+          "label": "current explicit instruction from Mihai, rank 1 of 7 in the AGENTS.md section 1 order"
+        },
+        "text": "TypeSafe Jev is authorized only for local development-time governance auditing. CI integration is not authorized."
+      },
+      "expect": {
+        "pair_relation": [
+          "conflict_resolved_by_precedence"
+        ]
+      },
+      "expected_outcome": [
+        "RESOLVED_CONFLICT"
+      ],
+      "origin": "synthetic",
+      "dimension": "pair_relation",
+      "rationale": "The instructions contradict each other, but the explicit owner instruction has higher authority. The contradiction must still be surfaced.",
+      "origin_as_given": "synthetic owner governance scenario"
+    }
+  ],
+  "transcription": "Input texts, ranks, expected labels and outcomes, origins and rationales are the owner's, supplied on 2026-09-27 and transcribed mechanically by the implementing agent. Fields the owner did not state were filled without adding meaning: `document` and `section` are neutral placeholders; authority labels follow the AGENTS.md section 1 wording for the stated rank; `dimension` names the question the label addresses; `category` is 'owner-authored'; `origin` uses the file's vocabulary, with the owner's own wording kept in `origin_as_given` where it differs."
+}

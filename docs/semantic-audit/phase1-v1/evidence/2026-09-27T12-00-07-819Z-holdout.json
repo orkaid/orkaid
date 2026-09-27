@@ -1,0 +1,5489 @@
+{
+  "report_version": "1",
+  "audit": "governance-phase1",
+  "corpus": "holdout",
+  "mode": "live",
+  "timestamp": "2026-09-27T12:00:07.819Z",
+  "interpretation": [
+    "NO_FINDING means only that no semantic finding was produced within the bounded questions evaluated. It does not mean correct, approved, complete, certified, or legally or regulatorily valid.",
+    "Findings are probabilistic typed judgments for human review, not proof. They never override a deterministic check.",
+    "Cross-document pairs are chosen by shared topic tags, a bounded heuristic: rules that share no tag are never compared, so NO_FINDING is not evidence that the repository has no governance conflicts."
+  ],
+  "profile": {
+    "path": "tools/semantic-audit/profiles/governance-phase1.json",
+    "sha256": "f6d71354e681218afa0cf069ddda9f9077c201d023c25c6f02846701dc65eb26",
+    "profile_id": "governance-phase1",
+    "version": "0.2.0",
+    "bands": {
+      "actionability": {
+        "review": 0.15,
+        "finding": 0.2
+      },
+      "authority_presented": {
+        "review": 0.05,
+        "finding": 0.1
+      },
+      "failure_behavior": {
+        "review": 0.05,
+        "finding": 0.1
+      },
+      "pair_relation": {
+        "review": 0.3,
+        "finding": 0.5
+      }
+    }
+  },
+  "manifest": {
+    "path": "tests/fixtures/semantic-audit/MANIFEST.json",
+    "sha256": "84130710d3b20c694cbd8928efadfa51f5700c49634fb4738f557cc066183a44"
+  },
+  "requested_model": "jev-1.13.0",
+  "repository": {
+    "commit": "75625c5d821957e6de5791b2547002260bb8e674",
+    "dirty": false
+  },
+  "outcome": "GOVERNANCE_CONFLICT_OR_POLICY_FAIL",
+  "exit_code": 2,
+  "repeat": 5,
+  "finding_counts": {
+    "NO_FINDING": 8,
+    "REVIEW": 4,
+    "INSUFFICIENT": 2,
+    "CONFLICT": 7,
+    "RESOLVED_CONFLICT": 3
+  },
+  "results": [
+    {
+      "request_id": "hold-01",
+      "kind": "unit",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-01",
+          "section": "Greenfield rule",
+          "authority_rank": 4,
+          "text_sha256": "cef7fe943cf96f2d66014aae7cbef0f08f39be4286704382b552ec79ce13556c"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "NO_FINDING",
+      "expected_outcome": [
+        "NO_FINDING"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "actionability": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "INSUFFICIENT": 0
+            },
+            {
+              "INSUFFICIENT": 0
+            },
+            {
+              "INSUFFICIENT": 0
+            },
+            {
+              "INSUFFICIENT": 0
+            },
+            {
+              "INSUFFICIENT": 0
+            }
+          ],
+          "max_probability_spread": 0,
+          "expectation": {
+            "expected": [
+              "concrete_prohibition"
+            ],
+            "top_option": "concrete_prohibition",
+            "expected_mass": 1,
+            "top_matches": true
+          }
+        },
+        "authority_presented": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            }
+          ],
+          "max_probability_spread": 0,
+          "expectation": {
+            "expected": [
+              "project_rule"
+            ],
+            "top_option": "project_rule",
+            "expected_mass": 1,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 1866,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 875,
+            "output_tokens": 149
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_prohibition",
+              "confidence": 1,
+              "probabilities": {
+                "concrete_prohibition": 1,
+                "escalation_trigger": 0,
+                "stated_principle": 0,
+                "definition_or_scope": 0,
+                "not_actionable_as_written": 0,
+                "concrete_obligation": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "names_external_source": 0,
+                "provisional_or_open": 0,
+                "project_rule": 1,
+                "asserts_external_mandate_without_source": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 279,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 875,
+            "output_tokens": 149
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_prohibition",
+              "confidence": 1,
+              "probabilities": {
+                "concrete_prohibition": 1,
+                "definition_or_scope": 0,
+                "escalation_trigger": 0,
+                "not_actionable_as_written": 0,
+                "stated_principle": 0,
+                "concrete_obligation": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "provisional_or_open": 0,
+                "project_rule": 1,
+                "asserts_external_mandate_without_source": 0,
+                "names_external_source": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 282,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 875,
+            "output_tokens": 149
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_prohibition",
+              "confidence": 1,
+              "probabilities": {
+                "concrete_obligation": 0,
+                "escalation_trigger": 0,
+                "definition_or_scope": 0,
+                "stated_principle": 0,
+                "not_actionable_as_written": 0,
+                "concrete_prohibition": 1
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0,
+                "names_external_source": 0,
+                "project_rule": 1,
+                "provisional_or_open": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 395,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 875,
+            "output_tokens": 149
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_prohibition",
+              "confidence": 1,
+              "probabilities": {
+                "concrete_obligation": 0,
+                "definition_or_scope": 0,
+                "concrete_prohibition": 1,
+                "escalation_trigger": 0,
+                "not_actionable_as_written": 0,
+                "stated_principle": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "project_rule": 1,
+                "names_external_source": 0,
+                "asserts_external_mandate_without_source": 0,
+                "provisional_or_open": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 300,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 875,
+            "output_tokens": 149
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_prohibition",
+              "confidence": 1,
+              "probabilities": {
+                "stated_principle": 0,
+                "concrete_obligation": 0,
+                "definition_or_scope": 0,
+                "concrete_prohibition": 1,
+                "not_actionable_as_written": 0,
+                "escalation_trigger": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "provisional_or_open": 0,
+                "names_external_source": 0,
+                "asserts_external_mandate_without_source": 0,
+                "project_rule": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-02",
+      "kind": "unit",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-02",
+          "section": "Documentation",
+          "authority_rank": 4,
+          "text_sha256": "86f2f71bb28a3a56184be129264c1f4f9175f5d2785e3617f73f20c09c26f540"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "REVIEW",
+      "expected_outcome": [
+        "NO_FINDING"
+      ],
+      "outcome_matches": false,
+      "questions": {
+        "actionability": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "INSUFFICIENT": 0
+            },
+            {
+              "INSUFFICIENT": 0
+            },
+            {
+              "INSUFFICIENT": 0
+            },
+            {
+              "INSUFFICIENT": 0
+            },
+            {
+              "INSUFFICIENT": 0.01
+            }
+          ],
+          "max_probability_spread": 0.020000000000000018,
+          "expectation": {
+            "expected": [
+              "concrete_obligation"
+            ],
+            "top_option": "concrete_obligation",
+            "expected_mass": 0.99,
+            "top_matches": true
+          }
+        },
+        "authority_presented": {
+          "finding": "REVIEW",
+          "finding_per_repeat": [
+            "REVIEW",
+            "NO_FINDING",
+            "REVIEW",
+            "REVIEW",
+            "REVIEW"
+          ],
+          "mass_per_repeat": [
+            {
+              "REVIEW": 0.07
+            },
+            {
+              "REVIEW": 0.04
+            },
+            {
+              "REVIEW": 0.05
+            },
+            {
+              "REVIEW": 0.07
+            },
+            {
+              "REVIEW": 0.06
+            }
+          ],
+          "max_probability_spread": 0.030000000000000006,
+          "expectation": {
+            "expected": [
+              "project_rule"
+            ],
+            "top_option": "project_rule",
+            "expected_mass": 0.93,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 328,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 876,
+            "output_tokens": 148
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 0.99,
+              "probabilities": {
+                "escalation_trigger": 0,
+                "concrete_obligation": 0.99,
+                "concrete_prohibition": 0.01,
+                "definition_or_scope": 0,
+                "not_actionable_as_written": 0,
+                "stated_principle": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 0.91,
+              "probabilities": {
+                "names_external_source": 0,
+                "asserts_external_mandate_without_source": 0.07,
+                "provisional_or_open": 0,
+                "project_rule": 0.93
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 292,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 876,
+            "output_tokens": 148
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 0.99,
+              "probabilities": {
+                "stated_principle": 0,
+                "definition_or_scope": 0,
+                "concrete_obligation": 1,
+                "concrete_prohibition": 0,
+                "not_actionable_as_written": 0,
+                "escalation_trigger": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 0.94,
+              "probabilities": {
+                "names_external_source": 0,
+                "provisional_or_open": 0,
+                "asserts_external_mandate_without_source": 0.04,
+                "project_rule": 0.96
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 329,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 876,
+            "output_tokens": 148
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 0.99,
+              "probabilities": {
+                "definition_or_scope": 0,
+                "not_actionable_as_written": 0,
+                "stated_principle": 0,
+                "concrete_obligation": 1,
+                "escalation_trigger": 0,
+                "concrete_prohibition": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 0.93,
+              "probabilities": {
+                "provisional_or_open": 0,
+                "project_rule": 0.95,
+                "names_external_source": 0,
+                "asserts_external_mandate_without_source": 0.05
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 277,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 876,
+            "output_tokens": 148
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 0.99,
+              "probabilities": {
+                "escalation_trigger": 0,
+                "concrete_obligation": 1,
+                "concrete_prohibition": 0,
+                "definition_or_scope": 0,
+                "not_actionable_as_written": 0,
+                "stated_principle": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 0.91,
+              "probabilities": {
+                "names_external_source": 0,
+                "provisional_or_open": 0,
+                "asserts_external_mandate_without_source": 0.07,
+                "project_rule": 0.93
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 269,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 876,
+            "output_tokens": 148
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 0.99,
+              "probabilities": {
+                "not_actionable_as_written": 0.01,
+                "escalation_trigger": 0,
+                "concrete_obligation": 0.98,
+                "definition_or_scope": 0,
+                "stated_principle": 0,
+                "concrete_prohibition": 0.01
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 0.92,
+              "probabilities": {
+                "provisional_or_open": 0,
+                "asserts_external_mandate_without_source": 0.06,
+                "project_rule": 0.94,
+                "names_external_source": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-03",
+      "kind": "unit",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-03",
+          "section": "Scope control",
+          "authority_rank": 4,
+          "text_sha256": "5429412898540f75a619c31587059ae38fde601cb2a2a5f55656757be116958b"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "NO_FINDING",
+      "expected_outcome": [
+        "NO_FINDING"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "actionability": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "INSUFFICIENT": 0
+            },
+            {
+              "INSUFFICIENT": 0
+            },
+            {
+              "INSUFFICIENT": 0
+            },
+            {
+              "INSUFFICIENT": 0
+            },
+            {
+              "INSUFFICIENT": 0
+            }
+          ],
+          "max_probability_spread": 0,
+          "expectation": {
+            "expected": [
+              "escalation_trigger"
+            ],
+            "top_option": "escalation_trigger",
+            "expected_mass": 1,
+            "top_matches": true
+          }
+        },
+        "authority_presented": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            }
+          ],
+          "max_probability_spread": 0,
+          "expectation": {
+            "expected": [
+              "project_rule"
+            ],
+            "top_option": "project_rule",
+            "expected_mass": 0.99,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 288,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 880,
+            "output_tokens": 147
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "escalation_trigger",
+              "confidence": 1,
+              "probabilities": {
+                "definition_or_scope": 0,
+                "concrete_obligation": 0,
+                "concrete_prohibition": 0,
+                "escalation_trigger": 1,
+                "stated_principle": 0,
+                "not_actionable_as_written": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 0.98,
+              "probabilities": {
+                "project_rule": 0.99,
+                "names_external_source": 0,
+                "asserts_external_mandate_without_source": 0,
+                "provisional_or_open": 0.01
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 537,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 880,
+            "output_tokens": 147
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "escalation_trigger",
+              "confidence": 1,
+              "probabilities": {
+                "not_actionable_as_written": 0,
+                "concrete_prohibition": 0,
+                "escalation_trigger": 1,
+                "definition_or_scope": 0,
+                "stated_principle": 0,
+                "concrete_obligation": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 0.98,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0,
+                "project_rule": 0.99,
+                "provisional_or_open": 0.01,
+                "names_external_source": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 379,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 880,
+            "output_tokens": 147
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "escalation_trigger",
+              "confidence": 1,
+              "probabilities": {
+                "not_actionable_as_written": 0,
+                "escalation_trigger": 1,
+                "concrete_obligation": 0,
+                "concrete_prohibition": 0,
+                "definition_or_scope": 0,
+                "stated_principle": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 0.98,
+              "probabilities": {
+                "provisional_or_open": 0.01,
+                "asserts_external_mandate_without_source": 0,
+                "names_external_source": 0,
+                "project_rule": 0.99
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 276,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 880,
+            "output_tokens": 147
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "escalation_trigger",
+              "confidence": 1,
+              "probabilities": {
+                "escalation_trigger": 1,
+                "stated_principle": 0,
+                "concrete_prohibition": 0,
+                "concrete_obligation": 0,
+                "definition_or_scope": 0,
+                "not_actionable_as_written": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 0.99,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0,
+                "project_rule": 0.99,
+                "provisional_or_open": 0.01,
+                "names_external_source": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 246,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 880,
+            "output_tokens": 147
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "escalation_trigger",
+              "confidence": 1,
+              "probabilities": {
+                "not_actionable_as_written": 0,
+                "stated_principle": 0,
+                "definition_or_scope": 0,
+                "concrete_prohibition": 0,
+                "concrete_obligation": 0,
+                "escalation_trigger": 1
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 0.98,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0,
+                "names_external_source": 0,
+                "provisional_or_open": 0.01,
+                "project_rule": 0.99
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-04",
+      "kind": "unit",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-04",
+          "section": "Coding standards",
+          "authority_rank": 4,
+          "text_sha256": "fa05d073195532664e11c9d251344b5657573e69775c7f08103c3599e45940c9"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "INSUFFICIENT",
+      "expected_outcome": [
+        "INSUFFICIENT",
+        "REVIEW"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "actionability": {
+          "finding": "INSUFFICIENT",
+          "finding_per_repeat": [
+            "INSUFFICIENT",
+            "INSUFFICIENT",
+            "INSUFFICIENT",
+            "INSUFFICIENT",
+            "INSUFFICIENT"
+          ],
+          "mass_per_repeat": [
+            {
+              "INSUFFICIENT": 0.99
+            },
+            {
+              "INSUFFICIENT": 0.99
+            },
+            {
+              "INSUFFICIENT": 0.99
+            },
+            {
+              "INSUFFICIENT": 0.99
+            },
+            {
+              "INSUFFICIENT": 0.99
+            }
+          ],
+          "max_probability_spread": 0,
+          "expectation": {
+            "expected": [
+              "not_actionable_as_written"
+            ],
+            "top_option": "not_actionable_as_written",
+            "expected_mass": 0.99,
+            "top_matches": true
+          }
+        },
+        "authority_presented": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            }
+          ],
+          "max_probability_spread": 0
+        },
+        "failure_behavior": {
+          "finding": "REVIEW",
+          "finding_per_repeat": [
+            "REVIEW",
+            "REVIEW",
+            "REVIEW",
+            "REVIEW",
+            "REVIEW"
+          ],
+          "mass_per_repeat": [
+            {
+              "REVIEW": 0.9
+            },
+            {
+              "REVIEW": 0.9
+            },
+            {
+              "REVIEW": 0.9
+            },
+            {
+              "REVIEW": 0.9
+            },
+            {
+              "REVIEW": 0.91
+            }
+          ],
+          "max_probability_spread": 0.010000000000000009
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 301,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1024,
+            "output_tokens": 167
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "not_actionable_as_written",
+              "confidence": 0.99,
+              "probabilities": {
+                "concrete_obligation": 0,
+                "escalation_trigger": 0,
+                "definition_or_scope": 0,
+                "stated_principle": 0.01,
+                "not_actionable_as_written": 0.99,
+                "concrete_prohibition": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0,
+                "project_rule": 1,
+                "names_external_source": 0,
+                "provisional_or_open": 0
+              }
+            },
+            "failure_behavior": {
+              "type": "noul",
+              "noul": 0.1
+            }
+          }
+        },
+        {
+          "latency_ms": 286,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1024,
+            "output_tokens": 167
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "not_actionable_as_written",
+              "confidence": 0.99,
+              "probabilities": {
+                "concrete_obligation": 0,
+                "not_actionable_as_written": 0.99,
+                "concrete_prohibition": 0,
+                "escalation_trigger": 0,
+                "stated_principle": 0.01,
+                "definition_or_scope": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0,
+                "names_external_source": 0,
+                "provisional_or_open": 0,
+                "project_rule": 1
+              }
+            },
+            "failure_behavior": {
+              "type": "noul",
+              "noul": 0.1
+            }
+          }
+        },
+        {
+          "latency_ms": 266,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1024,
+            "output_tokens": 167
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "not_actionable_as_written",
+              "confidence": 0.98,
+              "probabilities": {
+                "stated_principle": 0.01,
+                "not_actionable_as_written": 0.99,
+                "definition_or_scope": 0,
+                "concrete_prohibition": 0,
+                "concrete_obligation": 0,
+                "escalation_trigger": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0,
+                "provisional_or_open": 0,
+                "names_external_source": 0,
+                "project_rule": 1
+              }
+            },
+            "failure_behavior": {
+              "type": "noul",
+              "noul": 0.1
+            }
+          }
+        },
+        {
+          "latency_ms": 290,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1024,
+            "output_tokens": 167
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "not_actionable_as_written",
+              "confidence": 0.99,
+              "probabilities": {
+                "concrete_obligation": 0,
+                "escalation_trigger": 0,
+                "concrete_prohibition": 0,
+                "not_actionable_as_written": 0.99,
+                "stated_principle": 0.01,
+                "definition_or_scope": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0,
+                "names_external_source": 0,
+                "provisional_or_open": 0,
+                "project_rule": 1
+              }
+            },
+            "failure_behavior": {
+              "type": "noul",
+              "noul": 0.1
+            }
+          }
+        },
+        {
+          "latency_ms": 272,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1024,
+            "output_tokens": 167
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "not_actionable_as_written",
+              "confidence": 0.99,
+              "probabilities": {
+                "concrete_obligation": 0,
+                "escalation_trigger": 0,
+                "stated_principle": 0.01,
+                "concrete_prohibition": 0,
+                "not_actionable_as_written": 0.99,
+                "definition_or_scope": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "project_rule": 1,
+                "names_external_source": 0,
+                "asserts_external_mandate_without_source": 0,
+                "provisional_or_open": 0
+              }
+            },
+            "failure_behavior": {
+              "type": "noul",
+              "noul": 0.09
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-05",
+      "kind": "unit",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-05",
+          "section": "Security",
+          "authority_rank": 4,
+          "text_sha256": "13517e9cb9b014bd2a44202aec3efcceefceb1c25dbf4e4e7dad22f1c3813956"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "INSUFFICIENT",
+      "expected_outcome": [
+        "INSUFFICIENT"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "actionability": {
+          "finding": "INSUFFICIENT",
+          "finding_per_repeat": [
+            "INSUFFICIENT",
+            "INSUFFICIENT",
+            "INSUFFICIENT",
+            "INSUFFICIENT",
+            "INSUFFICIENT"
+          ],
+          "mass_per_repeat": [
+            {
+              "INSUFFICIENT": 1
+            },
+            {
+              "INSUFFICIENT": 1
+            },
+            {
+              "INSUFFICIENT": 1
+            },
+            {
+              "INSUFFICIENT": 1
+            },
+            {
+              "INSUFFICIENT": 1
+            }
+          ],
+          "max_probability_spread": 0,
+          "expectation": {
+            "expected": [
+              "not_actionable_as_written"
+            ],
+            "top_option": "not_actionable_as_written",
+            "expected_mass": 1,
+            "top_matches": true
+          }
+        },
+        "authority_presented": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "REVIEW": 0.01
+            },
+            {
+              "REVIEW": 0.01
+            },
+            {
+              "REVIEW": 0.01
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            }
+          ],
+          "max_probability_spread": 0.010000000000000009
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 247,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 869,
+            "output_tokens": 149
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "not_actionable_as_written",
+              "confidence": 1,
+              "probabilities": {
+                "escalation_trigger": 0,
+                "concrete_prohibition": 0,
+                "definition_or_scope": 0,
+                "not_actionable_as_written": 1,
+                "stated_principle": 0,
+                "concrete_obligation": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 0.99,
+              "probabilities": {
+                "provisional_or_open": 0,
+                "project_rule": 0.99,
+                "asserts_external_mandate_without_source": 0.01,
+                "names_external_source": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 250,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 869,
+            "output_tokens": 149
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "not_actionable_as_written",
+              "confidence": 1,
+              "probabilities": {
+                "not_actionable_as_written": 1,
+                "concrete_obligation": 0,
+                "escalation_trigger": 0,
+                "definition_or_scope": 0,
+                "stated_principle": 0,
+                "concrete_prohibition": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 0.99,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0.01,
+                "names_external_source": 0,
+                "provisional_or_open": 0,
+                "project_rule": 0.99
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 278,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 869,
+            "output_tokens": 149
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "not_actionable_as_written",
+              "confidence": 1,
+              "probabilities": {
+                "concrete_prohibition": 0,
+                "stated_principle": 0,
+                "definition_or_scope": 0,
+                "concrete_obligation": 0,
+                "escalation_trigger": 0,
+                "not_actionable_as_written": 1
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 0.99,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0.01,
+                "project_rule": 0.99,
+                "provisional_or_open": 0,
+                "names_external_source": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 276,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 869,
+            "output_tokens": 149
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "not_actionable_as_written",
+              "confidence": 1,
+              "probabilities": {
+                "definition_or_scope": 0,
+                "stated_principle": 0,
+                "escalation_trigger": 0,
+                "not_actionable_as_written": 1,
+                "concrete_prohibition": 0,
+                "concrete_obligation": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 0.99,
+              "probabilities": {
+                "provisional_or_open": 0,
+                "project_rule": 1,
+                "asserts_external_mandate_without_source": 0,
+                "names_external_source": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 278,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 869,
+            "output_tokens": 149
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "not_actionable_as_written",
+              "confidence": 1,
+              "probabilities": {
+                "escalation_trigger": 0,
+                "concrete_prohibition": 0,
+                "not_actionable_as_written": 1,
+                "definition_or_scope": 0,
+                "stated_principle": 0,
+                "concrete_obligation": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 0.99,
+              "probabilities": {
+                "provisional_or_open": 0,
+                "project_rule": 1,
+                "asserts_external_mandate_without_source": 0,
+                "names_external_source": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-06",
+      "kind": "unit",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-06",
+          "section": "Monetary policy",
+          "authority_rank": 4,
+          "text_sha256": "e4a4149d178ced92b5cabd6693bfbe83bcefe168ff3a31d61d879e24fb92b417"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "REVIEW",
+      "expected_outcome": [
+        "REVIEW"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "actionability": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "INSUFFICIENT": 0.01
+            },
+            {
+              "INSUFFICIENT": 0.02
+            },
+            {
+              "INSUFFICIENT": 0.02
+            },
+            {
+              "INSUFFICIENT": 0.01
+            },
+            {
+              "INSUFFICIENT": 0.02
+            }
+          ],
+          "max_probability_spread": 0.010000000000000009
+        },
+        "authority_presented": {
+          "finding": "REVIEW",
+          "finding_per_repeat": [
+            "REVIEW",
+            "REVIEW",
+            "REVIEW",
+            "REVIEW",
+            "REVIEW"
+          ],
+          "mass_per_repeat": [
+            {
+              "REVIEW": 0.81
+            },
+            {
+              "REVIEW": 0.73
+            },
+            {
+              "REVIEW": 0.81
+            },
+            {
+              "REVIEW": 0.58
+            },
+            {
+              "REVIEW": 0.77
+            }
+          ],
+          "max_probability_spread": 0.2300000000000001,
+          "expectation": {
+            "expected": [
+              "asserts_external_mandate_without_source"
+            ],
+            "top_option": "asserts_external_mandate_without_source",
+            "expected_mass": 0.81,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 257,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 880,
+            "output_tokens": 154
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 0.89,
+              "probabilities": {
+                "escalation_trigger": 0,
+                "concrete_prohibition": 0.08,
+                "not_actionable_as_written": 0.01,
+                "concrete_obligation": 0.91,
+                "definition_or_scope": 0,
+                "stated_principle": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "asserts_external_mandate_without_source",
+              "confidence": 0.75,
+              "probabilities": {
+                "project_rule": 0,
+                "asserts_external_mandate_without_source": 0.81,
+                "names_external_source": 0.19,
+                "provisional_or_open": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 274,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 880,
+            "output_tokens": 154
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 0.88,
+              "probabilities": {
+                "escalation_trigger": 0,
+                "concrete_prohibition": 0.08,
+                "not_actionable_as_written": 0.02,
+                "concrete_obligation": 0.9,
+                "definition_or_scope": 0,
+                "stated_principle": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "asserts_external_mandate_without_source",
+              "confidence": 0.64,
+              "probabilities": {
+                "provisional_or_open": 0,
+                "project_rule": 0,
+                "names_external_source": 0.27,
+                "asserts_external_mandate_without_source": 0.73
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 268,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 880,
+            "output_tokens": 154
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 0.88,
+              "probabilities": {
+                "concrete_obligation": 0.9,
+                "escalation_trigger": 0,
+                "not_actionable_as_written": 0.02,
+                "definition_or_scope": 0,
+                "stated_principle": 0,
+                "concrete_prohibition": 0.08
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "asserts_external_mandate_without_source",
+              "confidence": 0.74,
+              "probabilities": {
+                "provisional_or_open": 0,
+                "asserts_external_mandate_without_source": 0.81,
+                "project_rule": 0,
+                "names_external_source": 0.19
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 240,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 880,
+            "output_tokens": 154
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 0.89,
+              "probabilities": {
+                "escalation_trigger": 0,
+                "not_actionable_as_written": 0.01,
+                "concrete_obligation": 0.91,
+                "stated_principle": 0,
+                "concrete_prohibition": 0.08,
+                "definition_or_scope": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "asserts_external_mandate_without_source",
+              "confidence": 0.44,
+              "probabilities": {
+                "names_external_source": 0.42,
+                "provisional_or_open": 0,
+                "project_rule": 0,
+                "asserts_external_mandate_without_source": 0.58
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 269,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 880,
+            "output_tokens": 154
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 0.89,
+              "probabilities": {
+                "escalation_trigger": 0,
+                "concrete_prohibition": 0.07,
+                "not_actionable_as_written": 0.02,
+                "concrete_obligation": 0.91,
+                "definition_or_scope": 0,
+                "stated_principle": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "asserts_external_mandate_without_source",
+              "confidence": 0.69,
+              "probabilities": {
+                "project_rule": 0,
+                "asserts_external_mandate_without_source": 0.77,
+                "names_external_source": 0.23,
+                "provisional_or_open": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-07",
+      "kind": "unit",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-07",
+          "section": "Regulated domain",
+          "authority_rank": 4,
+          "text_sha256": "b4922820bcd6c40256d203337f5ff4cfca831b2d1b74ab8d3377d24a07f55038"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "NO_FINDING",
+      "expected_outcome": [
+        "NO_FINDING"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "actionability": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "INSUFFICIENT": 0
+            },
+            {
+              "INSUFFICIENT": 0
+            },
+            {
+              "INSUFFICIENT": 0
+            },
+            {
+              "INSUFFICIENT": 0
+            },
+            {
+              "INSUFFICIENT": 0
+            }
+          ],
+          "max_probability_spread": 0
+        },
+        "authority_presented": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            }
+          ],
+          "max_probability_spread": 0,
+          "expectation": {
+            "expected": [
+              "names_external_source"
+            ],
+            "top_option": "names_external_source",
+            "expected_mass": 1,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 282,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 892,
+            "output_tokens": 149
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 1,
+              "probabilities": {
+                "concrete_obligation": 1,
+                "escalation_trigger": 0,
+                "definition_or_scope": 0,
+                "concrete_prohibition": 0,
+                "not_actionable_as_written": 0,
+                "stated_principle": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "names_external_source",
+              "confidence": 1,
+              "probabilities": {
+                "names_external_source": 1,
+                "asserts_external_mandate_without_source": 0,
+                "provisional_or_open": 0,
+                "project_rule": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 272,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 892,
+            "output_tokens": 149
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 0.99,
+              "probabilities": {
+                "stated_principle": 0,
+                "concrete_obligation": 1,
+                "definition_or_scope": 0,
+                "concrete_prohibition": 0,
+                "not_actionable_as_written": 0,
+                "escalation_trigger": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "names_external_source",
+              "confidence": 1,
+              "probabilities": {
+                "provisional_or_open": 0,
+                "names_external_source": 1,
+                "asserts_external_mandate_without_source": 0,
+                "project_rule": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 291,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 892,
+            "output_tokens": 149
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 1,
+              "probabilities": {
+                "definition_or_scope": 0,
+                "stated_principle": 0,
+                "not_actionable_as_written": 0,
+                "escalation_trigger": 0,
+                "concrete_obligation": 1,
+                "concrete_prohibition": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "names_external_source",
+              "confidence": 1,
+              "probabilities": {
+                "provisional_or_open": 0,
+                "names_external_source": 1,
+                "project_rule": 0,
+                "asserts_external_mandate_without_source": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 286,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 892,
+            "output_tokens": 149
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 1,
+              "probabilities": {
+                "concrete_prohibition": 0,
+                "stated_principle": 0,
+                "escalation_trigger": 0,
+                "concrete_obligation": 1,
+                "definition_or_scope": 0,
+                "not_actionable_as_written": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "names_external_source",
+              "confidence": 1,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0,
+                "project_rule": 0,
+                "provisional_or_open": 0,
+                "names_external_source": 1
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 284,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 892,
+            "output_tokens": 149
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 1,
+              "probabilities": {
+                "concrete_obligation": 1,
+                "escalation_trigger": 0,
+                "definition_or_scope": 0,
+                "not_actionable_as_written": 0,
+                "stated_principle": 0,
+                "concrete_prohibition": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "names_external_source",
+              "confidence": 1,
+              "probabilities": {
+                "names_external_source": 1,
+                "provisional_or_open": 0,
+                "asserts_external_mandate_without_source": 0,
+                "project_rule": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-08",
+      "kind": "unit",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-08",
+          "section": "Decision states",
+          "authority_rank": 4,
+          "text_sha256": "56a3a6e20af7984587123e14a795d94329d097385921fea794739236681c8737"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "NO_FINDING",
+      "expected_outcome": [
+        "NO_FINDING"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "actionability": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "INSUFFICIENT": 0.08
+            },
+            {
+              "INSUFFICIENT": 0.08
+            },
+            {
+              "INSUFFICIENT": 0.11
+            },
+            {
+              "INSUFFICIENT": 0.1
+            },
+            {
+              "INSUFFICIENT": 0.09
+            }
+          ],
+          "max_probability_spread": 0.06999999999999995
+        },
+        "authority_presented": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            }
+          ],
+          "max_probability_spread": 0.010000000000000009,
+          "expectation": {
+            "expected": [
+              "provisional_or_open"
+            ],
+            "top_option": "provisional_or_open",
+            "expected_mass": 0.96,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 251,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 875,
+            "output_tokens": 151
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 0.58,
+              "probabilities": {
+                "definition_or_scope": 0.15,
+                "escalation_trigger": 0.01,
+                "concrete_prohibition": 0.1,
+                "concrete_obligation": 0.65,
+                "stated_principle": 0.01,
+                "not_actionable_as_written": 0.08
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "provisional_or_open",
+              "confidence": 0.95,
+              "probabilities": {
+                "project_rule": 0.04,
+                "names_external_source": 0,
+                "asserts_external_mandate_without_source": 0,
+                "provisional_or_open": 0.96
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 298,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 875,
+            "output_tokens": 151
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 0.6,
+              "probabilities": {
+                "not_actionable_as_written": 0.08,
+                "stated_principle": 0.02,
+                "concrete_prohibition": 0.09,
+                "escalation_trigger": 0.01,
+                "concrete_obligation": 0.66,
+                "definition_or_scope": 0.14
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "provisional_or_open",
+              "confidence": 0.94,
+              "probabilities": {
+                "provisional_or_open": 0.96,
+                "project_rule": 0.04,
+                "asserts_external_mandate_without_source": 0,
+                "names_external_source": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 280,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 875,
+            "output_tokens": 151
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 0.57,
+              "probabilities": {
+                "not_actionable_as_written": 0.11,
+                "concrete_prohibition": 0.08,
+                "definition_or_scope": 0.15,
+                "escalation_trigger": 0.01,
+                "stated_principle": 0.01,
+                "concrete_obligation": 0.64
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "provisional_or_open",
+              "confidence": 0.96,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0,
+                "project_rule": 0.03,
+                "provisional_or_open": 0.97,
+                "names_external_source": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 258,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 875,
+            "output_tokens": 151
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 0.6,
+              "probabilities": {
+                "concrete_prohibition": 0.06,
+                "escalation_trigger": 0.01,
+                "stated_principle": 0.01,
+                "concrete_obligation": 0.67,
+                "not_actionable_as_written": 0.1,
+                "definition_or_scope": 0.15
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "provisional_or_open",
+              "confidence": 0.96,
+              "probabilities": {
+                "names_external_source": 0,
+                "provisional_or_open": 0.97,
+                "project_rule": 0.03,
+                "asserts_external_mandate_without_source": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 271,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 875,
+            "output_tokens": 151
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_obligation",
+              "confidence": 0.65,
+              "probabilities": {
+                "escalation_trigger": 0.01,
+                "stated_principle": 0.01,
+                "concrete_prohibition": 0.07,
+                "concrete_obligation": 0.71,
+                "definition_or_scope": 0.11,
+                "not_actionable_as_written": 0.09
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "provisional_or_open",
+              "confidence": 0.95,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0,
+                "project_rule": 0.04,
+                "provisional_or_open": 0.96,
+                "names_external_source": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-09",
+      "kind": "unit",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-09",
+          "section": "Audit tooling",
+          "authority_rank": 4,
+          "text_sha256": "edd0e3ba75583929afc5910c5eb908d67dac0e01dc670b598afb07461ed6c8dc"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "NO_FINDING",
+      "expected_outcome": [
+        "NO_FINDING"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "actionability": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "INSUFFICIENT": 0.02
+            },
+            {
+              "INSUFFICIENT": 0.03
+            },
+            {
+              "INSUFFICIENT": 0.02
+            },
+            {
+              "INSUFFICIENT": 0.02
+            },
+            {
+              "INSUFFICIENT": 0.02
+            }
+          ],
+          "max_probability_spread": 0.07000000000000006
+        },
+        "authority_presented": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            }
+          ],
+          "max_probability_spread": 0,
+          "expectation": {
+            "expected": [
+              "project_rule"
+            ],
+            "top_option": "project_rule",
+            "expected_mass": 1,
+            "top_matches": true
+          }
+        },
+        "failure_behavior": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "REVIEW": 0.020000000000000018
+            },
+            {
+              "REVIEW": 0.020000000000000018
+            },
+            {
+              "REVIEW": 0.020000000000000018
+            },
+            {
+              "REVIEW": 0.020000000000000018
+            },
+            {
+              "REVIEW": 0.020000000000000018
+            }
+          ],
+          "max_probability_spread": 0,
+          "expectation": {
+            "expected": [
+              "true"
+            ],
+            "top_option": "true",
+            "expected_mass": 0.98,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 263,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1036,
+            "output_tokens": 165
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "escalation_trigger",
+              "confidence": 0.59,
+              "probabilities": {
+                "concrete_obligation": 0.26,
+                "escalation_trigger": 0.66,
+                "concrete_prohibition": 0.04,
+                "not_actionable_as_written": 0.02,
+                "stated_principle": 0,
+                "definition_or_scope": 0.02
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0,
+                "names_external_source": 0,
+                "provisional_or_open": 0,
+                "project_rule": 1
+              }
+            },
+            "failure_behavior": {
+              "type": "noul",
+              "noul": 0.98
+            }
+          }
+        },
+        {
+          "latency_ms": 303,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1036,
+            "output_tokens": 165
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "escalation_trigger",
+              "confidence": 0.55,
+              "probabilities": {
+                "escalation_trigger": 0.62,
+                "not_actionable_as_written": 0.03,
+                "concrete_prohibition": 0.05,
+                "concrete_obligation": 0.28,
+                "definition_or_scope": 0.02,
+                "stated_principle": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "project_rule": 1,
+                "asserts_external_mandate_without_source": 0,
+                "names_external_source": 0,
+                "provisional_or_open": 0
+              }
+            },
+            "failure_behavior": {
+              "type": "noul",
+              "noul": 0.98
+            }
+          }
+        },
+        {
+          "latency_ms": 305,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1036,
+            "output_tokens": 165
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "escalation_trigger",
+              "confidence": 0.56,
+              "probabilities": {
+                "concrete_prohibition": 0.05,
+                "escalation_trigger": 0.63,
+                "stated_principle": 0,
+                "definition_or_scope": 0.02,
+                "concrete_obligation": 0.28,
+                "not_actionable_as_written": 0.02
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "names_external_source": 0,
+                "provisional_or_open": 0,
+                "project_rule": 1,
+                "asserts_external_mandate_without_source": 0
+              }
+            },
+            "failure_behavior": {
+              "type": "noul",
+              "noul": 0.98
+            }
+          }
+        },
+        {
+          "latency_ms": 390,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1036,
+            "output_tokens": 165
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "escalation_trigger",
+              "confidence": 0.56,
+              "probabilities": {
+                "concrete_obligation": 0.27,
+                "not_actionable_as_written": 0.02,
+                "concrete_prohibition": 0.04,
+                "stated_principle": 0,
+                "escalation_trigger": 0.65,
+                "definition_or_scope": 0.02
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0,
+                "names_external_source": 0,
+                "provisional_or_open": 0,
+                "project_rule": 1
+              }
+            },
+            "failure_behavior": {
+              "type": "noul",
+              "noul": 0.98
+            }
+          }
+        },
+        {
+          "latency_ms": 258,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1036,
+            "output_tokens": 165
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "escalation_trigger",
+              "confidence": 0.51,
+              "probabilities": {
+                "concrete_obligation": 0.32,
+                "definition_or_scope": 0.02,
+                "stated_principle": 0,
+                "escalation_trigger": 0.59,
+                "not_actionable_as_written": 0.02,
+                "concrete_prohibition": 0.05
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "project_rule": 1,
+                "names_external_source": 0,
+                "asserts_external_mandate_without_source": 0,
+                "provisional_or_open": 0
+              }
+            },
+            "failure_behavior": {
+              "type": "noul",
+              "noul": 0.98
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-10",
+      "kind": "unit",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-10",
+          "section": "Tool behavior",
+          "authority_rank": 4,
+          "text_sha256": "a7275e96f686f5d4aa97fb2f2737b3fa73487ccde27d70e2056f028fb141d7e6"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "REVIEW",
+      "expected_outcome": [
+        "REVIEW",
+        "INSUFFICIENT"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "actionability": {
+          "finding": "REVIEW",
+          "finding_per_repeat": [
+            "REVIEW",
+            "REVIEW",
+            "REVIEW",
+            "REVIEW",
+            "REVIEW"
+          ],
+          "mass_per_repeat": [
+            {
+              "INSUFFICIENT": 0.16
+            },
+            {
+              "INSUFFICIENT": 0.18
+            },
+            {
+              "INSUFFICIENT": 0.16
+            },
+            {
+              "INSUFFICIENT": 0.16
+            },
+            {
+              "INSUFFICIENT": 0.15
+            }
+          ],
+          "max_probability_spread": 0.13
+        },
+        "authority_presented": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            },
+            {
+              "REVIEW": 0
+            }
+          ],
+          "max_probability_spread": 0
+        },
+        "failure_behavior": {
+          "finding": "REVIEW",
+          "finding_per_repeat": [
+            "REVIEW",
+            "REVIEW",
+            "REVIEW",
+            "REVIEW",
+            "REVIEW"
+          ],
+          "mass_per_repeat": [
+            {
+              "REVIEW": 0.8200000000000001
+            },
+            {
+              "REVIEW": 0.8200000000000001
+            },
+            {
+              "REVIEW": 0.81
+            },
+            {
+              "REVIEW": 0.8200000000000001
+            },
+            {
+              "REVIEW": 0.8200000000000001
+            }
+          ],
+          "max_probability_spread": 0.010000000000000009,
+          "expectation": {
+            "expected": [
+              "false"
+            ],
+            "top_option": "false",
+            "expected_mass": 0.8200000000000001,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 255,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1024,
+            "output_tokens": 164
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "definition_or_scope",
+              "confidence": 0.48,
+              "probabilities": {
+                "definition_or_scope": 0.57,
+                "not_actionable_as_written": 0.16,
+                "stated_principle": 0,
+                "concrete_obligation": 0.27,
+                "escalation_trigger": 0,
+                "concrete_prohibition": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "provisional_or_open": 0,
+                "project_rule": 1,
+                "names_external_source": 0,
+                "asserts_external_mandate_without_source": 0
+              }
+            },
+            "failure_behavior": {
+              "type": "noul",
+              "noul": 0.18
+            }
+          }
+        },
+        {
+          "latency_ms": 285,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1024,
+            "output_tokens": 164
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "definition_or_scope",
+              "confidence": 0.38,
+              "probabilities": {
+                "stated_principle": 0,
+                "concrete_obligation": 0.34,
+                "definition_or_scope": 0.48,
+                "not_actionable_as_written": 0.18,
+                "escalation_trigger": 0,
+                "concrete_prohibition": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "names_external_source": 0,
+                "provisional_or_open": 0,
+                "project_rule": 1,
+                "asserts_external_mandate_without_source": 0
+              }
+            },
+            "failure_behavior": {
+              "type": "noul",
+              "noul": 0.18
+            }
+          }
+        },
+        {
+          "latency_ms": 621,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1024,
+            "output_tokens": 164
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "definition_or_scope",
+              "confidence": 0.43,
+              "probabilities": {
+                "escalation_trigger": 0,
+                "concrete_prohibition": 0,
+                "not_actionable_as_written": 0.16,
+                "concrete_obligation": 0.31,
+                "definition_or_scope": 0.53,
+                "stated_principle": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "project_rule": 1,
+                "asserts_external_mandate_without_source": 0,
+                "names_external_source": 0,
+                "provisional_or_open": 0
+              }
+            },
+            "failure_behavior": {
+              "type": "noul",
+              "noul": 0.19
+            }
+          }
+        },
+        {
+          "latency_ms": 247,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1024,
+            "output_tokens": 164
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "definition_or_scope",
+              "confidence": 0.53,
+              "probabilities": {
+                "concrete_obligation": 0.23,
+                "escalation_trigger": 0,
+                "stated_principle": 0,
+                "not_actionable_as_written": 0.16,
+                "concrete_prohibition": 0,
+                "definition_or_scope": 0.61
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "project_rule": 1,
+                "names_external_source": 0,
+                "asserts_external_mandate_without_source": 0,
+                "provisional_or_open": 0
+              }
+            },
+            "failure_behavior": {
+              "type": "noul",
+              "noul": 0.18
+            }
+          }
+        },
+        {
+          "latency_ms": 302,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 1024,
+            "output_tokens": 164
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "definition_or_scope",
+              "confidence": 0.48,
+              "probabilities": {
+                "definition_or_scope": 0.57,
+                "not_actionable_as_written": 0.15,
+                "concrete_prohibition": 0,
+                "stated_principle": 0,
+                "escalation_trigger": 0,
+                "concrete_obligation": 0.28
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "project_rule",
+              "confidence": 1,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0,
+                "names_external_source": 0,
+                "provisional_or_open": 0,
+                "project_rule": 1
+              }
+            },
+            "failure_behavior": {
+              "type": "noul",
+              "noul": 0.18
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-11",
+      "kind": "unit",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-11",
+          "section": "Security",
+          "authority_rank": 4,
+          "text_sha256": "dc68f09a579ab998d4690496e52a7440ce57c77d6749b7718a226ce4a3d93ca7"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "REVIEW",
+      "expected_outcome": [
+        "NO_FINDING"
+      ],
+      "outcome_matches": false,
+      "questions": {
+        "actionability": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "INSUFFICIENT": 0.03
+            },
+            {
+              "INSUFFICIENT": 0.03
+            },
+            {
+              "INSUFFICIENT": 0.03
+            },
+            {
+              "INSUFFICIENT": 0.03
+            },
+            {
+              "INSUFFICIENT": 0.03
+            }
+          ],
+          "max_probability_spread": 0.040000000000000036,
+          "expectation": {
+            "expected": [
+              "concrete_prohibition"
+            ],
+            "top_option": "concrete_prohibition",
+            "expected_mass": 0.89,
+            "top_matches": true
+          }
+        },
+        "authority_presented": {
+          "finding": "REVIEW",
+          "finding_per_repeat": [
+            "REVIEW",
+            "REVIEW",
+            "REVIEW",
+            "REVIEW",
+            "REVIEW"
+          ],
+          "mass_per_repeat": [
+            {
+              "REVIEW": 0.63
+            },
+            {
+              "REVIEW": 0.69
+            },
+            {
+              "REVIEW": 0.7
+            },
+            {
+              "REVIEW": 0.7
+            },
+            {
+              "REVIEW": 0.68
+            }
+          ],
+          "max_probability_spread": 0.07,
+          "expectation": {
+            "expected": [
+              "project_rule"
+            ],
+            "top_option": "asserts_external_mandate_without_source",
+            "expected_mass": 0.37,
+            "top_matches": false
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 265,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 884,
+            "output_tokens": 155
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_prohibition",
+              "confidence": 0.85,
+              "probabilities": {
+                "concrete_obligation": 0.08,
+                "escalation_trigger": 0,
+                "concrete_prohibition": 0.89,
+                "definition_or_scope": 0,
+                "not_actionable_as_written": 0.03,
+                "stated_principle": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "asserts_external_mandate_without_source",
+              "confidence": 0.51,
+              "probabilities": {
+                "names_external_source": 0,
+                "provisional_or_open": 0,
+                "project_rule": 0.37,
+                "asserts_external_mandate_without_source": 0.63
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 254,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 884,
+            "output_tokens": 155
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_prohibition",
+              "confidence": 0.85,
+              "probabilities": {
+                "escalation_trigger": 0,
+                "concrete_obligation": 0.09,
+                "definition_or_scope": 0,
+                "concrete_prohibition": 0.88,
+                "not_actionable_as_written": 0.03,
+                "stated_principle": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "asserts_external_mandate_without_source",
+              "confidence": 0.59,
+              "probabilities": {
+                "names_external_source": 0,
+                "project_rule": 0.31,
+                "provisional_or_open": 0,
+                "asserts_external_mandate_without_source": 0.69
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 313,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 884,
+            "output_tokens": 155
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_prohibition",
+              "confidence": 0.84,
+              "probabilities": {
+                "concrete_obligation": 0.09,
+                "escalation_trigger": 0,
+                "definition_or_scope": 0,
+                "stated_principle": 0,
+                "not_actionable_as_written": 0.03,
+                "concrete_prohibition": 0.88
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "asserts_external_mandate_without_source",
+              "confidence": 0.6,
+              "probabilities": {
+                "asserts_external_mandate_without_source": 0.7,
+                "names_external_source": 0,
+                "project_rule": 0.3,
+                "provisional_or_open": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 245,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 884,
+            "output_tokens": 155
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_prohibition",
+              "confidence": 0.82,
+              "probabilities": {
+                "definition_or_scope": 0,
+                "escalation_trigger": 0,
+                "concrete_obligation": 0.12,
+                "concrete_prohibition": 0.85,
+                "stated_principle": 0,
+                "not_actionable_as_written": 0.03
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "asserts_external_mandate_without_source",
+              "confidence": 0.6,
+              "probabilities": {
+                "project_rule": 0.3,
+                "names_external_source": 0,
+                "asserts_external_mandate_without_source": 0.7,
+                "provisional_or_open": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 266,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 884,
+            "output_tokens": 155
+          },
+          "answers": {
+            "actionability": {
+              "type": "choice",
+              "choice": "concrete_prohibition",
+              "confidence": 0.86,
+              "probabilities": {
+                "definition_or_scope": 0,
+                "concrete_prohibition": 0.89,
+                "not_actionable_as_written": 0.03,
+                "concrete_obligation": 0.08,
+                "escalation_trigger": 0,
+                "stated_principle": 0
+              }
+            },
+            "authority_presented": {
+              "type": "choice",
+              "choice": "asserts_external_mandate_without_source",
+              "confidence": 0.57,
+              "probabilities": {
+                "provisional_or_open": 0,
+                "asserts_external_mandate_without_source": 0.68,
+                "project_rule": 0.32,
+                "names_external_source": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-12",
+      "kind": "pair",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-12.a",
+          "section": "Platform baseline",
+          "authority_rank": 4,
+          "text_sha256": "b0240f8036b0a189a581c40771718bef006bd8c0d9f430350a84855632e4799d"
+        },
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-12.b",
+          "section": "Dependency discipline",
+          "authority_rank": 4,
+          "text_sha256": "db811ebab28dccb42fb9d1306220f8fddd1fee2f7db9813e4566bb645371d4b9"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "CONFLICT",
+      "expected_outcome": [
+        "CONFLICT"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "pair_relation": {
+          "finding": "CONFLICT",
+          "finding_per_repeat": [
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT"
+          ],
+          "mass_per_repeat": [
+            {
+              "RESOLVED_CONFLICT": 0.09,
+              "CONFLICT": 0.91,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.1,
+              "CONFLICT": 0.9,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.08,
+              "CONFLICT": 0.92,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.12,
+              "CONFLICT": 0.88,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.09,
+              "CONFLICT": 0.91,
+              "INSUFFICIENT": 0
+            }
+          ],
+          "max_probability_spread": 0.040000000000000036,
+          "expectation": {
+            "expected": [
+              "unresolved_contradiction"
+            ],
+            "top_option": "unresolved_contradiction",
+            "expected_mass": 0.91,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 283,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 804,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.88,
+              "probabilities": {
+                "no_semantic_relation": 0,
+                "no_conflict": 0,
+                "conflict_resolved_by_precedence": 0.09,
+                "unresolved_contradiction": 0.91,
+                "insufficient_context": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 277,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 804,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.86,
+              "probabilities": {
+                "insufficient_context": 0,
+                "no_semantic_relation": 0,
+                "conflict_resolved_by_precedence": 0.1,
+                "no_conflict": 0,
+                "unresolved_contradiction": 0.9
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 263,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 804,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.89,
+              "probabilities": {
+                "no_conflict": 0,
+                "insufficient_context": 0,
+                "unresolved_contradiction": 0.92,
+                "no_semantic_relation": 0,
+                "conflict_resolved_by_precedence": 0.08
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 286,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 804,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.84,
+              "probabilities": {
+                "no_semantic_relation": 0,
+                "insufficient_context": 0,
+                "conflict_resolved_by_precedence": 0.12,
+                "no_conflict": 0,
+                "unresolved_contradiction": 0.88
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 292,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 804,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.88,
+              "probabilities": {
+                "insufficient_context": 0,
+                "no_conflict": 0,
+                "unresolved_contradiction": 0.91,
+                "conflict_resolved_by_precedence": 0.09,
+                "no_semantic_relation": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-13",
+      "kind": "pair",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-13.a",
+          "section": "Decision states",
+          "authority_rank": 4,
+          "text_sha256": "1aca3c18bc59459466ca1f8353da189a8ec54729621c3f9d9323c32c359c086c"
+        },
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-13.b",
+          "section": "Monetary policy",
+          "authority_rank": 4,
+          "text_sha256": "8f6a1f0b5756758c8f26262c3cc4ce617666c106bb6a7a679d0a92faa68fbeb9"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "CONFLICT",
+      "expected_outcome": [
+        "CONFLICT"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "pair_relation": {
+          "finding": "CONFLICT",
+          "finding_per_repeat": [
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT"
+          ],
+          "mass_per_repeat": [
+            {
+              "RESOLVED_CONFLICT": 0.04,
+              "CONFLICT": 0.94,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.03,
+              "CONFLICT": 0.95,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.03,
+              "CONFLICT": 0.95,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.03,
+              "CONFLICT": 0.95,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.03,
+              "CONFLICT": 0.95,
+              "INSUFFICIENT": 0
+            }
+          ],
+          "max_probability_spread": 0.010000000000000009,
+          "expectation": {
+            "expected": [
+              "unresolved_contradiction"
+            ],
+            "top_option": "unresolved_contradiction",
+            "expected_mass": 0.94,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 287,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 814,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.93,
+              "probabilities": {
+                "unresolved_contradiction": 0.94,
+                "no_semantic_relation": 0,
+                "insufficient_context": 0,
+                "conflict_resolved_by_precedence": 0.04,
+                "no_conflict": 0.02
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 285,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 814,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.94,
+              "probabilities": {
+                "unresolved_contradiction": 0.95,
+                "no_conflict": 0.02,
+                "no_semantic_relation": 0,
+                "conflict_resolved_by_precedence": 0.03,
+                "insufficient_context": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 291,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 814,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.94,
+              "probabilities": {
+                "unresolved_contradiction": 0.95,
+                "no_conflict": 0.02,
+                "insufficient_context": 0,
+                "conflict_resolved_by_precedence": 0.03,
+                "no_semantic_relation": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 254,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 814,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.93,
+              "probabilities": {
+                "conflict_resolved_by_precedence": 0.03,
+                "insufficient_context": 0,
+                "no_semantic_relation": 0,
+                "no_conflict": 0.02,
+                "unresolved_contradiction": 0.95
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 266,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 814,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.94,
+              "probabilities": {
+                "no_semantic_relation": 0,
+                "no_conflict": 0.02,
+                "conflict_resolved_by_precedence": 0.03,
+                "unresolved_contradiction": 0.95,
+                "insufficient_context": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-14",
+      "kind": "pair",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-14.a",
+          "section": "Tooling",
+          "authority_rank": 6,
+          "text_sha256": "c473a56d413aefb660750d18132eed8e4154dc77293bddc268aef513dc803486"
+        },
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-14.b",
+          "section": "Security",
+          "authority_rank": 4,
+          "text_sha256": "c26a2f1c86622c3d769431c264336519f7d8fba750af0ae69b3b0fd7175b6b53"
+        }
+      ],
+      "precedence_sha256": "e905313d840e50cc2d7e360695009ed1fe89d6aa6bdcbdf6e5c52727c6e5dee9",
+      "finding": "RESOLVED_CONFLICT",
+      "expected_outcome": [
+        "RESOLVED_CONFLICT"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "pair_relation": {
+          "finding": "RESOLVED_CONFLICT",
+          "finding_per_repeat": [
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT"
+          ],
+          "mass_per_repeat": [
+            {
+              "RESOLVED_CONFLICT": 0.92,
+              "CONFLICT": 0.03,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.94,
+              "CONFLICT": 0.02,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.93,
+              "CONFLICT": 0.03,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.93,
+              "CONFLICT": 0.03,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.94,
+              "CONFLICT": 0.03,
+              "INSUFFICIENT": 0
+            }
+          ],
+          "max_probability_spread": 0.020000000000000004,
+          "expectation": {
+            "expected": [
+              "conflict_resolved_by_precedence"
+            ],
+            "top_option": "conflict_resolved_by_precedence",
+            "expected_mass": 0.92,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 279,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 909,
+            "output_tokens": 86
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "conflict_resolved_by_precedence",
+              "confidence": 0.9,
+              "probabilities": {
+                "no_semantic_relation": 0,
+                "no_conflict": 0.05,
+                "conflict_resolved_by_precedence": 0.92,
+                "unresolved_contradiction": 0.03,
+                "insufficient_context": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 251,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 909,
+            "output_tokens": 86
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "conflict_resolved_by_precedence",
+              "confidence": 0.92,
+              "probabilities": {
+                "insufficient_context": 0,
+                "no_semantic_relation": 0,
+                "conflict_resolved_by_precedence": 0.94,
+                "no_conflict": 0.04,
+                "unresolved_contradiction": 0.02
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 271,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 909,
+            "output_tokens": 86
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "conflict_resolved_by_precedence",
+              "confidence": 0.92,
+              "probabilities": {
+                "no_conflict": 0.04,
+                "unresolved_contradiction": 0.03,
+                "no_semantic_relation": 0,
+                "insufficient_context": 0,
+                "conflict_resolved_by_precedence": 0.93
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 263,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 909,
+            "output_tokens": 86
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "conflict_resolved_by_precedence",
+              "confidence": 0.91,
+              "probabilities": {
+                "conflict_resolved_by_precedence": 0.93,
+                "no_semantic_relation": 0,
+                "insufficient_context": 0,
+                "no_conflict": 0.04,
+                "unresolved_contradiction": 0.03
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 266,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 909,
+            "output_tokens": 86
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "conflict_resolved_by_precedence",
+              "confidence": 0.93,
+              "probabilities": {
+                "no_semantic_relation": 0,
+                "insufficient_context": 0,
+                "no_conflict": 0.03,
+                "unresolved_contradiction": 0.03,
+                "conflict_resolved_by_precedence": 0.94
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-15",
+      "kind": "pair",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-15.a",
+          "section": "Testing",
+          "authority_rank": 4,
+          "text_sha256": "7ff9242489fd6d537b452f2e11b76c86767b7fcb697c6eee40a657efe334120a"
+        },
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-15.b",
+          "section": "Validation tooling",
+          "authority_rank": 4,
+          "text_sha256": "0662f1f26e3adcf613a0b86872a1c405f7078885b09eb1b3cb609e4e56554daa"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "NO_FINDING",
+      "expected_outcome": [
+        "NO_FINDING"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "pair_relation": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "RESOLVED_CONFLICT": 0,
+              "CONFLICT": 0,
+              "INSUFFICIENT": 0.01
+            },
+            {
+              "RESOLVED_CONFLICT": 0,
+              "CONFLICT": 0,
+              "INSUFFICIENT": 0.01
+            },
+            {
+              "RESOLVED_CONFLICT": 0,
+              "CONFLICT": 0,
+              "INSUFFICIENT": 0.01
+            },
+            {
+              "RESOLVED_CONFLICT": 0,
+              "CONFLICT": 0,
+              "INSUFFICIENT": 0.01
+            },
+            {
+              "RESOLVED_CONFLICT": 0,
+              "CONFLICT": 0,
+              "INSUFFICIENT": 0.01
+            }
+          ],
+          "max_probability_spread": 0.03,
+          "expectation": {
+            "expected": [
+              "no_conflict"
+            ],
+            "top_option": "no_conflict",
+            "expected_mass": 0.92,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 260,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 807,
+            "output_tokens": 80
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "no_conflict",
+              "confidence": 0.9,
+              "probabilities": {
+                "insufficient_context": 0.01,
+                "no_conflict": 0.92,
+                "unresolved_contradiction": 0,
+                "conflict_resolved_by_precedence": 0,
+                "no_semantic_relation": 0.07
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 291,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 807,
+            "output_tokens": 80
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "no_conflict",
+              "confidence": 0.93,
+              "probabilities": {
+                "no_conflict": 0.94,
+                "no_semantic_relation": 0.05,
+                "insufficient_context": 0.01,
+                "conflict_resolved_by_precedence": 0,
+                "unresolved_contradiction": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 362,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 807,
+            "output_tokens": 80
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "no_conflict",
+              "confidence": 0.93,
+              "probabilities": {
+                "no_conflict": 0.94,
+                "insufficient_context": 0.01,
+                "unresolved_contradiction": 0,
+                "conflict_resolved_by_precedence": 0,
+                "no_semantic_relation": 0.05
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 257,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 807,
+            "output_tokens": 80
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "no_conflict",
+              "confidence": 0.89,
+              "probabilities": {
+                "conflict_resolved_by_precedence": 0,
+                "no_conflict": 0.91,
+                "unresolved_contradiction": 0,
+                "no_semantic_relation": 0.08,
+                "insufficient_context": 0.01
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 258,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 807,
+            "output_tokens": 80
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "no_conflict",
+              "confidence": 0.9,
+              "probabilities": {
+                "conflict_resolved_by_precedence": 0,
+                "insufficient_context": 0.01,
+                "no_semantic_relation": 0.07,
+                "no_conflict": 0.92,
+                "unresolved_contradiction": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-16",
+      "kind": "pair",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-16.a",
+          "section": "Localization",
+          "authority_rank": 4,
+          "text_sha256": "ab1d655df1146cbc16fcadb7c61ffaa7cb65063ca2ea11103447c0b25239fda8"
+        },
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-16.b",
+          "section": "Security",
+          "authority_rank": 4,
+          "text_sha256": "10fd1ebe2b406993b87adca86f516601d06249e47129c1853d05000a89c24e7c"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "NO_FINDING",
+      "expected_outcome": [
+        "NO_FINDING"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "pair_relation": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "RESOLVED_CONFLICT": 0,
+              "CONFLICT": 0,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0,
+              "CONFLICT": 0,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0,
+              "CONFLICT": 0,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0,
+              "CONFLICT": 0,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0,
+              "CONFLICT": 0,
+              "INSUFFICIENT": 0
+            }
+          ],
+          "max_probability_spread": 0,
+          "expectation": {
+            "expected": [
+              "no_semantic_relation"
+            ],
+            "top_option": "no_semantic_relation",
+            "expected_mass": 0.99,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 242,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 801,
+            "output_tokens": 82
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "no_semantic_relation",
+              "confidence": 0.98,
+              "probabilities": {
+                "insufficient_context": 0,
+                "no_semantic_relation": 0.99,
+                "conflict_resolved_by_precedence": 0,
+                "no_conflict": 0.01,
+                "unresolved_contradiction": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 295,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 801,
+            "output_tokens": 82
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "no_semantic_relation",
+              "confidence": 0.99,
+              "probabilities": {
+                "no_conflict": 0.01,
+                "unresolved_contradiction": 0,
+                "no_semantic_relation": 0.99,
+                "insufficient_context": 0,
+                "conflict_resolved_by_precedence": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 259,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 801,
+            "output_tokens": 82
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "no_semantic_relation",
+              "confidence": 0.98,
+              "probabilities": {
+                "no_semantic_relation": 0.99,
+                "insufficient_context": 0,
+                "no_conflict": 0.01,
+                "unresolved_contradiction": 0,
+                "conflict_resolved_by_precedence": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 289,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 801,
+            "output_tokens": 82
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "no_semantic_relation",
+              "confidence": 0.99,
+              "probabilities": {
+                "insufficient_context": 0,
+                "no_conflict": 0.01,
+                "no_semantic_relation": 0.99,
+                "unresolved_contradiction": 0,
+                "conflict_resolved_by_precedence": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 315,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 801,
+            "output_tokens": 82
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "no_semantic_relation",
+              "confidence": 0.99,
+              "probabilities": {
+                "conflict_resolved_by_precedence": 0,
+                "insufficient_context": 0,
+                "no_semantic_relation": 0.99,
+                "no_conflict": 0.01,
+                "unresolved_contradiction": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-17",
+      "kind": "pair",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-17.a",
+          "section": "Releases",
+          "authority_rank": 4,
+          "text_sha256": "02af77263f052996f0aefa328492fc26acb2aac38f51b00b4a47b294dbc319fb"
+        },
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-17.b",
+          "section": "Contributing",
+          "authority_rank": 4,
+          "text_sha256": "8f246fe988452b13387cfeb8357a8a472e8e1441c5b967e8d300ae73bd349c8f"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "CONFLICT",
+      "expected_outcome": [
+        "CONFLICT"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "pair_relation": {
+          "finding": "CONFLICT",
+          "finding_per_repeat": [
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT"
+          ],
+          "mass_per_repeat": [
+            {
+              "RESOLVED_CONFLICT": 0.08,
+              "CONFLICT": 0.91,
+              "INSUFFICIENT": 0.01
+            },
+            {
+              "RESOLVED_CONFLICT": 0.07,
+              "CONFLICT": 0.92,
+              "INSUFFICIENT": 0.01
+            },
+            {
+              "RESOLVED_CONFLICT": 0.06,
+              "CONFLICT": 0.93,
+              "INSUFFICIENT": 0.01
+            },
+            {
+              "RESOLVED_CONFLICT": 0.07,
+              "CONFLICT": 0.93,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.06,
+              "CONFLICT": 0.93,
+              "INSUFFICIENT": 0.01
+            }
+          ],
+          "max_probability_spread": 0.020000000000000018,
+          "expectation": {
+            "expected": [
+              "unresolved_contradiction"
+            ],
+            "top_option": "unresolved_contradiction",
+            "expected_mass": 0.91,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 288,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 807,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.89,
+              "probabilities": {
+                "no_semantic_relation": 0,
+                "no_conflict": 0,
+                "insufficient_context": 0.01,
+                "conflict_resolved_by_precedence": 0.08,
+                "unresolved_contradiction": 0.91
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 249,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 807,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.9,
+              "probabilities": {
+                "no_conflict": 0,
+                "insufficient_context": 0.01,
+                "no_semantic_relation": 0,
+                "conflict_resolved_by_precedence": 0.07,
+                "unresolved_contradiction": 0.92
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 283,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 807,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.92,
+              "probabilities": {
+                "no_conflict": 0,
+                "unresolved_contradiction": 0.93,
+                "insufficient_context": 0.01,
+                "conflict_resolved_by_precedence": 0.06,
+                "no_semantic_relation": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 254,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 807,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.9,
+              "probabilities": {
+                "conflict_resolved_by_precedence": 0.07,
+                "insufficient_context": 0,
+                "no_semantic_relation": 0,
+                "no_conflict": 0,
+                "unresolved_contradiction": 0.93
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 242,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 807,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.92,
+              "probabilities": {
+                "no_conflict": 0,
+                "insufficient_context": 0.01,
+                "no_semantic_relation": 0,
+                "conflict_resolved_by_precedence": 0.06,
+                "unresolved_contradiction": 0.93
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-18",
+      "kind": "pair",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-18.a",
+          "section": "Git and external mutations",
+          "authority_rank": 4,
+          "text_sha256": "140acea88d9191326f0f82d969f72331e9cced3ec1fc7b02d71b20d4d289c8dd"
+        },
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-18.b",
+          "section": "Automation",
+          "authority_rank": 4,
+          "text_sha256": "947b649dc5cd8a49e9dac3396d01c186e16207c6a1a5717a7dfb1a8fdf422785"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "CONFLICT",
+      "expected_outcome": [
+        "CONFLICT"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "pair_relation": {
+          "finding": "CONFLICT",
+          "finding_per_repeat": [
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT"
+          ],
+          "mass_per_repeat": [
+            {
+              "RESOLVED_CONFLICT": 0.16,
+              "CONFLICT": 0.62,
+              "INSUFFICIENT": 0.01
+            },
+            {
+              "RESOLVED_CONFLICT": 0.12,
+              "CONFLICT": 0.71,
+              "INSUFFICIENT": 0.01
+            },
+            {
+              "RESOLVED_CONFLICT": 0.14,
+              "CONFLICT": 0.65,
+              "INSUFFICIENT": 0.01
+            },
+            {
+              "RESOLVED_CONFLICT": 0.16,
+              "CONFLICT": 0.62,
+              "INSUFFICIENT": 0.01
+            },
+            {
+              "RESOLVED_CONFLICT": 0.12,
+              "CONFLICT": 0.67,
+              "INSUFFICIENT": 0.01
+            }
+          ],
+          "max_probability_spread": 0.08999999999999997,
+          "expectation": {
+            "expected": [
+              "unresolved_contradiction"
+            ],
+            "top_option": "unresolved_contradiction",
+            "expected_mass": 0.62,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 351,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 822,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.54,
+              "probabilities": {
+                "unresolved_contradiction": 0.62,
+                "no_semantic_relation": 0,
+                "insufficient_context": 0.01,
+                "conflict_resolved_by_precedence": 0.16,
+                "no_conflict": 0.21
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 231,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 822,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.63,
+              "probabilities": {
+                "conflict_resolved_by_precedence": 0.12,
+                "no_semantic_relation": 0,
+                "insufficient_context": 0.01,
+                "unresolved_contradiction": 0.71,
+                "no_conflict": 0.16
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 275,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 822,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.57,
+              "probabilities": {
+                "conflict_resolved_by_precedence": 0.14,
+                "insufficient_context": 0.01,
+                "no_conflict": 0.2,
+                "no_semantic_relation": 0,
+                "unresolved_contradiction": 0.65
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 252,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 822,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.53,
+              "probabilities": {
+                "no_conflict": 0.21,
+                "no_semantic_relation": 0,
+                "unresolved_contradiction": 0.62,
+                "insufficient_context": 0.01,
+                "conflict_resolved_by_precedence": 0.16
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 295,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 822,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.59,
+              "probabilities": {
+                "insufficient_context": 0.01,
+                "no_semantic_relation": 0,
+                "conflict_resolved_by_precedence": 0.12,
+                "no_conflict": 0.2,
+                "unresolved_contradiction": 0.67
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-19",
+      "kind": "pair",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-19.a",
+          "section": "Deployment",
+          "authority_rank": 4,
+          "text_sha256": "665b863d221937b99b3f008ab706df6d53bcee1f5cd63d11ecbcf42891e468ad"
+        },
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-19.b",
+          "section": "Deployment checks",
+          "authority_rank": 4,
+          "text_sha256": "85e12e55bb53f67dd86c4c4794ae5722bd853736376311f1115599975cc95d50"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "NO_FINDING",
+      "expected_outcome": [
+        "NO_FINDING"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "pair_relation": {
+          "finding": "NO_FINDING",
+          "finding_per_repeat": [
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING",
+            "NO_FINDING"
+          ],
+          "mass_per_repeat": [
+            {
+              "RESOLVED_CONFLICT": 0.01,
+              "CONFLICT": 0.09,
+              "INSUFFICIENT": 0.02
+            },
+            {
+              "RESOLVED_CONFLICT": 0.01,
+              "CONFLICT": 0.1,
+              "INSUFFICIENT": 0.02
+            },
+            {
+              "RESOLVED_CONFLICT": 0.01,
+              "CONFLICT": 0.12,
+              "INSUFFICIENT": 0.03
+            },
+            {
+              "RESOLVED_CONFLICT": 0.01,
+              "CONFLICT": 0.12,
+              "INSUFFICIENT": 0.04
+            },
+            {
+              "RESOLVED_CONFLICT": 0.01,
+              "CONFLICT": 0.11,
+              "INSUFFICIENT": 0.03
+            }
+          ],
+          "max_probability_spread": 0.04999999999999993,
+          "expectation": {
+            "expected": [
+              "no_conflict"
+            ],
+            "top_option": "no_conflict",
+            "expected_mass": 0.85,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 266,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 799,
+            "output_tokens": 80
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "no_conflict",
+              "confidence": 0.81,
+              "probabilities": {
+                "no_semantic_relation": 0.03,
+                "no_conflict": 0.85,
+                "conflict_resolved_by_precedence": 0.01,
+                "unresolved_contradiction": 0.09,
+                "insufficient_context": 0.02
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 240,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 799,
+            "output_tokens": 80
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "no_conflict",
+              "confidence": 0.81,
+              "probabilities": {
+                "no_conflict": 0.84,
+                "unresolved_contradiction": 0.1,
+                "no_semantic_relation": 0.03,
+                "insufficient_context": 0.02,
+                "conflict_resolved_by_precedence": 0.01
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 273,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 799,
+            "output_tokens": 80
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "no_conflict",
+              "confidence": 0.75,
+              "probabilities": {
+                "unresolved_contradiction": 0.12,
+                "no_semantic_relation": 0.03,
+                "conflict_resolved_by_precedence": 0.01,
+                "no_conflict": 0.81,
+                "insufficient_context": 0.03
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 277,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 799,
+            "output_tokens": 80
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "no_conflict",
+              "confidence": 0.76,
+              "probabilities": {
+                "no_semantic_relation": 0.03,
+                "no_conflict": 0.8,
+                "conflict_resolved_by_precedence": 0.01,
+                "unresolved_contradiction": 0.12,
+                "insufficient_context": 0.04
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 268,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 799,
+            "output_tokens": 80
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "no_conflict",
+              "confidence": 0.76,
+              "probabilities": {
+                "conflict_resolved_by_precedence": 0.01,
+                "insufficient_context": 0.03,
+                "no_semantic_relation": 0.05,
+                "no_conflict": 0.8,
+                "unresolved_contradiction": 0.11
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "hold-20",
+      "kind": "pair",
+      "subjects": [
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-20.a",
+          "section": "Export tools",
+          "authority_rank": 4,
+          "text_sha256": "9a09bab9db27d3f21c76d6964ebd8d09a9aa9c40e67883d42e63631a9673fa63"
+        },
+        {
+          "document": "synthetic governance document",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#hold-20.b",
+          "section": "Ledger export",
+          "authority_rank": 4,
+          "text_sha256": "bd8925ea5916978c10f418b08fd3ab438348fcb6b911be512dc1dfd8b98fdda5"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "CONFLICT",
+      "expected_outcome": [
+        "INSUFFICIENT"
+      ],
+      "outcome_matches": false,
+      "questions": {
+        "pair_relation": {
+          "finding": "CONFLICT",
+          "finding_per_repeat": [
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT"
+          ],
+          "mass_per_repeat": [
+            {
+              "RESOLVED_CONFLICT": 0.05,
+              "CONFLICT": 0.69,
+              "INSUFFICIENT": 0.21
+            },
+            {
+              "RESOLVED_CONFLICT": 0.04,
+              "CONFLICT": 0.73,
+              "INSUFFICIENT": 0.18
+            },
+            {
+              "RESOLVED_CONFLICT": 0.06,
+              "CONFLICT": 0.69,
+              "INSUFFICIENT": 0.2
+            },
+            {
+              "RESOLVED_CONFLICT": 0.05,
+              "CONFLICT": 0.69,
+              "INSUFFICIENT": 0.21
+            },
+            {
+              "RESOLVED_CONFLICT": 0.04,
+              "CONFLICT": 0.68,
+              "INSUFFICIENT": 0.23
+            }
+          ],
+          "max_probability_spread": 0.05000000000000002,
+          "expectation": {
+            "expected": [
+              "insufficient_context"
+            ],
+            "top_option": "unresolved_contradiction",
+            "expected_mass": 0.21,
+            "top_matches": false
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 264,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 807,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.62,
+              "probabilities": {
+                "insufficient_context": 0.21,
+                "no_conflict": 0.04,
+                "no_semantic_relation": 0.01,
+                "unresolved_contradiction": 0.69,
+                "conflict_resolved_by_precedence": 0.05
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 248,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 807,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.67,
+              "probabilities": {
+                "unresolved_contradiction": 0.73,
+                "no_semantic_relation": 0.01,
+                "insufficient_context": 0.18,
+                "conflict_resolved_by_precedence": 0.04,
+                "no_conflict": 0.04
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 266,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 807,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.62,
+              "probabilities": {
+                "insufficient_context": 0.2,
+                "no_conflict": 0.04,
+                "no_semantic_relation": 0.01,
+                "unresolved_contradiction": 0.69,
+                "conflict_resolved_by_precedence": 0.06
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 302,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 807,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.62,
+              "probabilities": {
+                "conflict_resolved_by_precedence": 0.05,
+                "no_semantic_relation": 0.01,
+                "unresolved_contradiction": 0.69,
+                "no_conflict": 0.04,
+                "insufficient_context": 0.21
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 270,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 807,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.61,
+              "probabilities": {
+                "insufficient_context": 0.23,
+                "no_semantic_relation": 0.01,
+                "conflict_resolved_by_precedence": 0.04,
+                "no_conflict": 0.03,
+                "unresolved_contradiction": 0.68
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "OWNER-01",
+      "kind": "pair",
+      "subjects": [
+        {
+          "document": "owner-authored governance scenario",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#OWNER-01.a",
+          "section": "OWNER-01 rule A",
+          "authority_rank": 4,
+          "text_sha256": "f7503ffc4cba3c0ff446b36e9e371eac41928c6b3a08f263a0a571027a6a76b2"
+        },
+        {
+          "document": "owner-authored governance scenario",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#OWNER-01.b",
+          "section": "OWNER-01 rule B",
+          "authority_rank": 4,
+          "text_sha256": "b0474fc71f57ee1db2c2d9311746a887b6d6bf0466c302cd48c02b8a745866b8"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "CONFLICT",
+      "expected_outcome": [
+        "CONFLICT"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "pair_relation": {
+          "finding": "CONFLICT",
+          "finding_per_repeat": [
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT"
+          ],
+          "mass_per_repeat": [
+            {
+              "RESOLVED_CONFLICT": 0.05,
+              "CONFLICT": 0.95,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.05,
+              "CONFLICT": 0.95,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.04,
+              "CONFLICT": 0.96,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.05,
+              "CONFLICT": 0.95,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.06,
+              "CONFLICT": 0.94,
+              "INSUFFICIENT": 0
+            }
+          ],
+          "max_probability_spread": 0.020000000000000018,
+          "expectation": {
+            "expected": [
+              "unresolved_contradiction"
+            ],
+            "top_option": "unresolved_contradiction",
+            "expected_mass": 0.95,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 286,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 836,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.93,
+              "probabilities": {
+                "unresolved_contradiction": 0.95,
+                "no_semantic_relation": 0,
+                "conflict_resolved_by_precedence": 0.05,
+                "no_conflict": 0,
+                "insufficient_context": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 243,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 836,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.94,
+              "probabilities": {
+                "insufficient_context": 0,
+                "no_semantic_relation": 0,
+                "conflict_resolved_by_precedence": 0.05,
+                "no_conflict": 0,
+                "unresolved_contradiction": 0.95
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 286,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 836,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.94,
+              "probabilities": {
+                "no_conflict": 0,
+                "unresolved_contradiction": 0.96,
+                "no_semantic_relation": 0,
+                "insufficient_context": 0,
+                "conflict_resolved_by_precedence": 0.04
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 304,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 836,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.93,
+              "probabilities": {
+                "conflict_resolved_by_precedence": 0.05,
+                "no_semantic_relation": 0,
+                "insufficient_context": 0,
+                "no_conflict": 0,
+                "unresolved_contradiction": 0.95
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 271,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 836,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.92,
+              "probabilities": {
+                "no_semantic_relation": 0,
+                "no_conflict": 0,
+                "conflict_resolved_by_precedence": 0.06,
+                "unresolved_contradiction": 0.94,
+                "insufficient_context": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "OWNER-02",
+      "kind": "pair",
+      "subjects": [
+        {
+          "document": "owner-authored governance scenario",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#OWNER-02.a",
+          "section": "OWNER-02 rule A",
+          "authority_rank": 4,
+          "text_sha256": "f450aeeb60606bd662aebf60347a92dc4ac05a44e10389c3e07a7a9a3efa0fba"
+        },
+        {
+          "document": "owner-authored governance scenario",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#OWNER-02.b",
+          "section": "OWNER-02 rule B",
+          "authority_rank": 4,
+          "text_sha256": "67c0e34d7a346e4560f0cb90541f29a92f2ce39d6830ba8df64f2b4fdb5feeef"
+        }
+      ],
+      "precedence_sha256": null,
+      "finding": "CONFLICT",
+      "expected_outcome": [
+        "CONFLICT"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "pair_relation": {
+          "finding": "CONFLICT",
+          "finding_per_repeat": [
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT",
+            "CONFLICT"
+          ],
+          "mass_per_repeat": [
+            {
+              "RESOLVED_CONFLICT": 0.07,
+              "CONFLICT": 0.92,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.07,
+              "CONFLICT": 0.92,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.05,
+              "CONFLICT": 0.94,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.05,
+              "CONFLICT": 0.93,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.05,
+              "CONFLICT": 0.93,
+              "INSUFFICIENT": 0
+            }
+          ],
+          "max_probability_spread": 0.020000000000000004,
+          "expectation": {
+            "expected": [
+              "unresolved_contradiction"
+            ],
+            "top_option": "unresolved_contradiction",
+            "expected_mass": 0.92,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 243,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 835,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.9,
+              "probabilities": {
+                "conflict_resolved_by_precedence": 0.07,
+                "insufficient_context": 0,
+                "no_conflict": 0.01,
+                "unresolved_contradiction": 0.92,
+                "no_semantic_relation": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 243,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 835,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.9,
+              "probabilities": {
+                "no_conflict": 0.01,
+                "insufficient_context": 0,
+                "conflict_resolved_by_precedence": 0.07,
+                "unresolved_contradiction": 0.92,
+                "no_semantic_relation": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 277,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 835,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.92,
+              "probabilities": {
+                "no_conflict": 0.01,
+                "insufficient_context": 0,
+                "no_semantic_relation": 0,
+                "conflict_resolved_by_precedence": 0.05,
+                "unresolved_contradiction": 0.94
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 262,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 835,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.91,
+              "probabilities": {
+                "insufficient_context": 0,
+                "no_semantic_relation": 0,
+                "conflict_resolved_by_precedence": 0.05,
+                "no_conflict": 0.01,
+                "unresolved_contradiction": 0.93
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 239,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 835,
+            "output_tokens": 85
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "unresolved_contradiction",
+              "confidence": 0.91,
+              "probabilities": {
+                "no_semantic_relation": 0,
+                "no_conflict": 0.02,
+                "conflict_resolved_by_precedence": 0.05,
+                "unresolved_contradiction": 0.93,
+                "insufficient_context": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "OWNER-03",
+      "kind": "pair",
+      "subjects": [
+        {
+          "document": "owner-authored governance scenario",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#OWNER-03.a",
+          "section": "OWNER-03 rule A",
+          "authority_rank": 4,
+          "text_sha256": "c221cc2cdcbf8109894201da38e4a24bd098728b0d74037bc0ebad1a73eee946"
+        },
+        {
+          "document": "owner-authored governance scenario",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#OWNER-03.b",
+          "section": "OWNER-03 rule B",
+          "authority_rank": 1,
+          "text_sha256": "b01adee7c5ee10c1406f3d50a698e4f7881cb862d807131c3fe6ff13517f1083"
+        }
+      ],
+      "precedence_sha256": "e905313d840e50cc2d7e360695009ed1fe89d6aa6bdcbdf6e5c52727c6e5dee9",
+      "finding": "RESOLVED_CONFLICT",
+      "expected_outcome": [
+        "NO_FINDING"
+      ],
+      "outcome_matches": false,
+      "questions": {
+        "pair_relation": {
+          "finding": "RESOLVED_CONFLICT",
+          "finding_per_repeat": [
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT"
+          ],
+          "mass_per_repeat": [
+            {
+              "RESOLVED_CONFLICT": 0.78,
+              "CONFLICT": 0.01,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.78,
+              "CONFLICT": 0.01,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.82,
+              "CONFLICT": 0.01,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.8,
+              "CONFLICT": 0.01,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 0.77,
+              "CONFLICT": 0.01,
+              "INSUFFICIENT": 0
+            }
+          ],
+          "max_probability_spread": 0.04999999999999999,
+          "expectation": {
+            "expected": [
+              "no_conflict"
+            ],
+            "top_option": "conflict_resolved_by_precedence",
+            "expected_mass": 0.21,
+            "top_matches": false
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 255,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 947,
+            "output_tokens": 86
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "conflict_resolved_by_precedence",
+              "confidence": 0.73,
+              "probabilities": {
+                "no_semantic_relation": 0,
+                "no_conflict": 0.21,
+                "conflict_resolved_by_precedence": 0.78,
+                "unresolved_contradiction": 0.01,
+                "insufficient_context": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 254,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 947,
+            "output_tokens": 86
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "conflict_resolved_by_precedence",
+              "confidence": 0.72,
+              "probabilities": {
+                "no_semantic_relation": 0,
+                "conflict_resolved_by_precedence": 0.78,
+                "unresolved_contradiction": 0.01,
+                "no_conflict": 0.21,
+                "insufficient_context": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 288,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 947,
+            "output_tokens": 86
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "conflict_resolved_by_precedence",
+              "confidence": 0.77,
+              "probabilities": {
+                "no_conflict": 0.17,
+                "unresolved_contradiction": 0.01,
+                "no_semantic_relation": 0,
+                "insufficient_context": 0,
+                "conflict_resolved_by_precedence": 0.82
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 266,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 947,
+            "output_tokens": 86
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "conflict_resolved_by_precedence",
+              "confidence": 0.75,
+              "probabilities": {
+                "no_semantic_relation": 0,
+                "insufficient_context": 0,
+                "no_conflict": 0.19,
+                "unresolved_contradiction": 0.01,
+                "conflict_resolved_by_precedence": 0.8
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 362,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 947,
+            "output_tokens": 86
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "conflict_resolved_by_precedence",
+              "confidence": 0.72,
+              "probabilities": {
+                "conflict_resolved_by_precedence": 0.77,
+                "insufficient_context": 0,
+                "no_semantic_relation": 0,
+                "no_conflict": 0.22,
+                "unresolved_contradiction": 0.01
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "request_id": "OWNER-04",
+      "kind": "pair",
+      "subjects": [
+        {
+          "document": "owner-authored governance scenario",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#OWNER-04.a",
+          "section": "OWNER-04 rule A",
+          "authority_rank": 6,
+          "text_sha256": "f598381a1cbb87b41ed211a2c17aeb8b28067b6372b56667ddd8ba6c1d585a0c"
+        },
+        {
+          "document": "owner-authored governance scenario",
+          "rule_id": "tests/fixtures/semantic-audit/holdout/cases.json#OWNER-04.b",
+          "section": "OWNER-04 rule B",
+          "authority_rank": 1,
+          "text_sha256": "ecc69e9fff75b615fdfa7feb6f7c33d6e1ad4cd6312be4c676eb1e6b234c82b6"
+        }
+      ],
+      "precedence_sha256": "e905313d840e50cc2d7e360695009ed1fe89d6aa6bdcbdf6e5c52727c6e5dee9",
+      "finding": "RESOLVED_CONFLICT",
+      "expected_outcome": [
+        "RESOLVED_CONFLICT"
+      ],
+      "outcome_matches": true,
+      "questions": {
+        "pair_relation": {
+          "finding": "RESOLVED_CONFLICT",
+          "finding_per_repeat": [
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT",
+            "RESOLVED_CONFLICT"
+          ],
+          "mass_per_repeat": [
+            {
+              "RESOLVED_CONFLICT": 1,
+              "CONFLICT": 0,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 1,
+              "CONFLICT": 0,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 1,
+              "CONFLICT": 0,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 1,
+              "CONFLICT": 0,
+              "INSUFFICIENT": 0
+            },
+            {
+              "RESOLVED_CONFLICT": 1,
+              "CONFLICT": 0,
+              "INSUFFICIENT": 0
+            }
+          ],
+          "max_probability_spread": 0,
+          "expectation": {
+            "expected": [
+              "conflict_resolved_by_precedence"
+            ],
+            "top_option": "conflict_resolved_by_precedence",
+            "expected_mass": 1,
+            "top_matches": true
+          }
+        }
+      },
+      "repeats": [
+        {
+          "latency_ms": 256,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 924,
+            "output_tokens": 86
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "conflict_resolved_by_precedence",
+              "confidence": 1,
+              "probabilities": {
+                "no_conflict": 0,
+                "insufficient_context": 0,
+                "conflict_resolved_by_precedence": 1,
+                "no_semantic_relation": 0,
+                "unresolved_contradiction": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 287,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 924,
+            "output_tokens": 86
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "conflict_resolved_by_precedence",
+              "confidence": 1,
+              "probabilities": {
+                "insufficient_context": 0,
+                "no_conflict": 0,
+                "no_semantic_relation": 0,
+                "conflict_resolved_by_precedence": 1,
+                "unresolved_contradiction": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 289,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 924,
+            "output_tokens": 86
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "conflict_resolved_by_precedence",
+              "confidence": 1,
+              "probabilities": {
+                "unresolved_contradiction": 0,
+                "insufficient_context": 0,
+                "conflict_resolved_by_precedence": 1,
+                "no_conflict": 0,
+                "no_semantic_relation": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 273,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 924,
+            "output_tokens": 86
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "conflict_resolved_by_precedence",
+              "confidence": 1,
+              "probabilities": {
+                "conflict_resolved_by_precedence": 1,
+                "insufficient_context": 0,
+                "no_conflict": 0,
+                "no_semantic_relation": 0,
+                "unresolved_contradiction": 0
+              }
+            }
+          }
+        },
+        {
+          "latency_ms": 242,
+          "resolved_model": "jev-1.13.0",
+          "usage": {
+            "input_tokens": 924,
+            "output_tokens": 86
+          },
+          "answers": {
+            "pair_relation": {
+              "type": "choice",
+              "choice": "conflict_resolved_by_precedence",
+              "confidence": 1,
+              "probabilities": {
+                "no_conflict": 0,
+                "conflict_resolved_by_precedence": 1,
+                "insufficient_context": 0,
+                "unresolved_contradiction": 0,
+                "no_semantic_relation": 0
+              }
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "report_sha256": "1fda93441e3411edb8eae9bc951f0458873827c1b5c1d1ecb884843125c39471"
+}

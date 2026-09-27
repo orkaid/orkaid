@@ -1,0 +1,18 @@
+{
+  "calibration": {
+    "report": "2026-09-27T11-42-14-998Z-calibration.json",
+    "manifest": "calibration-manifest.json",
+    "profile": "profile-0.1.0-uncalibrated.json"
+  },
+  "holdout": {
+    "report": "2026-09-27T12-00-07-819Z-holdout.json",
+    "manifest": "holdout-manifest.json",
+    "profile": "profile-0.2.0.json"
+  },
+  "corpora": {
+    "calibration": "calibration-cases.json",
+    "holdout": "holdout-cases.json",
+    "owner": "holdout-owner-cases.json"
+  },
+  "policy": "policy.ts"
+}
