@@ -48,16 +48,22 @@
       "unitCode": "C62",
       "quantity": "3",
       "unitPrice": "0.335",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     },
     {
       "name": "Sonderanfertigung",
       "unitCode": "KGM",
       "quantity": "2.5",
       "unitPrice": "1.999",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     }
   ]
 }

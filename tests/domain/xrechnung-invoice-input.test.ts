@@ -9,7 +9,7 @@ import { calculateInvoiceTotals, PROVISIONAL_MAX_REPORTED_ERRORS } from '../../s
 type Options = Parameters<typeof calculateInvoiceTotals>[1];
 
 function line(quantity: string, unitPrice: string, vatRate = '19') {
-  return { quantity, unitPrice, vatCategory: 'S', vatRate };
+  return { quantity, unitPrice, vat: { treatment: 'standard', category: 'S', rate: vatRate } };
 }
 
 function invoice(lines: unknown, overrides: Record<string, unknown> = {}) {
@@ -138,15 +138,16 @@ test('one line beyond the bound is identifiable as truncated, with the first uns
 });
 
 test('a truncated list keeps every existing error and path; the marker is the only addition, and last', () => {
-  // Each of these lines yields 4 errors (quantity, unitPrice, vatCategory, vatRate). Scanning stops after the
-  // first line at which the collected count reaches CAP, i.e. after ceil(CAP / 4) lines.
-  const bad = { quantity: 'x', unitPrice: 'y', vatCategory: 'Z', vatRate: '1' };
+  // Each of these lines yields 4 errors (quantity, unitPrice, vat.category, vat.rate; treatment is valid so it
+  // contributes none). Scanning stops after the first line at which the collected count reaches CAP, i.e. after
+  // ceil(CAP / 4) lines.
+  const bad = { quantity: 'x', unitPrice: 'y', vat: { treatment: 'standard', category: 'Z', rate: '1' } };
   const scanned = Math.ceil(CAP / 4);
   const expected = Array.from({ length: scanned }, (_unused, index) => [
     { code: 'invalid_decimal', path: `lines[${index}].quantity` },
     { code: 'invalid_decimal', path: `lines[${index}].unitPrice` },
-    { code: 'unsupported_vat_category', path: `lines[${index}].vatCategory` },
-    { code: 'unsupported_vat_rate', path: `lines[${index}].vatRate` },
+    { code: 'unsupported_vat_category', path: `lines[${index}].vat.category` },
+    { code: 'unsupported_vat_rate', path: `lines[${index}].vat.rate` },
   ]).flat();
 
   const result = failure(invoice(Array.from({ length: scanned + 10 }, () => bad)));
@@ -214,44 +215,77 @@ test('German notation accepts 19,00 and 7,0 as the same rates', () => {
 test('English notation accepts 19.00 and rejects the German spelling 19,00', () => {
   assert.deepEqual(ok(invoice([line('1', '100.00', '19.00')]), { notation: 'en' }).vatBreakdown.map((b) => b.rate), ['19']);
   assert.deepEqual(errors(invoice([line('1', '100.00', '19,00')]), { notation: 'en' }), [
-    { code: 'unsupported_vat_rate', path: 'lines[0].vatRate' },
+    { code: 'unsupported_vat_rate', path: 'lines[0].vat.rate' },
   ]);
 });
 
 test('localized grouping is never mistaken for a supported rate', () => {
   // In German "19.000" is nineteen thousand; in English "19,000" is nineteen thousand.
   assert.deepEqual(errors(invoice([line('1', '1,00', '19.000')]), { notation: 'de' }), [
-    { code: 'unsupported_vat_rate', path: 'lines[0].vatRate' },
+    { code: 'unsupported_vat_rate', path: 'lines[0].vat.rate' },
   ]);
   assert.deepEqual(errors(invoice([line('1', '1.00', '19,000')]), { notation: 'en' }), [
-    { code: 'unsupported_vat_rate', path: 'lines[0].vatRate' },
+    { code: 'unsupported_vat_rate', path: 'lines[0].vat.rate' },
   ]);
   // German "19.00" is a malformed group, not 19.00 %.
   assert.deepEqual(errors(invoice([line('1', '1,00', '19.00')]), { notation: 'de' }), [
-    { code: 'unsupported_vat_rate', path: 'lines[0].vatRate' },
+    { code: 'unsupported_vat_rate', path: 'lines[0].vat.rate' },
   ]);
 });
 
 test('near-miss rates stay unsupported in every notation', () => {
   for (const [vatRate, notation] of [['19,01', 'de'], ['18,99', 'de'], ['7,5', 'de'], ['19.01', 'en'], ['7.5', 'en'], ['19.01', 'canonical']] as const) {
     assert.deepEqual(errors(invoice([line('1', '1', vatRate)]), { notation }), [
-      { code: 'unsupported_vat_rate', path: 'lines[0].vatRate' },
+      { code: 'unsupported_vat_rate', path: 'lines[0].vat.rate' },
     ]);
   }
 });
 
 test('the VAT category is never inferred from the rate', () => {
   // Rate 19 does not make category Z or a missing category valid, and rate 0 does not imply category Z.
-  assert.deepEqual(errors(invoice([{ quantity: '1', unitPrice: '1', vatCategory: 'Z', vatRate: '19' }])), [
-    { code: 'unsupported_vat_category', path: 'lines[0].vatCategory' },
+  assert.deepEqual(errors(invoice([{ quantity: '1', unitPrice: '1', vat: { treatment: 'standard', category: 'Z', rate: '19' } }])), [
+    { code: 'unsupported_vat_category', path: 'lines[0].vat.category' },
   ]);
-  assert.deepEqual(errors(invoice([{ quantity: '1', unitPrice: '1', vatRate: '19.00' }])), [
-    { code: 'unsupported_vat_category', path: 'lines[0].vatCategory' },
+  assert.deepEqual(errors(invoice([{ quantity: '1', unitPrice: '1', vat: { treatment: 'standard', rate: '19.00' } }])), [
+    { code: 'unsupported_vat_category', path: 'lines[0].vat.category' },
   ]);
-  assert.deepEqual(errors(invoice([{ quantity: '1', unitPrice: '1', vatCategory: 'Z', vatRate: '0' }])), [
-    { code: 'unsupported_vat_category', path: 'lines[0].vatCategory' },
-    { code: 'unsupported_vat_rate', path: 'lines[0].vatRate' },
+  assert.deepEqual(errors(invoice([{ quantity: '1', unitPrice: '1', vat: { treatment: 'standard', category: 'Z', rate: '0' } }])), [
+    { code: 'unsupported_vat_category', path: 'lines[0].vat.category' },
+    { code: 'unsupported_vat_rate', path: 'lines[0].vat.rate' },
   ]);
+});
+
+test('the VAT treatment is required and must be "standard": it is never defaulted or inferred', () => {
+  const at = (vat: unknown) => errors(invoice([{ quantity: '1', unitPrice: '1', vat }]));
+  assert.deepEqual(at({ treatment: 'reverse-charge', category: 'S', rate: '19' }), [{ code: 'unsupported_vat_treatment', path: 'lines[0].vat.treatment' }]);
+  assert.deepEqual(at({ treatment: 'Standard', category: 'S', rate: '19' }), [{ code: 'unsupported_vat_treatment', path: 'lines[0].vat.treatment' }]);
+  assert.deepEqual(at({ category: 'S', rate: '19' }), [{ code: 'unsupported_vat_treatment', path: 'lines[0].vat.treatment' }]);
+});
+
+test('a missing or structurally invalid vat object is rejected, never defaulted', () => {
+  const expected = ['treatment', 'category', 'rate'].map((field, i) => ({ code: ['unsupported_vat_treatment', 'unsupported_vat_category', 'unsupported_vat_rate'][i], path: `lines[0].vat.${field}` }));
+  assert.deepEqual(errors(invoice([{ quantity: '1', unitPrice: '1' }])), expected);
+  for (const vat of [null, 'standard', 19, []]) {
+    assert.deepEqual(errors(invoice([{ quantity: '1', unitPrice: '1', vat }])), expected, JSON.stringify(vat));
+  }
+});
+
+test('an unknown field inside vat is rejected', () => {
+  assert.deepEqual(errors(invoice([{ quantity: '1', unitPrice: '1', vat: { treatment: 'standard', category: 'S', rate: '19', reason: 'x' } }])), [
+    { code: 'unknown_field', path: 'lines[0].vat.reason' },
+  ]);
+});
+
+test('the legacy flat line fields vatRate and vatCategory are not accepted as an alias for vat', () => {
+  assert.deepEqual(errors(invoice([{ quantity: '1', unitPrice: '1', vatCategory: 'S', vatRate: '19' }])), [
+    { code: 'unsupported_vat_treatment', path: 'lines[0].vat.treatment' },
+    { code: 'unsupported_vat_category', path: 'lines[0].vat.category' },
+    { code: 'unsupported_vat_rate', path: 'lines[0].vat.rate' },
+    { code: 'unknown_field', path: 'lines[0].vatCategory' },
+    { code: 'unknown_field', path: 'lines[0].vatRate' },
+  ]);
+  // Even next to a valid vat object the legacy fields stay unknown fields.
+  assert.deepEqual(errors(invoice([{ ...line('1', '1'), vatRate: '19' }])), [{ code: 'unknown_field', path: 'lines[0].vatRate' }]);
 });
 
 // ---------------------------------------------------------------- DE / EN / canonical input at invoice level
@@ -329,7 +363,7 @@ test('the provisional input guard is reported per field in every notation', () =
   }
   // The rate field is subject to the same guard; a rate can never be a supported one when it is that long.
   assert.deepEqual(errors(invoice([line('1', '1', '1'.repeat(PROVISIONAL_INPUT_LENGTH_GUARD + 1))])), [
-    { code: 'unsupported_vat_rate', path: 'lines[0].vatRate' },
+    { code: 'unsupported_vat_rate', path: 'lines[0].vat.rate' },
   ]);
 });
 

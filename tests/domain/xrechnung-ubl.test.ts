@@ -236,7 +236,7 @@ test('the notation used to read the input does not matter, and serializing the s
 
 test('the typed scale of quantity and unit price is written as typed, without grouping or exponent', () => {
   const input = withValue(loadFixtureInput('a-simple'), 'lines', [
-    { name: 'x', unitCode: 'C62', quantity: '2.50', unitPrice: '1234567.890', vatCategory: 'S', vatRate: '19.00' },
+    { name: 'x', unitCode: 'C62', quantity: '2.50', unitPrice: '1234567.890', vat: { treatment: 'standard', category: 'S', rate: '19.00' } },
   ]);
   const line = one(parseXml(xmlFor(input)), 'cac:InvoiceLine');
   assert.equal(textAt(line, 'cbc:InvoicedQuantity'), '2.50');

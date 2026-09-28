@@ -75,11 +75,20 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
   return { ok: true, xml: `<?xml version="1.0" encoding="UTF-8"?>\n${render(root, 0).join('\n')}\n` };
 }
 
-// BG-4 carries the seller VAT identifier (BT-31) and the seller contact (BG-6); BG-7 has neither in this profile.
+// BT-32's TaxScheme/ID: the SeMoX UBL binding requires only `!= 'VAT'` (verified against the pinned EN16931-UBL and
+// XRechnung-UBL stylesheets and the official maxRechnung_ubl.xml test instance, which uses an arbitrary non-VAT
+// placeholder). No specific value is mandated by any inspected rule or code list. 'FC' is an Orkaid choice, not an
+// EN16931/XRechnung requirement, reused from the CII binding (which does require it) for cross-syntax consistency.
+const UBL_TAX_REGISTRATION_SCHEME = 'FC';
+
+// BG-4 carries the seller identifiers (BT-29/30/31/32) and the seller contact (BG-6); BG-7 has neither in this
+// profile. Element order follows the UBL 2.1 PartyType sequence: EndpointID, PartyIdentification, PostalAddress,
+// PartyTaxScheme, PartyLegalEntity, Contact.
 function party(source: InvoiceParty, seller?: Invoice['seller']): Element {
   return group(
     'cac:Party',
     leaf('cbc:EndpointID', source.electronicAddress.value, [['schemeID', source.electronicAddress.schemeId]]), // BT-34 / BT-49
+    ...(seller?.sellerIdentifiers.map((identifier) => group('cac:PartyIdentification', leaf('cbc:ID', identifier.value))) ?? []), // BT-29
     group(
       'cac:PostalAddress',
       leaf('cbc:StreetName', source.address.street), // BT-35 / BT-50
@@ -87,8 +96,12 @@ function party(source: InvoiceParty, seller?: Invoice['seller']): Element {
       leaf('cbc:PostalZone', source.address.postCode), // BT-38 / BT-53
       group('cac:Country', leaf('cbc:IdentificationCode', source.address.country)), // BT-40 / BT-55
     ),
-    ...(seller ? [group('cac:PartyTaxScheme', leaf('cbc:CompanyID', seller.vatId), group('cac:TaxScheme', leaf('cbc:ID', 'VAT')))] : []), // BT-31
-    group('cac:PartyLegalEntity', leaf('cbc:RegistrationName', source.name)), // BT-27 / BT-44
+    ...(seller ? sellerTaxSchemes(seller) : []), // BT-31 / BT-32
+    group(
+      'cac:PartyLegalEntity',
+      leaf('cbc:RegistrationName', source.name), // BT-27 / BT-44
+      ...(seller?.legalRegistrationId !== undefined ? [leaf('cbc:CompanyID', seller.legalRegistrationId)] : []), // BT-30
+    ),
     ...(seller
       ? [
           group(
@@ -100,6 +113,15 @@ function party(source: InvoiceParty, seller?: Invoice['seller']): Element {
         ]
       : []),
   );
+}
+
+function sellerTaxSchemes(seller: Invoice['seller']): readonly Element[] {
+  const schemes: Element[] = [];
+  if (seller.vatId !== undefined) schemes.push(group('cac:PartyTaxScheme', leaf('cbc:CompanyID', seller.vatId), group('cac:TaxScheme', leaf('cbc:ID', 'VAT')))); // BT-31
+  if (seller.taxRegistrationId !== undefined) {
+    schemes.push(group('cac:PartyTaxScheme', leaf('cbc:CompanyID', seller.taxRegistrationId), group('cac:TaxScheme', leaf('cbc:ID', UBL_TAX_REGISTRATION_SCHEME)))); // BT-32
+  }
+  return schemes;
 }
 
 function taxTotal(invoice: Invoice, currency: string): Element {
@@ -133,8 +155,8 @@ function invoiceLine(line: InvoiceLine, index: number, currency: string): Elemen
       leaf('cbc:Name', line.name), // BT-153
       group(
         'cac:ClassifiedTaxCategory', // BG-30
-        leaf('cbc:ID', line.vatCategory), // BT-151
-        leaf('cbc:Percent', line.vatRate), // BT-152
+        leaf('cbc:ID', line.vat.category), // BT-151
+        leaf('cbc:Percent', line.vat.rate), // BT-152
         group('cac:TaxScheme', leaf('cbc:ID', 'VAT')),
       ),
     ),

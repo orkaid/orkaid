@@ -48,32 +48,44 @@
       "unitCode": "C62",
       "quantity": "3",
       "unitPrice": "12.347",
-      "vatCategory": "S",
-      "vatRate": "7"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "7"
+      }
     },
     {
       "name": "S1 Beratung B",
       "unitCode": "HUR",
       "quantity": "2.25",
       "unitPrice": "84.99",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     },
     {
       "name": "S1 Material C",
       "unitCode": "KGM",
       "quantity": "1.333",
       "unitPrice": "9.99",
-      "vatCategory": "S",
-      "vatRate": "7"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "7"
+      }
     },
     {
       "name": "S1 Miete D",
       "unitCode": "DAY",
       "quantity": "7",
       "unitPrice": "118.33",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     }
   ]
 }

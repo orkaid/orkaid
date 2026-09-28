@@ -3,9 +3,11 @@
 //   node tools/cii-experiment/manifest.ts           # check: the committed MANIFEST.json matches the files
 //   node tools/cii-experiment/manifest.ts --write   # regenerate MANIFEST.json
 //
-// `files` are the preregistration artifacts; they are checked byte for byte by the test suite. `recorded` holds the
-// identities the future experiment run compares against (runtime, lockfile, the code under test, KoSIT tooling);
-// they are written here but not enforced by the test suite, so ordinary development is not frozen by them.
+// `files` are the preregistration artifacts, all hashed here for the historical record; the active test suite
+// enforces only the frozen oracle/protocol subset of them (DP-0, M1 WP-1 human review 2026-09-27), since the raw
+// input fixtures may legitimately evolve with the semantic model. `recorded` holds the identities the experiment
+// run compared against (runtime, lockfile, the code under test, KoSIT tooling); they are written here but not
+// enforced by the test suite, so ordinary development is not frozen by them.
 
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';

@@ -49,14 +49,14 @@ test('the validated invoice carries the business data and the typed line quantit
   assert.equal(invoice.buyer.address.city, 'Hamburg');
   assert.equal(invoice.payment.iban, 'DE79000000001234567890');
   assert.deepEqual(
-    invoice.lines.map((l) => [l.name, l.unitCode, formatDecimal(l.quantity), formatDecimal(l.unitPrice), l.vatRate]),
+    invoice.lines.map((l) => [l.name, l.unitCode, formatDecimal(l.quantity), formatDecimal(l.unitPrice), l.vat.rate]),
     [['Lieferung Kleinmaterial', 'C62', '3', '0.335', '19'], ['Sonderanfertigung', 'KGM', '2.5', '1.999', '19']],
   );
 });
 
 test('German, English and canonical notation give the same validated invoice', () => {
-  const canonical = { ...base(), lines: [{ ...(base().lines as JsonObject[])[0], quantity: '1234.5', unitPrice: '1234.56', vatRate: '19.00' }] };
-  const german = { ...canonical, lines: [{ ...(canonical.lines[0] as JsonObject), quantity: '1.234,5', unitPrice: '1.234,56', vatRate: '19,00' }] };
+  const canonical = { ...base(), lines: [{ ...(base().lines as JsonObject[])[0], quantity: '1234.5', unitPrice: '1234.56', vat: { treatment: 'standard', category: 'S', rate: '19.00' } }] };
+  const german = { ...canonical, lines: [{ ...(canonical.lines[0] as JsonObject), quantity: '1.234,5', unitPrice: '1.234,56', vat: { treatment: 'standard', category: 'S', rate: '19,00' } }] };
   const english = { ...canonical, lines: [{ ...(canonical.lines[0] as JsonObject), quantity: '1,234.5', unitPrice: '1,234.56' }] };
   const a = buildInvoice(canonical);
   const b = buildInvoice(german, { notation: 'de' });
@@ -82,13 +82,13 @@ test('input outside the implemented profile fails explicitly, per field, without
   const cases: [string, JsonObject, string][] = [
     ['another document type', withValue(base(), 'documentTypeCode', '384'), 'unsupported_document_type@documentTypeCode'],
     ['another currency', withValue(base(), 'currency', 'USD'), 'unsupported_currency@currency'],
-    ['a VAT category other than S', withValue(base(), 'lines.0.vatCategory', 'Z'), 'unsupported_vat_category@lines[0].vatCategory'],
-    ['a rate other than 19 or 7', withValue(base(), 'lines.0.vatRate', '16'), 'unsupported_vat_rate@lines[0].vatRate'],
+    ['a VAT category other than S', withValue(base(), 'lines.0.vat.category', 'Z'), 'unsupported_vat_category@lines[0].vat.category'],
+    ['a rate other than 19 or 7', withValue(base(), 'lines.0.vat.rate', '16'), 'unsupported_vat_rate@lines[0].vat.rate'],
     ['a negative amount', withValue(base(), 'lines.0.unitPrice', '-1.00'), 'negative_amount@lines[0].unitPrice'],
     ['a foreign seller country', withValue(base(), 'seller.address.country', 'AT'), 'unsupported_country@seller.address.country'],
     ['a foreign buyer country', withValue(base(), 'buyer.address.country', 'FR'), 'unsupported_country@buyer.address.country'],
-    ['a seller electronic address scheme other than EM', withValue(base(), 'seller.electronicAddress.schemeId', '0204'), 'unsupported_electronic_address_scheme@seller.electronicAddress.schemeId'],
-    ['a buyer electronic address scheme other than EM', withValue(base(), 'buyer.electronicAddress.schemeId', '9930'), 'unsupported_electronic_address_scheme@buyer.electronicAddress.schemeId'],
+    ['a seller electronic address scheme outside EM / 0204 / 0088', withValue(base(), 'seller.electronicAddress.schemeId', '0009'), 'unsupported_electronic_address_scheme@seller.electronicAddress.schemeId'],
+    ['a buyer electronic address scheme outside EM / 0204 / 0088', withValue(base(), 'buyer.electronicAddress.schemeId', '9930'), 'unsupported_electronic_address_scheme@buyer.electronicAddress.schemeId'],
     ['a payment means code other than 58', withValue(base(), 'payment.meansCode', '30'), 'unsupported_payment_means@payment.meansCode'],
     ['a unit code outside the supported list', withValue(base(), 'lines.0.unitCode', 'ZZZ'), 'unsupported_unit_code@lines[0].unitCode'],
   ];
@@ -104,7 +104,7 @@ test('every supported unit code is accepted, and a code that is not on the list 
 test('out-of-profile errors say "unsupported", never that the input is legally invalid', () => {
   const outOfProfile = [
     withValue(base(), 'seller.address.country', 'AT'),
-    withValue(base(), 'seller.electronicAddress.schemeId', '0204'),
+    withValue(base(), 'seller.electronicAddress.schemeId', '0009'),
     withValue(base(), 'payment.meansCode', '30'),
     withValue(base(), 'lines.0.unitCode', 'ZZZ'),
   ];
@@ -118,9 +118,11 @@ test('out-of-profile errors say "unsupported", never that the input is legally i
 // ------------------------------------------------------------------------------------------- required fields
 
 test('every required business field is reported when it is missing', () => {
+  // seller.vatId (BT-31) is not in this list: since MDR-21 it is one of three disjunctive branches (BT-29/30/31)
+  // that satisfy seller identification, not an unconditionally required field. See the seller-identity tests.
   const required = [
     'invoiceNumber', 'issueDate', 'deliveryDate', 'paymentDueDate', 'buyerReference',
-    'seller', 'seller.name', 'seller.vatId', 'seller.electronicAddress', 'seller.electronicAddress.value',
+    'seller', 'seller.name', 'seller.electronicAddress', 'seller.electronicAddress.value',
     'seller.address', 'seller.address.street', 'seller.address.city', 'seller.address.postCode', 'seller.address.country',
     'seller.contact', 'seller.contact.name', 'seller.contact.telephone', 'seller.contact.email',
     'buyer', 'buyer.name', 'buyer.electronicAddress', 'buyer.address.street', 'buyer.address.city', 'buyer.address.postCode',
@@ -200,6 +202,7 @@ test('dates must be real calendar dates in YYYY-MM-DD form', () => {
 
 test('the seller USt-IdNr must be DE followed by nine digits', () => {
   for (const vatId of ['DE123456789', 'DE000000000']) assert.equal(buildInvoice(withValue(base(), 'seller.vatId', vatId)).ok, true, vatId);
+  // A supplied-but-malformed BT-31 is reported by its own format error only, never additionally as "missing".
   for (const vatId of ['DE12345678', 'DE1234567890', 'de123456789', 'DE 123456789', 'AT123456789', 'DE12345678X', '123456789']) {
     assert.deepEqual(asPairs(withValue(base(), 'seller.vatId', vatId)), ['invalid_vat_id@seller.vatId'], vatId);
   }
@@ -230,13 +233,13 @@ test('contact and electronic addresses: e-mail shape and at least three digits i
 // ------------------------------------------------------------------------------------------- errors: shape and bounds
 
 test('business and monetary errors are reported together, business first, each at its own path', () => {
-  const input = withValue(withValue(withValue(base(), 'invoiceNumber', ''), 'lines.0.quantity', 'x'), 'lines.1.vatRate', '16');
-  assert.deepEqual(asPairs(input), ['empty_text@invoiceNumber', 'invalid_decimal@lines[0].quantity', 'unsupported_vat_rate@lines[1].vatRate']);
+  const input = withValue(withValue(withValue(base(), 'invoiceNumber', ''), 'lines.0.quantity', 'x'), 'lines.1.vat.rate', '16');
+  assert.deepEqual(asPairs(input), ['empty_text@invoiceNumber', 'invalid_decimal@lines[0].quantity', 'unsupported_vat_rate@lines[1].vat.rate']);
   assert.equal(failure(input).truncated, false);
 });
 
 test('the notation applies to the monetary fields only, and an unknown notation is a programming error', () => {
-  const line = { name: 'x', unitCode: 'C62', quantity: '1,5', unitPrice: '49,90', vatCategory: 'S', vatRate: '19' };
+  const line = { name: 'x', unitCode: 'C62', quantity: '1,5', unitPrice: '49,90', vat: { treatment: 'standard', category: 'S', rate: '19' } };
   const german = withValue(base(), 'lines', [line]);
   assert.equal(buildInvoice(german, { notation: 'de' }).ok, true);
   // The same text in canonical notation is a different, malformed number: "1,5" has no canonical reading.
@@ -252,7 +255,7 @@ test('lines: a missing, empty or non-array list is reported', () => {
 });
 
 test('an over-long error list is cut at the provisional bound and identified as incomplete exactly once', () => {
-  const lines = Array.from({ length: PROVISIONAL_MAX_REPORTED_ERRORS + 50 }, () => ({ quantity: '1', unitPrice: '1.00', vatCategory: 'S', vatRate: '19', unitCode: 'C62' }));
+  const lines = Array.from({ length: PROVISIONAL_MAX_REPORTED_ERRORS + 50 }, () => ({ quantity: '1', unitPrice: '1.00', vat: { treatment: 'standard', category: 'S', rate: '19' }, unitCode: 'C62' }));
   const result = failure(withValue(base(), 'lines', lines)); // every line lacks its name
   assert.equal(result.truncated, true);
   assert.equal(result.errors.filter((e) => e.code === 'error_list_truncated').length, 1);
@@ -363,7 +366,7 @@ test('extra non-index properties on the lines array are ignored, only the elemen
 test('when the business scan and the monetary scan both stop early, each names where it stopped', () => {
   // Lines 0-49: no name and no unit code (2 business errors) and an unreadable quantity (1 monetary error).
   // Lines 50-149: only the unreadable quantity. The business scan stops at line 50, the monetary scan at line 100.
-  const lines = Array.from({ length: 150 }, (_, i) => (i < 50 ? { quantity: 'x', unitPrice: '1.00', vatCategory: 'S', vatRate: '19' } : { name: 'n', unitCode: 'C62', quantity: 'x', unitPrice: '1.00', vatCategory: 'S', vatRate: '19' }));
+  const lines = Array.from({ length: 150 }, (_, i) => (i < 50 ? { quantity: 'x', unitPrice: '1.00', vat: { treatment: 'standard', category: 'S', rate: '19' } } : { name: 'n', unitCode: 'C62', quantity: 'x', unitPrice: '1.00', vat: { treatment: 'standard', category: 'S', rate: '19' } }));
   const result = failure(withValue(base(), 'lines', lines));
   assert.equal(result.truncated, true);
   const markers = result.errors.filter((e) => e.code === 'error_list_truncated');

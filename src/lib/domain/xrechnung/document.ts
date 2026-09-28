@@ -17,9 +17,10 @@ import {
   PROVISIONAL_MAX_REPORTED_ERRORS,
   type InvoiceError,
   type InvoiceErrorCode,
+  type InvoiceLineVat,
   type InvoiceOptions,
   type InvoiceTotals,
-  type VatRate,
+  type VatInput,
 } from './invoice.ts';
 import type { Decimal } from './decimal.ts';
 
@@ -37,6 +38,14 @@ export type PartyInput = {
   address: { street: string; city: string; postCode: string; country: string }; // BG-5 / BG-8
 };
 
+/**
+ * BT-29, validated. A plain `{ value }` rather than a bare string: MDR-21 commits no scheme in M1, but keeps the
+ * shape ready to carry one additively later (a `scheme?` field) without changing the collection's element type.
+ */
+export type SellerIdentifier = {
+  readonly value: string;
+};
+
 /** Shape the boundary expects. Every field is validated at runtime. Amounts are decimal strings, never numbers. */
 export type InvoiceDocumentInput = {
   documentTypeCode: string; // BT-3, validated by invoice.ts
@@ -47,7 +56,10 @@ export type InvoiceDocumentInput = {
   paymentDueDate: string; // BT-9, YYYY-MM-DD
   buyerReference: string; // BT-10, buyer-provided business information (not a generated Leitweg-ID)
   seller: PartyInput & {
-    vatId: string; // BT-31
+    sellerIdentifiers?: readonly string[]; // BT-29, 0..n; no scheme in M1 (MDR-21)
+    legalRegistrationId?: string; // BT-30; no scheme in M1 (MDR-21)
+    vatId?: string; // BT-31
+    taxRegistrationId?: string; // BT-32
     contact: { name: string; telephone: string; email: string }; // BG-6: BT-41, BT-42, BT-43
   };
   buyer: PartyInput;
@@ -57,14 +69,19 @@ export type InvoiceDocumentInput = {
     unitCode: string; // BT-130
     quantity: string; // BT-129
     unitPrice: string; // BT-146
-    vatCategory: string; // BT-151
-    vatRate: string; // BT-152
+    vat: VatInput; // BT-151 / BT-152, plus the treatment discriminant
   }[];
 };
 
+// PROFILE: the electronic address schemes (BT-34 / BT-49) M1 commits to, from the CEF EAS list (EXTERNAL: BR-CL-25).
+// A scheme code carries no routing or product meaning here; the list is deliberately not the whole EAS list.
+export const EAS_SCHEMES = ['EM', '0204', '0088'] as const;
+export type EasScheme = (typeof EAS_SCHEMES)[number];
+export type ElectronicAddress = { readonly schemeId: EasScheme; readonly value: string };
+
 export type InvoiceParty = {
   readonly name: string;
-  readonly electronicAddress: { readonly schemeId: 'EM'; readonly value: string };
+  readonly electronicAddress: ElectronicAddress;
   readonly address: { readonly street: string; readonly city: string; readonly postCode: string; readonly country: 'DE' };
 };
 
@@ -73,8 +90,7 @@ export type InvoiceLine = {
   readonly unitCode: UnitCode; // BT-130
   readonly quantity: Decimal; // BT-129, with the scale the caller typed
   readonly unitPrice: Decimal; // BT-146, with the scale the caller typed
-  readonly vatCategory: 'S'; // BT-151
-  readonly vatRate: VatRate; // BT-152
+  readonly vat: InvoiceLineVat; // BT-151 / BT-152, plus the treatment discriminant
   readonly netAmount: Decimal; // BT-131, from the monetary calculation
 };
 
@@ -90,7 +106,10 @@ export type Invoice = {
   readonly paymentDueDate: string; // BT-9
   readonly buyerReference: string; // BT-10
   readonly seller: InvoiceParty & {
-    readonly vatId: string; // BT-31
+    readonly sellerIdentifiers: readonly SellerIdentifier[]; // BT-29, 0..n
+    readonly legalRegistrationId?: string; // BT-30
+    readonly vatId?: string; // BT-31
+    readonly taxRegistrationId?: string; // BT-32
     readonly contact: { readonly name: string; readonly telephone: string; readonly email: string };
   };
   readonly buyer: InvoiceParty;
@@ -114,6 +133,8 @@ export type DocumentErrorCode =
   | 'unsupported_electronic_address_scheme'
   | 'unsupported_payment_means'
   | 'unsupported_unit_code'
+  | 'missing_seller_identification' // BR-CO-26: none of BT-29, BT-30, BT-31 is present
+  | 'missing_seller_tax_identifier' // standard treatment: neither BT-31 nor BT-32 is present
   | 'internal_inconsistency';
 
 export type DocumentError = { readonly code: DocumentErrorCode; readonly path: string };
@@ -129,6 +150,7 @@ export type DocumentResult =
 const DOCUMENT_FIELDS = ['invoiceNumber', 'issueDate', 'deliveryDate', 'paymentDueDate', 'buyerReference', 'seller', 'buyer', 'payment'];
 const LINE_FIELDS = ['name', 'unitCode'];
 const PARTY_FIELDS = ['name', 'electronicAddress', 'address'];
+const SELLER_FIELDS = [...PARTY_FIELDS, 'sellerIdentifiers', 'legalRegistrationId', 'vatId', 'taxRegistrationId', 'contact'];
 const ADDRESS_FIELDS = ['street', 'city', 'postCode', 'country'];
 const ELECTRONIC_ADDRESS_FIELDS = ['schemeId', 'value'];
 
@@ -184,7 +206,7 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
       const data = lineData[String(index)];
       const totalsLine = money.value.totals.lines[index];
       if (data === undefined || totalsLine === undefined) return { ok: false, errors: [{ code: 'internal_inconsistency', path: `lines[${index}]` }], truncated: false };
-      lines.push({ ...data, quantity: calculated.quantity, unitPrice: calculated.unitPrice, vatCategory: 'S', vatRate: calculated.vatRate, netAmount: totalsLine.netAmount });
+      lines.push({ ...data, quantity: calculated.quantity, unitPrice: calculated.unitPrice, vat: calculated.vat, netAmount: totalsLine.netAmount });
     }
     return {
       ok: true,
@@ -223,9 +245,10 @@ function failure(
 
 // Deep copy of own enumerable data properties. Accessors are never executed: a property that is not a plain data
 // property is reported at its path. Containers deeper than the input can legitimately be (root, party or lines,
-// address or line, then only values) are replaced by an empty object, which also ends any cycle. The copy of a huge
-// sparse array stays sparse. Ceiling: a hostile object with very many keys is copied in full (no entry budget).
-const MAX_SNAPSHOT_DEPTH = 3;
+// address or line, then a line's `vat`, then only values) are replaced by an empty object, which also ends any
+// cycle. The copy of a huge sparse array stays sparse. Ceiling: a hostile object with very many keys is copied in
+// full (no entry budget).
+const MAX_SNAPSHOT_DEPTH = 4;
 
 function snapshot(value: unknown, path: string, depth: number, problems: string[]): unknown {
   if (typeof value !== 'object' || value === null) return value;
@@ -278,12 +301,54 @@ function deepFreeze<T>(value: T): T {
 // ------------------------------------------------------------------------------------------------ parties
 
 function readSeller(parent: Record<string, unknown>, errors: DocumentError[]): Invoice['seller'] | undefined {
-  const record = readObject(parent, 'seller', 'seller', [...PARTY_FIELDS, 'vatId', 'contact'], errors);
+  const record = readObject(parent, 'seller', 'seller', SELLER_FIELDS, errors);
   if (record === undefined) return undefined;
+
+  const errorsBefore = errors.length;
   const party = readPartyFields(record, 'seller', errors);
-  const vatId = readVatId(record, 'vatId', 'seller.vatId', errors);
+  const sellerIdentifiers = readSellerIdentifiers(record, errors);
+  const legalRegistrationId = readOptionalText(record, 'legalRegistrationId', 'seller.legalRegistrationId', errors);
+  const vatId = readOptionalVatId(record, 'vatId', 'seller.vatId', errors);
+  const taxRegistrationId = readOptionalText(record, 'taxRegistrationId', 'seller.taxRegistrationId', errors);
   const contact = readContact(record, errors);
-  return party && vatId !== undefined && contact ? { ...party, vatId, contact } : undefined;
+
+  // Presence is read from the raw input, never from the validated value: a supplied-but-malformed field is reported
+  // by its own diagnostic and must not also be reported as missing. An empty BT-29 array supplies nothing; a
+  // non-array BT-29 was supplied (and is reported as invalid_type).
+  const suppliesBt29 = record.sellerIdentifiers !== undefined && !(Array.isArray(record.sellerIdentifiers) && record.sellerIdentifiers.length === 0);
+  const suppliesBt30 = record.legalRegistrationId !== undefined;
+  const suppliesBt31 = record.vatId !== undefined;
+  const suppliesBt32 = record.taxRegistrationId !== undefined;
+
+  // BR-CO-26 (MDR-21): at least one of BT-29, BT-30, BT-31 identifies the seller. BT-32 alone does not satisfy it,
+  // and this invariant is never merged with the tax-identifier rule below -- each fails independently.
+  if (!suppliesBt29 && !suppliesBt30 && !suppliesBt31) {
+    errors.push({ code: 'missing_seller_identification', path: 'seller' });
+  }
+  // Standard-treatment seller tax identifier: BT-31 or BT-32. BT-63/BG-11 (the tax representative branch these
+  // rules also accept) is not implemented in M1, so only these two are checked here (MDR-21).
+  if (!suppliesBt31 && !suppliesBt32) {
+    errors.push({ code: 'missing_seller_tax_identifier', path: 'seller' });
+  }
+
+  if (errors.length > errorsBefore || !party || !contact) return undefined;
+  return { ...party, sellerIdentifiers, legalRegistrationId, vatId, taxRegistrationId, contact };
+}
+
+// BT-29: caller-supplied values, no scheme in M1. Absent is valid (0..n); each present entry is validated as text.
+function readSellerIdentifiers(parent: Record<string, unknown>, errors: DocumentError[]): readonly SellerIdentifier[] {
+  const value = parent.sellerIdentifiers;
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) {
+    errors.push({ code: 'invalid_type', path: 'seller.sellerIdentifiers' });
+    return [];
+  }
+  const identifiers: SellerIdentifier[] = [];
+  for (const [index, entry] of value.entries()) {
+    const text = readTextValue(entry, `seller.sellerIdentifiers[${index}]`, errors);
+    if (text !== undefined) identifiers.push({ value: text });
+  }
+  return identifiers;
 }
 
 function readParty(parent: Record<string, unknown>, key: string, path: string, errors: DocumentError[]): InvoiceParty | undefined {
@@ -301,11 +366,13 @@ function readPartyFields(record: Record<string, unknown>, path: string, errors: 
   const country = address && readChoice(address, 'country', `${path}.address.country`, ['DE'], 'unsupported_country', errors);
 
   const electronic = readObject(record, 'electronicAddress', `${path}.electronicAddress`, ELECTRONIC_ADDRESS_FIELDS, errors);
-  // PROFILE: electronic address scheme EM (e-mail) only. BT-34/BT-49 carry their scheme (EXTERNAL: BR-62/BR-63).
-  const schemeId = electronic && readChoice(electronic, 'schemeId', `${path}.electronicAddress.schemeId`, ['EM'], 'unsupported_electronic_address_scheme', errors);
-  const value = electronic && readEmail(electronic, 'value', `${path}.electronicAddress.value`, errors);
+  // EXTERNAL: BR-62/BR-63 require the scheme. PROFILE: only EAS_SCHEMES. The value is checked per scheme: EM is an
+  // e-mail address; no pinned rule constrains the value of 0204 or 0088, so those get the safe-text guard only.
+  const schemeId = electronic && readChoice(electronic, 'schemeId', `${path}.electronicAddress.schemeId`, EAS_SCHEMES, 'unsupported_electronic_address_scheme', errors);
+  const readValue = schemeId === 'EM' ? readEmail : readText;
+  const value = electronic && readValue(electronic, 'value', `${path}.electronicAddress.value`, errors);
 
-  if (name === undefined || !street || !city || !postCode || country !== 'DE' || schemeId !== 'EM' || value === undefined) return undefined;
+  if (name === undefined || !street || !city || !postCode || country !== 'DE' || schemeId === undefined || value === undefined) return undefined;
   return { name, electronicAddress: { schemeId, value }, address: { street, city, postCode, country } };
 }
 
@@ -385,8 +452,7 @@ function readObject(
 // text that is a single line, so they are rejected too. Other legal characters (for example U+00A0) are accepted.
 const ILLEGAL_TEXT = /[\u0000-\u001F\u007F-\u009F\u2028\u2029\uFFFE\uFFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
 
-function readText(parent: Record<string, unknown>, key: string, path: string, errors: DocumentError[]): string | undefined {
-  const value = parent[key];
+function readTextValue(value: unknown, path: string, errors: DocumentError[]): string | undefined {
   if (value === undefined) return report(errors, 'missing_field', path);
   if (typeof value !== 'string') return report(errors, 'invalid_type', path);
   if (value.trim() === '') return report(errors, 'empty_text', path);
@@ -394,6 +460,17 @@ function readText(parent: Record<string, unknown>, key: string, path: string, er
   // Never trimmed or otherwise repaired: the caller is told, the text is not silently changed.
   if (value !== value.trim() || ILLEGAL_TEXT.test(value)) return report(errors, 'invalid_text', path);
   return value;
+}
+
+function readText(parent: Record<string, unknown>, key: string, path: string, errors: DocumentError[]): string | undefined {
+  return readTextValue(parent[key], path, errors);
+}
+
+// Optional counterpart of readText: an absent field is a valid "not supplied" (0..1), never `missing_field`. A
+// present value is validated exactly as the required form would.
+function readOptionalText(parent: Record<string, unknown>, key: string, path: string, errors: DocumentError[]): string | undefined {
+  const value = parent[key];
+  return value === undefined ? undefined : readTextValue(value, path, errors);
 }
 
 function report(errors: DocumentError[], code: DocumentErrorCode, path: string): undefined {
@@ -439,8 +516,12 @@ function readDate(parent: Record<string, unknown>, key: string, path: string, er
 }
 
 // PROFILE: German USt-IdNr, DE followed by nine digits. EXTERNAL (BR-CO-09): a VAT identifier carries an ISO 3166 prefix.
-function readVatId(parent: Record<string, unknown>, key: string, path: string, errors: DocumentError[]): string | undefined {
-  const text = readText(parent, key, path, errors);
+// BT-31 is optional since MDR-21 (a seller may instead rely on BT-29 and/or BT-30 for BR-CO-26); an absent value is
+// valid and never reported.
+function readOptionalVatId(parent: Record<string, unknown>, key: string, path: string, errors: DocumentError[]): string | undefined {
+  const value = parent[key];
+  if (value === undefined) return undefined;
+  const text = readTextValue(value, path, errors);
   if (text === undefined) return undefined;
   return /^DE[0-9]{9}$/.test(text) ? text : report(errors, 'invalid_vat_id', path);
 }

@@ -48,16 +48,22 @@
       "unitCode": "C62",
       "quantity": "1",
       "unitPrice": "1.50",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     },
     {
       "name": "S4b Artikel 7",
       "unitCode": "C62",
       "quantity": "1",
       "unitPrice": "1.50",
-      "vatCategory": "S",
-      "vatRate": "7"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "7"
+      }
     }
   ]
 }

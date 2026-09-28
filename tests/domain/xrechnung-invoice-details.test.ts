@@ -8,7 +8,7 @@ import { calculateInvoice, calculateInvoiceTotals } from '../../src/lib/domain/x
 // needs. The V1 monetary calculation itself (rounding points, notation handling) is unchanged; the existing suites keep asserting it. Expected values
 // below are worked out by hand, not produced by the code under test.
 
-const line = (quantity: string, unitPrice: string, vatRate = '19') => ({ quantity, unitPrice, vatCategory: 'S', vatRate });
+const line = (quantity: string, unitPrice: string, vatRate = '19') => ({ quantity, unitPrice, vat: { treatment: 'standard', category: 'S', rate: vatRate } });
 const invoice = (lines: unknown[], extra: Record<string, unknown> = {}) => ({ documentTypeCode: '380', currency: 'EUR', lines, ...extra });
 
 function okDetails(input: unknown, options?: Parameters<typeof calculateInvoice>[1], callerFields?: Parameters<typeof calculateInvoice>[2]) {
@@ -37,14 +37,14 @@ test('the totals-only entry point reports the same totals, now including BT-115'
 test('the calculation retains the parsed line data with the scale the caller typed', () => {
   const { lines } = okDetails(invoice([line('2.50', '0.335'), line('3', '10', '19.00'), line('1', '1', '7')]));
   assert.deepEqual(
-    lines.map((l) => [formatDecimal(l.quantity), formatDecimal(l.unitPrice), l.vatRate]),
+    lines.map((l) => [formatDecimal(l.quantity), formatDecimal(l.unitPrice), l.vat.rate]),
     [['2.50', '0.335', '19'], ['3', '10', '19'], ['1', '1', '7']],
   );
 });
 
 test('the notation applies to the retained line data exactly as it does to the totals', () => {
   const { lines, totals } = okDetails(invoice([line('1,5', '1.234,56', '19,00')]), { notation: 'de' });
-  assert.deepEqual(lines.map((l) => [formatDecimal(l.quantity), formatDecimal(l.unitPrice), l.vatRate]), [['1.5', '1234.56', '19']]);
+  assert.deepEqual(lines.map((l) => [formatDecimal(l.quantity), formatDecimal(l.unitPrice), l.vat.rate]), [['1.5', '1234.56', '19']]);
   assert.equal(formatDecimal(totals.sumOfLineNetAmounts), '1851.84'); // 1.5 x 1234.56 = 1851.84 exactly
 });
 

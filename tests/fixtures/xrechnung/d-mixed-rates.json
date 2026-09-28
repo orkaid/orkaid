@@ -48,16 +48,22 @@
       "unitCode": "HUR",
       "quantity": "1",
       "unitPrice": "100.00",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     },
     {
       "name": "Fachbuch",
       "unitCode": "C62",
       "quantity": "3",
       "unitPrice": "33.33",
-      "vatCategory": "S",
-      "vatRate": "7"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "7"
+      }
     }
   ]
 }

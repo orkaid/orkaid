@@ -48,16 +48,22 @@
       "unitCode": "C62",
       "quantity": "2",
       "unitPrice": "49.90",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     },
     {
       "name": "Workshop",
       "unitCode": "HUR",
       "quantity": "1.5",
       "unitPrice": "80.00",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     }
   ]
 }

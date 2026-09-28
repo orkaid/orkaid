@@ -48,24 +48,33 @@
       "unitCode": "C62",
       "quantity": "0.001",
       "unitPrice": "0.40",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     },
     {
       "name": "S4a Standard",
       "unitCode": "C62",
       "quantity": "2",
       "unitPrice": "5.00",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     },
     {
       "name": "S4a Schüttgut",
       "unitCode": "KGM",
       "quantity": "1.6",
       "unitPrice": "6.253",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     }
   ]
 }

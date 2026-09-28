@@ -17,6 +17,18 @@ import { parseDecimalInput, type NumberNotation } from './number-notation.ts';
 export const SUPPORTED_VAT_RATES = ['19', '7'] as const;
 export type VatRate = (typeof SUPPORTED_VAT_RATES)[number];
 
+/**
+ * The semantic identity of a line's VAT treatment: `treatment` is the discriminator, `category` and `rate` are
+ * carried alongside it rather than derived from it, so a future treatment with its own category/rate (Kleinunternehmer,
+ * reverse charge; MDR-18, MDR-21) is additive and never requires re-deriving this shape or the VAT bucket key below.
+ * M1 implements only the standard treatment; the union has one member on purpose (WP-1 §6.3, corrected).
+ */
+export type InvoiceLineVat = {
+  readonly treatment: 'standard';
+  readonly category: 'S'; // BT-151
+  readonly rate: VatRate; // BT-152
+};
+
 /** Shape the boundary expects. Every field is validated at runtime; amounts are decimal strings, never numbers. */
 export type InvoiceInput = {
   documentTypeCode: string; // BT-3, must be '380'
@@ -24,16 +36,22 @@ export type InvoiceInput = {
   lines: readonly InvoiceLineInput[];
 };
 
+/** The unvalidated counterpart of InvoiceLineVat: every field is a string the caller wrote, checked independently. */
+export type VatInput = {
+  treatment: string; // must be 'standard' in M1 (PROFILE: Kleinunternehmer/reverse charge are a later increment)
+  category: string; // BT-151, must be 'S'; never inferred from the rate
+  rate: string; // BT-152, must equal 19 or 7
+};
+
 /**
- * quantity, unitPrice and vatRate are decimal strings in the notation given by InvoiceOptions.notation. A supported
+ * quantity, unitPrice and vat.rate are decimal strings in the notation given by InvoiceOptions.notation. A supported
  * rate may be written with equivalent trailing zeros ('19', '19.0', '19.00', or '19,00' in German notation) and is
  * normalized to '19' or '7'.
  */
 export type InvoiceLineInput = {
   quantity: string; // BT-129
   unitPrice: string; // BT-146, per one unit (no price base quantity in V1)
-  vatCategory: string; // BT-151, must be 'S'; never inferred from the rate
-  vatRate: string; // BT-152, must equal 19 or 7
+  vat: VatInput; // BT-151 / BT-152, plus the treatment discriminant
 };
 
 export type InvoiceOptions = {
@@ -49,12 +67,20 @@ export type InvoiceErrorCode =
   | 'error_list_truncated'
   | 'unsupported_document_type'
   | 'unsupported_currency'
+  | 'unsupported_vat_treatment'
   | 'unsupported_vat_category'
   | 'unsupported_vat_rate';
 
 export type InvoiceError = { readonly code: InvoiceErrorCode; readonly path: string };
 
+/**
+ * BG-23. Grouped by `(treatment, category, rate)`, not by rate alone: the bucket identity must never depend on
+ * BT-120 reason text (research-gated for Kleinunternehmer/reverse charge; WP-1 VAT bucket-key correction). M1 has
+ * only the standard treatment, so `treatment` and `category` are constant here, but the key stays composite so a
+ * later treatment does not change this shape.
+ */
 export type VatBreakdown = {
+  readonly treatment: 'standard';
   readonly category: 'S'; // BT-118
   readonly rate: VatRate; // BT-119
   readonly taxableAmount: Decimal; // BT-116
@@ -75,7 +101,7 @@ export type InvoiceTotals = {
 export type CalculatedLine = {
   readonly quantity: Decimal; // BT-129
   readonly unitPrice: Decimal; // BT-146
-  readonly vatRate: VatRate; // BT-152
+  readonly vat: InvoiceLineVat; // BT-151 / BT-152
 };
 
 export type CalculatedInvoice = { readonly lines: readonly CalculatedLine[]; readonly totals: InvoiceTotals };
@@ -98,11 +124,12 @@ export type InvoiceResult = { readonly ok: true; readonly value: InvoiceTotals }
 export type CalculationResult = { readonly ok: true; readonly value: CalculatedInvoice } | InvoiceFailure;
 
 const INVOICE_FIELDS = ['documentTypeCode', 'currency', 'lines'];
-const LINE_FIELDS = ['quantity', 'unitPrice', 'vatCategory', 'vatRate'];
+const LINE_FIELDS = ['quantity', 'unitPrice', 'vat'];
+const VAT_FIELDS = ['treatment', 'category', 'rate'];
 const CENT_SCALE = 2;
 const ZERO: Decimal = { units: 0n, scale: CENT_SCALE };
 
-type ParsedLine = { readonly quantity: Decimal; readonly unitPrice: Decimal; readonly vatRate: VatRate };
+type ParsedLine = { readonly quantity: Decimal; readonly unitPrice: Decimal; readonly vat: InvoiceLineVat };
 
 // Provisional defensive bound, NOT a product rule: line scanning stops once this many errors are collected, so a huge
 // sparse array cannot amplify into an unbounded error list. The result is a failure either way, and a scan that was
@@ -175,13 +202,25 @@ function validateLine(
   const errorsBefore = errors.length;
   const quantity = parseAmount(line.quantity, `${path}.quantity`, notation, errors);
   const unitPrice = parseAmount(line.unitPrice, `${path}.unitPrice`, notation, errors);
-  if (line.vatCategory !== 'S') errors.push({ code: 'unsupported_vat_category', path: `${path}.vatCategory` });
-  const vatRate = normalizeVatRate(line.vatRate, notation);
-  if (vatRate === undefined) errors.push({ code: 'unsupported_vat_rate', path: `${path}.vatRate` });
+  const vat = validateVat(line.vat, `${path}.vat`, notation, errors);
   reportUnknownFields(line, [...LINE_FIELDS, ...callerLineFields], path, errors);
 
-  if (errors.length > errorsBefore || !quantity || !unitPrice || !vatRate) return undefined;
-  return { quantity, unitPrice, vatRate };
+  if (errors.length > errorsBefore || !quantity || !unitPrice || !vat) return undefined;
+  return { quantity, unitPrice, vat };
+}
+
+// PROFILE (M1): only the standard treatment is implemented; Kleinunternehmer and reverse charge are a later
+// increment (MDR-18, MDR-21). category and rate are validated independently of treatment, never inferred from it.
+function validateVat(input: unknown, path: string, notation: NumberNotation, errors: InvoiceError[]): InvoiceLineVat | undefined {
+  const record = isRecord(input) ? input : undefined;
+  const treatmentOk = record?.treatment === 'standard';
+  if (!treatmentOk) errors.push({ code: 'unsupported_vat_treatment', path: `${path}.treatment` });
+  const categoryOk = record?.category === 'S';
+  if (!categoryOk) errors.push({ code: 'unsupported_vat_category', path: `${path}.category` });
+  const rate = normalizeVatRate(record?.rate, notation);
+  if (rate === undefined) errors.push({ code: 'unsupported_vat_rate', path: `${path}.rate` });
+  if (record !== undefined) reportUnknownFields(record, VAT_FIELDS, path, errors);
+  return treatmentOk && categoryOk && rate !== undefined ? { treatment: 'standard', category: 'S', rate } : undefined;
 }
 
 function parseAmount(input: unknown, path: string, notation: NumberNotation, errors: InvoiceError[]): Decimal | undefined {
@@ -209,15 +248,17 @@ function reportUnknownFields(record: Record<string, unknown>, allowed: readonly 
 function calculate(lines: readonly ParsedLine[]): InvoiceTotals {
   const netAmounts = lines.map((line) => roundHalfUp(multiply(line.quantity, line.unitPrice), CENT_SCALE));
 
+  // M1 has only the standard treatment, so grouping by rate and grouping by (treatment, category, rate) coincide;
+  // the bucket carries the full key regardless, so a future treatment does not change this loop's shape.
   const vatBreakdown: VatBreakdown[] = [];
   for (const rate of SUPPORTED_VAT_RATES) {
-    const bucket = lines.flatMap((line, index) => (line.vatRate === rate ? [netAmounts[index] as Decimal] : []));
+    const bucket = lines.flatMap((line, index) => (line.vat.rate === rate ? [netAmounts[index] as Decimal] : []));
     if (bucket.length === 0) continue;
 
     const taxableAmount = bucket.reduce(add, ZERO);
     // rate / 100 is the integer rate at scale 2; VAT is rounded once per bucket.
     const taxAmount = roundHalfUp(multiply(taxableAmount, { units: BigInt(rate), scale: 2 }), CENT_SCALE);
-    vatBreakdown.push({ category: 'S', rate, taxableAmount, taxAmount });
+    vatBreakdown.push({ treatment: 'standard', category: 'S', rate, taxableAmount, taxAmount });
   }
 
   const sumOfLineNetAmounts = netAmounts.reduce(add, ZERO);

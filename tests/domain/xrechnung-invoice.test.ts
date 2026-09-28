@@ -8,10 +8,10 @@ import { calculateInvoiceTotals } from '../../src/lib/domain/xrechnung/invoice.t
 // never produced by the code under test. The BR-CO checks use their own integer
 // arithmetic on cents, independent of the implementation.
 
-type LineFixture = { quantity: string; unitPrice: string; vatCategory?: string; vatRate?: string };
+type LineFixture = { quantity: string; unitPrice: string; vat: { treatment: string; category: string; rate: string } };
 
-function line(quantity: string, unitPrice: string, vatRate = '19'): Required<LineFixture> {
-  return { quantity, unitPrice, vatCategory: 'S', vatRate };
+function line(quantity: string, unitPrice: string, vatRate = '19'): LineFixture {
+  return { quantity, unitPrice, vat: { treatment: 'standard', category: 'S', rate: vatRate } };
 }
 
 function invoice(lines: unknown[], overrides: Record<string, unknown> = {}) {
@@ -229,7 +229,7 @@ test('invalid decimal input is rejected with the offending field path', () => {
 });
 
 test('numbers (binary floats) are rejected as decimal input; only strings are accepted', () => {
-  assert.deepEqual(errors(invoice([{ quantity: 1, unitPrice: 0.03, vatCategory: 'S', vatRate: '19' }])), [
+  assert.deepEqual(errors(invoice([{ quantity: 1, unitPrice: 0.03, vat: { treatment: 'standard', category: 'S', rate: '19' } }])), [
     { code: 'invalid_decimal', path: 'lines[0].quantity' },
     { code: 'invalid_decimal', path: 'lines[0].unitPrice' },
   ]);
@@ -267,17 +267,17 @@ test('currency other than EUR is unsupported, never treated as EUR', () => {
 });
 
 test('VAT category other than S is unsupported, never treated as S', () => {
-  for (const vatCategory of ['Z', 'E', 'AE', 'K', 'G', 'O', 'L', 'M', 's', '']) {
-    assert.deepEqual(errors(invoice([{ quantity: '1', unitPrice: '1', vatCategory, vatRate: '19' }])), [
-      { code: 'unsupported_vat_category', path: 'lines[0].vatCategory' },
+  for (const category of ['Z', 'E', 'AE', 'K', 'G', 'O', 'L', 'M', 's', '']) {
+    assert.deepEqual(errors(invoice([{ quantity: '1', unitPrice: '1', vat: { treatment: 'standard', category, rate: '19' } }])), [
+      { code: 'unsupported_vat_category', path: 'lines[0].vat.category' },
     ]);
   }
 });
 
 test('VAT rate other than 19 or 7 is unsupported, never rounded or mapped to a supported rate', () => {
-  for (const vatRate of ['0', '16', '5', '20', '19.01', '18.99', '190', '1.9', '7.5', '6.99', '-19', '', 'abc']) {
-    assert.deepEqual(errors(invoice([{ quantity: '1', unitPrice: '1', vatCategory: 'S', vatRate }])), [
-      { code: 'unsupported_vat_rate', path: 'lines[0].vatRate' },
+  for (const rate of ['0', '16', '5', '20', '19.01', '18.99', '190', '1.9', '7.5', '6.99', '-19', '', 'abc']) {
+    assert.deepEqual(errors(invoice([{ quantity: '1', unitPrice: '1', vat: { treatment: 'standard', category: 'S', rate } }])), [
+      { code: 'unsupported_vat_rate', path: 'lines[0].vat.rate' },
     ]);
   }
 });
@@ -313,7 +313,7 @@ test('structurally invalid input is rejected with invalid_type', () => {
 
 test('all independent problems are reported together', () => {
   const found = errors(
-    invoice([{ quantity: '-1', unitPrice: 'x', vatCategory: 'Z', vatRate: '16' }], {
+    invoice([{ quantity: '-1', unitPrice: 'x', vat: { treatment: 'standard', category: 'Z', rate: '16' } }], {
       documentTypeCode: '381',
       currency: 'USD',
     }),
@@ -323,7 +323,7 @@ test('all independent problems are reported together', () => {
     { code: 'unsupported_currency', path: 'currency' },
     { code: 'negative_amount', path: 'lines[0].quantity' },
     { code: 'invalid_decimal', path: 'lines[0].unitPrice' },
-    { code: 'unsupported_vat_category', path: 'lines[0].vatCategory' },
-    { code: 'unsupported_vat_rate', path: 'lines[0].vatRate' },
+    { code: 'unsupported_vat_category', path: 'lines[0].vat.category' },
+    { code: 'unsupported_vat_rate', path: 'lines[0].vat.rate' },
   ]);
 });

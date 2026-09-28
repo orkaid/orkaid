@@ -48,80 +48,110 @@
       "unitCode": "C62",
       "quantity": "1",
       "unitPrice": "0.03",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     },
     {
       "name": "Kleinteil",
       "unitCode": "C62",
       "quantity": "1",
       "unitPrice": "0.03",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     },
     {
       "name": "Kleinteil",
       "unitCode": "C62",
       "quantity": "1",
       "unitPrice": "0.03",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     },
     {
       "name": "Kleinteil",
       "unitCode": "C62",
       "quantity": "1",
       "unitPrice": "0.03",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     },
     {
       "name": "Kleinteil",
       "unitCode": "C62",
       "quantity": "1",
       "unitPrice": "0.03",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     },
     {
       "name": "Kleinteil",
       "unitCode": "C62",
       "quantity": "1",
       "unitPrice": "0.03",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     },
     {
       "name": "Kleinteil",
       "unitCode": "C62",
       "quantity": "1",
       "unitPrice": "0.03",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     },
     {
       "name": "Kleinteil",
       "unitCode": "C62",
       "quantity": "1",
       "unitPrice": "0.03",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     },
     {
       "name": "Kleinteil",
       "unitCode": "C62",
       "quantity": "1",
       "unitPrice": "0.03",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     },
     {
       "name": "Kleinteil",
       "unitCode": "C62",
       "quantity": "1",
       "unitPrice": "0.03",
-      "vatCategory": "S",
-      "vatRate": "19"
+      "vat": {
+        "treatment": "standard",
+        "category": "S",
+        "rate": "19"
+      }
     }
   ]
 }

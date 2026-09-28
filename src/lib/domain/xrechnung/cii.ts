@@ -77,11 +77,15 @@ export function serializeCiiInvoice(invoice: Invoice): CiiResult {
   return { ok: true, xml: `<?xml version="1.0" encoding="UTF-8"?>\n${render(root, 0).join('\n')}\n` };
 }
 
-// BG-4 carries the seller contact (BG-6) and VAT identifier (BT-31); BG-7 has neither in this profile.
+// BG-4 carries the seller identifiers (BT-29/30/31/32) and the seller contact (BG-6); BG-7 has neither in this
+// profile. Element order follows the CII D16B TradePartyType sequence: ID, GlobalID, Name, SpecifiedLegalOrganization,
+// DefinedTradeContact, PostalTradeAddress, URIUniversalCommunication, SpecifiedTaxRegistration.
 function party(name: string, source: InvoiceParty, seller?: Invoice['seller']): Element {
   return group(
     name,
+    ...(seller?.sellerIdentifiers.map((identifier) => leaf('ram:ID', identifier.value)) ?? []), // BT-29, unscoped: no scheme in M1
     leaf('ram:Name', source.name), // BT-27 / BT-44
+    ...(seller?.legalRegistrationId !== undefined ? [group('ram:SpecifiedLegalOrganization', leaf('ram:ID', seller.legalRegistrationId))] : []), // BT-30
     ...(seller
       ? [
           group(
@@ -100,8 +104,15 @@ function party(name: string, source: InvoiceParty, seller?: Invoice['seller']): 
       leaf('ram:CountryID', source.address.country), // BT-40 / BT-55
     ),
     group('ram:URIUniversalCommunication', leaf('ram:URIID', source.electronicAddress.value, [['schemeID', source.electronicAddress.schemeId]])), // BT-34 / BT-49
-    ...(seller ? [group('ram:SpecifiedTaxRegistration', leaf('ram:ID', seller.vatId, [['schemeID', 'VA']]))] : []), // BT-31
+    ...(seller ? sellerTaxRegistrations(seller) : []), // BT-31 / BT-32
   );
+}
+
+function sellerTaxRegistrations(seller: Invoice['seller']): readonly Element[] {
+  const registrations: Element[] = [];
+  if (seller.vatId !== undefined) registrations.push(group('ram:SpecifiedTaxRegistration', leaf('ram:ID', seller.vatId, [['schemeID', 'VA']]))); // BT-31
+  if (seller.taxRegistrationId !== undefined) registrations.push(group('ram:SpecifiedTaxRegistration', leaf('ram:ID', seller.taxRegistrationId, [['schemeID', 'FC']]))); // BT-32
+  return registrations;
 }
 
 function settlement(invoice: Invoice): Element {
@@ -148,8 +159,8 @@ function lineItem(line: InvoiceLine, index: number): Element {
       group(
         'ram:ApplicableTradeTax', // BG-30
         leaf('ram:TypeCode', 'VAT'),
-        leaf('ram:CategoryCode', line.vatCategory), // BT-151
-        leaf('ram:RateApplicablePercent', line.vatRate), // BT-152
+        leaf('ram:CategoryCode', line.vat.category), // BT-151
+        leaf('ram:RateApplicablePercent', line.vat.rate), // BT-152
       ),
       group('ram:SpecifiedTradeSettlementLineMonetarySummation', amount('ram:LineTotalAmount', line.netAmount)), // BT-131
     ),
