@@ -151,6 +151,7 @@ const ORDER: Record<string, string[]> = {
   'cac:PostalAddress': ['cbc:StreetName', 'cbc:CityName', 'cbc:PostalZone', 'cac:Country'],
   'cac:PartyTaxScheme': ['cbc:CompanyID', 'cac:TaxScheme'],
   'cac:PartyLegalEntity': ['cbc:RegistrationName'],
+  'cac:PartyLegalEntity(CompanyID)': ['cbc:RegistrationName', 'cbc:CompanyID'], // BT-30 or BT-47, no BT-33
   'cac:PartyLegalEntity(BT-30, BT-33)': ['cbc:RegistrationName', 'cbc:CompanyID', 'cbc:CompanyLegalForm'],
   'cac:PartyLegalEntity(BT-33)': ['cbc:RegistrationName', 'cbc:CompanyLegalForm'],
   'cac:Contact': ['cbc:Name', 'cbc:Telephone', 'cbc:ElectronicMail'],
@@ -167,6 +168,7 @@ const ORDER: Record<string, string[]> = {
   'cac:Price': ['cbc:PriceAmount'],
   'cac:Party(supplier)': ['cbc:EndpointID', 'cac:PostalAddress', 'cac:PartyTaxScheme', 'cac:PartyLegalEntity', 'cac:Contact'],
   'cac:Party(customer)': ['cbc:EndpointID', 'cac:PostalAddress', 'cac:PartyLegalEntity'],
+  'cac:Party(customer, BT-48)': ['cbc:EndpointID', 'cac:PostalAddress', 'cac:PartyTaxScheme', 'cac:PartyLegalEntity'],
 };
 
 // The set of distinct child names, in first-appearance order, must equal the XSD order for that element (a name may
@@ -192,12 +194,14 @@ test('element order follows the UBL 2.1 XSD sequences at every level', () => {
     // The two Party elements have different children, so the parent tells which sequence applies.
     const key =
       node.name === 'cac:Party'
-        ? `cac:Party(${parent?.name === 'cac:AccountingSupplierParty' ? 'supplier' : 'customer'})`
+        ? `cac:Party(${parent?.name === 'cac:AccountingSupplierParty' ? 'supplier' : childNames(node).includes('cac:PartyTaxScheme') ? 'customer, BT-48' : 'customer'})`
         : node.name === 'cac:TaxCategory' && childNames(node).includes('cbc:TaxExemptionReason')
           ? 'cac:TaxCategory(BT-120)'
           : node.name === 'cac:PartyLegalEntity' && childNames(node).includes('cbc:CompanyLegalForm')
             ? `cac:PartyLegalEntity(${childNames(node).includes('cbc:CompanyID') ? 'BT-30, ' : ''}BT-33)`
-            : node.name;
+            : node.name === 'cac:PartyLegalEntity' && childNames(node).includes('cbc:CompanyID')
+              ? 'cac:PartyLegalEntity(CompanyID)'
+              : node.name;
     checkOrder(node, key);
     for (const child of node.children) walk(child, node);
   };

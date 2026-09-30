@@ -255,9 +255,9 @@ test('the VAT category is never inferred from the rate', () => {
   ]);
 });
 
-test('the VAT treatment is required and must be "standard": it is never defaulted or inferred', () => {
+test('the VAT treatment is required and must be a supported one: it is never defaulted or inferred', () => {
   const at = (vat: unknown) => errors(invoice([{ quantity: '1', unitPrice: '1', vat }]));
-  assert.deepEqual(at({ treatment: 'reverse-charge', category: 'S', rate: '19' }), [{ code: 'unsupported_vat_treatment', path: 'lines[0].vat.treatment' }]);
+  assert.deepEqual(at({ treatment: 'intra-community', category: 'S', rate: '19' }), [{ code: 'unsupported_vat_treatment', path: 'lines[0].vat.treatment' }]);
   assert.deepEqual(at({ treatment: 'Standard', category: 'S', rate: '19' }), [{ code: 'unsupported_vat_treatment', path: 'lines[0].vat.treatment' }]);
   assert.deepEqual(at({ category: 'S', rate: '19' }), [{ code: 'unsupported_vat_treatment', path: 'lines[0].vat.treatment' }]);
 });

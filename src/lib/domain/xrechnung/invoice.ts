@@ -1,6 +1,6 @@
 // V1 XRechnung semantic invoice model and monetary calculation.
-// Scope: domestic German B2B invoice, EUR, BT-3 = 380, VAT category S at 19% or 7% or the Kleinunternehmer treatment
-// (category E, rate 0), non-negative amounts.
+// Scope: domestic German B2B invoice, EUR, BT-3 = 380, VAT category S at 19% or 7%, the Kleinunternehmer treatment
+// (category E, rate 0) or the reverse-charge treatment (category AE, rate 0), non-negative amounts.
 // Syntax-independent: no UBL/CII structures. Anything outside the scope is an explicit failure, never a fallback (MDR-12).
 //
 // Calculation contract, a project engineering policy for V1 (MDR-13). HALF_UP is not an EN 16931/XRechnung mandate;
@@ -30,11 +30,23 @@ export type VatRate = (typeof SUPPORTED_VAT_RATES)[number];
 export const KLEINUNTERNEHMER_EXEMPTION_TEXT = 'Kein Ausweis von Umsatzsteuer, da Kleinunternehmer gemäß § 19 UStG';
 
 /**
+ * BT-120 text for a reverse-charge invoice. EXTERNAL (law): § 14a Abs. 5 Satz 1 UStG requires the invoice to carry the
+ * statement „Steuerschuldnerschaft des Leistungsempfängers“; BR-AE-10 only tests that BT-120 or BT-121 exists.
+ * Orkaid choice: this statutory phrase, held here once and only rendered by the serializers, is not caller-editable in M1
+ * (XRechnung 3.0.2 suggests 'Umkehrung der Steuerschuldnerschaft' for BT-120; using the statutory phrase instead is an
+ * Orkaid choice, and BT-121 is omitted). No claim is made that it is legally sufficient beyond being the phrase the
+ * statute names. The whole reverse-charge contract (category AE, rate 0, seller BT-31 or BT-32, buyer BT-47 or BT-48,
+ * one treatment per invoice, domestic, no § 13b applicability check) is the accepted implementation decision (MDR-23,
+ * resting on MDR-18, MDR-21 and MDR-22).
+ */
+export const REVERSE_CHARGE_TEXT = 'Steuerschuldnerschaft des Leistungsempfängers';
+
+/**
  * The semantic identity of a line's VAT treatment: `treatment` is the discriminator, `category` and `rate` are
- * carried alongside it rather than derived from it, so a further treatment (reverse charge; MDR-18, MDR-21) is
+ * carried alongside it rather than derived from it, so a further treatment (MDR-18, MDR-21, MDR-22, MDR-23) is
  * additive and never requires re-deriving this shape or the VAT bucket key below. `kleinunternehmer` is category E
- * with rate 0 (XRechnung 3.0.2 section 13.3, BR-E-05..07); it is not a generic zero-rate mode and category E is not
- * selectable on its own.
+ * with rate 0 (XRechnung 3.0.2 section 13.3, BR-E-05..07); `reverse-charge` is category AE with rate 0 (BR-AE-05..07).
+ * Neither is a generic zero-rate mode and neither category is selectable on its own.
  */
 export type InvoiceLineVat =
   | {
@@ -45,6 +57,11 @@ export type InvoiceLineVat =
   | {
       readonly treatment: 'kleinunternehmer';
       readonly category: 'E'; // BT-151
+      readonly rate: '0'; // BT-152
+    }
+  | {
+      readonly treatment: 'reverse-charge';
+      readonly category: 'AE'; // BT-151
       readonly rate: '0'; // BT-152
     };
 
@@ -57,9 +74,9 @@ export type InvoiceInput = {
 
 /** The unvalidated counterpart of InvoiceLineVat: every field is a string the caller wrote, checked independently. */
 export type VatInput = {
-  treatment: string; // 'standard' or 'kleinunternehmer' (PROFILE: reverse charge is a later increment)
-  category: string; // BT-151, must be 'S' for standard and 'E' for kleinunternehmer; never inferred from the rate
-  rate: string; // BT-152, must equal 19 or 7 for standard and 0 for kleinunternehmer
+  treatment: string; // 'standard', 'kleinunternehmer' or 'reverse-charge'
+  category: string; // BT-151, must be 'S' for standard, 'E' for kleinunternehmer and 'AE' for reverse-charge; never inferred from the rate
+  rate: string; // BT-152, must equal 19 or 7 for standard and 0 for the other two
 };
 
 /**
@@ -95,7 +112,8 @@ export type InvoiceError = { readonly code: InvoiceErrorCode; readonly path: str
 /**
  * BG-23. Grouped by `(treatment, category, rate)`, not by rate alone: the bucket identity must never depend on
  * BT-120 reason text. The Kleinunternehmer breakdown carries that text as `exemptionReason`, beside and not in the
- * key. Its taxable amount is the sum of its lines and its tax amount is exactly zero (BR-E-08, BR-E-09).
+ * key. Its taxable amount is the sum of its lines and its tax amount is exactly zero (BR-E-08, BR-E-09). The
+ * reverse-charge breakdown is built the same way with BT-120 from REVERSE_CHARGE_TEXT (BR-AE-08, BR-AE-09, BR-AE-10).
  */
 export type VatBreakdown =
   | {
@@ -112,6 +130,14 @@ export type VatBreakdown =
       readonly taxableAmount: Decimal; // BT-116
       readonly taxAmount: Decimal; // BT-117, zero
       readonly exemptionReason: typeof KLEINUNTERNEHMER_EXEMPTION_TEXT; // BT-120
+    }
+  | {
+      readonly treatment: 'reverse-charge';
+      readonly category: 'AE'; // BT-118
+      readonly rate: '0'; // BT-119
+      readonly taxableAmount: Decimal; // BT-116
+      readonly taxAmount: Decimal; // BT-117, zero
+      readonly exemptionReason: typeof REVERSE_CHARGE_TEXT; // BT-120
     };
 
 export type InvoiceTotals = {
@@ -236,22 +262,25 @@ function validateLine(
   return { quantity, unitPrice, vat };
 }
 
-// PROFILE (M1): the standard and kleinunternehmer treatments are implemented; reverse charge is a later increment
-// (MDR-18, MDR-21). category and rate are validated independently of each other, never inferred. A treatment that is
-// not recognised is judged against the standard expectation, so the caller still sees every field that is wrong.
+// PROFILE (M1): the standard, kleinunternehmer and reverse-charge treatments are implemented. category and rate are
+// validated independently of each other, never inferred. A treatment that is not recognised is judged against the
+// standard expectation, so the caller still sees every field that is wrong.
+const ZERO_RATE_CATEGORY = { kleinunternehmer: 'E', 'reverse-charge': 'AE' } as const;
+
 function validateVat(input: unknown, path: string, notation: NumberNotation, errors: InvoiceError[]): InvoiceLineVat | undefined {
   const record = isRecord(input) ? input : undefined;
-  const kleinunternehmer = record?.treatment === 'kleinunternehmer';
-  const treatmentOk = kleinunternehmer || record?.treatment === 'standard';
+  const special = record?.treatment === 'kleinunternehmer' || record?.treatment === 'reverse-charge' ? record.treatment : undefined;
+  const treatmentOk = special !== undefined || record?.treatment === 'standard';
   if (!treatmentOk) errors.push({ code: 'unsupported_vat_treatment', path: `${path}.treatment` });
-  const categoryOk = record?.category === (kleinunternehmer ? 'E' : 'S');
+  const categoryOk = record?.category === (special === undefined ? 'S' : ZERO_RATE_CATEGORY[special]);
   if (!categoryOk) errors.push({ code: 'unsupported_vat_category', path: `${path}.category` });
-  const standardRate = kleinunternehmer ? undefined : normalizeVatRate(record?.rate, notation);
-  const rateOk = kleinunternehmer ? isZeroRate(record?.rate, notation) : standardRate !== undefined;
+  const standardRate = special === undefined ? normalizeVatRate(record?.rate, notation) : undefined;
+  const rateOk = special === undefined ? standardRate !== undefined : isZeroRate(record?.rate, notation);
   if (!rateOk) errors.push({ code: 'unsupported_vat_rate', path: `${path}.rate` });
   if (record !== undefined) reportUnknownFields(record, VAT_FIELDS, path, errors);
   if (!treatmentOk || !categoryOk || !rateOk) return undefined;
-  if (kleinunternehmer) return { treatment: 'kleinunternehmer', category: 'E', rate: '0' };
+  if (special === 'kleinunternehmer') return { treatment: 'kleinunternehmer', category: 'E', rate: '0' };
+  if (special === 'reverse-charge') return { treatment: 'reverse-charge', category: 'AE', rate: '0' };
   return standardRate === undefined ? undefined : { treatment: 'standard', category: 'S', rate: standardRate };
 }
 
@@ -271,7 +300,7 @@ function normalizeVatRate(input: unknown, notation: NumberNotation): VatRate | u
   return SUPPORTED_VAT_RATES.find((rate) => units === BigInt(rate) * 10n ** BigInt(scale));
 }
 
-// The Kleinunternehmer rate is exactly zero, however it is spelled ('0', '0.00', '0,0'). Same exact-decimal comparison.
+// The Kleinunternehmer and reverse-charge rate is exactly zero, however it is spelled ('0', '0.00', '0,0'). Same exact-decimal comparison.
 function isZeroRate(input: unknown, notation: NumberNotation): boolean {
   const parsed = parseDecimalInput(input, notation);
   return parsed.ok && parsed.value.units === 0n;
@@ -287,7 +316,7 @@ function calculate(lines: readonly ParsedLine[]): InvoiceTotals {
   const netAmounts = lines.map((line) => roundHalfUp(multiply(line.quantity, line.unitPrice), CENT_SCALE));
 
   // The bucket carries the full key `(treatment, category, rate)`; the standard buckets come first, in
-  // SUPPORTED_VAT_RATES order, then the Kleinunternehmer bucket.
+  // SUPPORTED_VAT_RATES order, then the Kleinunternehmer bucket, then the reverse-charge bucket.
   const vatBreakdown: VatBreakdown[] = [];
   for (const rate of SUPPORTED_VAT_RATES) {
     const bucket = lines.flatMap((line, index) => (line.vat.treatment === 'standard' && line.vat.rate === rate ? [netAmounts[index] as Decimal] : []));
@@ -308,6 +337,18 @@ function calculate(lines: readonly ParsedLine[]): InvoiceTotals {
       taxableAmount: kleinunternehmerNets.reduce(add, ZERO),
       taxAmount: ZERO,
       exemptionReason: KLEINUNTERNEHMER_EXEMPTION_TEXT,
+    });
+  }
+  const reverseChargeNets = lines.flatMap((line, index) => (line.vat.treatment === 'reverse-charge' ? [netAmounts[index] as Decimal] : []));
+  if (reverseChargeNets.length > 0) {
+    // No VAT is computed: BR-AE-09 requires exactly zero. BT-116 is the real sum of the lines (BR-AE-08).
+    vatBreakdown.push({
+      treatment: 'reverse-charge',
+      category: 'AE',
+      rate: '0',
+      taxableAmount: reverseChargeNets.reduce(add, ZERO),
+      taxAmount: ZERO,
+      exemptionReason: REVERSE_CHARGE_TEXT,
     });
   }
 

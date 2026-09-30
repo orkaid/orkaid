@@ -63,7 +63,10 @@ export type InvoiceDocumentInput = {
     taxRegistrationId?: string; // BT-32
     contact: { name: string; telephone: string; email: string }; // BG-6: BT-41, BT-42, BT-43
   };
-  buyer: PartyInput;
+  buyer: PartyInput & {
+    legalRegistrationId?: string; // BT-47; no scheme in M1 (MDR-23)
+    vatId?: string; // BT-48
+  };
   payment: { meansCode: string; iban: string }; // BT-81, BT-84
   lines: readonly {
     name: string; // BT-153
@@ -114,7 +117,10 @@ export type Invoice = {
     readonly additionalLegalInformation?: string; // BT-33, set by buildInvoice for the Kleinunternehmer treatment, never by the caller
     readonly contact: { readonly name: string; readonly telephone: string; readonly email: string };
   };
-  readonly buyer: InvoiceParty;
+  readonly buyer: InvoiceParty & {
+    readonly legalRegistrationId?: string; // BT-47
+    readonly vatId?: string; // BT-48
+  };
   readonly payment: { readonly meansCode: '58'; readonly iban: string };
   readonly lines: readonly InvoiceLine[];
   readonly totals: InvoiceTotals;
@@ -137,7 +143,8 @@ export type DocumentErrorCode =
   | 'unsupported_unit_code'
   | 'missing_seller_identification' // BR-CO-26: none of BT-29, BT-30, BT-31 is present
   | 'missing_seller_tax_identifier' // neither BT-31 nor BT-32 is present (BR-S-02, BR-E-02, BR-DE-16)
-  | 'unsupported_mixed_vat_treatments' // PROFILE: an invoice is all-standard or all-kleinunternehmer
+  | 'missing_buyer_identifier' // BR-AE-02: a reverse-charge invoice has neither BT-47 nor BT-48
+  | 'unsupported_mixed_vat_treatments' // PROFILE: an invoice is all-standard, all-kleinunternehmer or all-reverse-charge
   | 'internal_inconsistency';
 
 export type DocumentError = { readonly code: DocumentErrorCode; readonly path: string };
@@ -154,6 +161,7 @@ const DOCUMENT_FIELDS = ['invoiceNumber', 'issueDate', 'deliveryDate', 'paymentD
 const LINE_FIELDS = ['name', 'unitCode'];
 const PARTY_FIELDS = ['name', 'electronicAddress', 'address'];
 const SELLER_FIELDS = [...PARTY_FIELDS, 'sellerIdentifiers', 'legalRegistrationId', 'vatId', 'taxRegistrationId', 'contact'];
+const BUYER_FIELDS = [...PARTY_FIELDS, 'legalRegistrationId', 'vatId'];
 const ADDRESS_FIELDS = ['street', 'city', 'postCode', 'country'];
 const ELECTRONIC_ADDRESS_FIELDS = ['schemeId', 'value'];
 
@@ -193,10 +201,10 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
   const paymentDueDate = readDate(input, 'paymentDueDate', 'paymentDueDate', errors);
   const buyerReference = readText(input, 'buyerReference', 'buyerReference', errors);
   const seller = readSeller(input, errors);
-  const buyer = readParty(input, 'buyer', 'buyer', errors);
+  const buyer = readBuyer(input, usesReverseCharge(input), errors);
   const payment = readPayment(input, errors);
   const { lines: lineData, stoppedAt } = readLineData(input, errors);
-  // PROFILE: one VAT treatment per invoice. Whether treatments may be combined is an open decision (MDR-18,
+  // PROFILE: one VAT treatment per invoice (MDR-22, MDR-23). Whether treatments may be combined is an open decision (MDR-18,
   // oq-mixed-vat-treatments-in-m1); the semantic types allow it, only this profile check refuses it.
   if (money.ok && new Set(money.value.lines.map((line) => line.vat.treatment)).size > 1) {
     errors.push({ code: 'unsupported_mixed_vat_treatments', path: 'lines' });
@@ -337,9 +345,10 @@ function readSeller(parent: Record<string, unknown>, errors: DocumentError[]): I
   if (!suppliesBt29 && !suppliesBt30 && !suppliesBt31) {
     errors.push({ code: 'missing_seller_identification', path: 'seller' });
   }
-  // Seller tax identifier: BT-31 or BT-32. Both implemented treatments need it: standard (BR-S-02, BR-DE-16) and
-  // kleinunternehmer (BR-E-02, BR-DE-16, verified in UBL and CII; it is not relaxed for category E). BT-63/BG-11 (the
-  // tax representative branch these rules also accept) is not implemented in M1, so only these two are checked (MDR-21).
+  // Seller tax identifier: BT-31 or BT-32. Every implemented treatment needs it: standard (BR-S-02, BR-DE-16),
+  // kleinunternehmer (BR-E-02, BR-DE-16) and reverse-charge (BR-AE-02, BR-DE-16), verified in UBL and CII; it is not
+  // relaxed for any category. BT-63/BG-11 (the tax representative branch these rules also accept) is not implemented in
+  // M1, so only these two are checked (MDR-21, MDR-23).
   if (!suppliesBt31 && !suppliesBt32) {
     errors.push({ code: 'missing_seller_tax_identifier', path: 'seller' });
   }
@@ -364,9 +373,34 @@ function readSellerIdentifiers(parent: Record<string, unknown>, errors: Document
   return identifiers;
 }
 
-function readParty(parent: Record<string, unknown>, key: string, path: string, errors: DocumentError[]): InvoiceParty | undefined {
-  const record = readObject(parent, key, path, PARTY_FIELDS, errors);
-  return record === undefined ? undefined : readPartyFields(record, path, errors);
+// BT-47 and BT-48 are two distinct optional slots. Only the reverse-charge treatment needs one of them (BR-AE-02, MDR-23);
+// standard and kleinunternehmer invoices are never forced to supply either. The treatment is read from the raw input so
+// that this rule is also reported when the monetary calculation fails for another reason.
+function readBuyer(parent: Record<string, unknown>, reverseCharge: boolean, errors: DocumentError[]): Invoice['buyer'] | undefined {
+  const record = readObject(parent, 'buyer', 'buyer', BUYER_FIELDS, errors);
+  if (record === undefined) return undefined;
+
+  const errorsBefore = errors.length;
+  const party = readPartyFields(record, 'buyer', errors);
+  const legalRegistrationId = readOptionalText(record, 'legalRegistrationId', 'buyer.legalRegistrationId', errors);
+  const vatId = readOptionalVatId(record, 'vatId', 'buyer.vatId', errors);
+
+  // Presence is read from the raw input, never from the validated value: a supplied-but-malformed field is reported by
+  // its own diagnostic and must not also be reported as missing.
+  if (reverseCharge && record.legalRegistrationId === undefined && record.vatId === undefined) {
+    errors.push({ code: 'missing_buyer_identifier', path: 'buyer' });
+  }
+
+  if (errors.length > errorsBefore || !party) return undefined;
+  return {
+    ...party,
+    ...(legalRegistrationId !== undefined ? { legalRegistrationId } : {}),
+    ...(vatId !== undefined ? { vatId } : {}),
+  };
+}
+
+function usesReverseCharge(input: Record<string, unknown>): boolean {
+  return Array.isArray(input.lines) && input.lines.some((line) => isRecord(line) && isRecord(line.vat) && line.vat.treatment === 'reverse-charge');
 }
 
 function readPartyFields(record: Record<string, unknown>, path: string, errors: DocumentError[]): InvoiceParty | undefined {
@@ -530,7 +564,8 @@ function readDate(parent: Record<string, unknown>, key: string, path: string, er
 
 // PROFILE: German USt-IdNr, DE followed by nine digits. EXTERNAL (BR-CO-09): a VAT identifier carries an ISO 3166 prefix.
 // BT-31 is optional since MDR-21 (a seller may instead rely on BT-29 and/or BT-30 for BR-CO-26); an absent value is
-// valid and never reported.
+// valid and never reported. The same check serves the buyer's BT-48 (MDR-23): EN 16931 only needs the ISO 3166 prefix
+// (BR-CO-09), the German format is a PROFILE restriction for a domestic buyer.
 function readOptionalVatId(parent: Record<string, unknown>, key: string, path: string, errors: DocumentError[]): string | undefined {
   const value = parent[key];
   if (value === undefined) return undefined;

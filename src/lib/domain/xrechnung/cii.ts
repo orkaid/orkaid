@@ -77,16 +77,18 @@ export function serializeCiiInvoice(invoice: Invoice): CiiResult {
   return { ok: true, xml: `<?xml version="1.0" encoding="UTF-8"?>\n${render(root, 0).join('\n')}\n` };
 }
 
-// BG-4 carries the seller identifiers (BT-29/30/31/32) and the seller contact (BG-6); BG-7 has neither in this
-// profile. Element order follows the CII D16B TradePartyType sequence: ID, GlobalID, Name, Description, SpecifiedLegalOrganization,
+// BG-4 carries the seller identifiers (BT-29/30/31/32) and the seller contact (BG-6); BG-7 carries only BT-47 and BT-48
+// (MDR-23). Element order follows the CII D16B TradePartyType sequence: ID, GlobalID, Name, Description, SpecifiedLegalOrganization,
 // DefinedTradeContact, PostalTradeAddress, URIUniversalCommunication, SpecifiedTaxRegistration.
-function party(name: string, source: InvoiceParty, seller?: Invoice['seller']): Element {
+type Identified = InvoiceParty & { readonly legalRegistrationId?: string; readonly vatId?: string };
+
+function party(name: string, source: Identified, seller?: Invoice['seller']): Element {
   return group(
     name,
     ...(seller?.sellerIdentifiers.map((identifier) => leaf('ram:ID', identifier.value)) ?? []), // BT-29, unscoped: no scheme in M1
     leaf('ram:Name', source.name), // BT-27 / BT-44
     ...(seller?.additionalLegalInformation !== undefined ? [leaf('ram:Description', seller.additionalLegalInformation)] : []), // BT-33
-    ...(seller?.legalRegistrationId !== undefined ? [group('ram:SpecifiedLegalOrganization', leaf('ram:ID', seller.legalRegistrationId))] : []), // BT-30
+    ...(source.legalRegistrationId !== undefined ? [group('ram:SpecifiedLegalOrganization', leaf('ram:ID', source.legalRegistrationId))] : []), // BT-30 / BT-47
     ...(seller
       ? [
           group(
@@ -105,14 +107,14 @@ function party(name: string, source: InvoiceParty, seller?: Invoice['seller']): 
       leaf('ram:CountryID', source.address.country), // BT-40 / BT-55
     ),
     group('ram:URIUniversalCommunication', leaf('ram:URIID', source.electronicAddress.value, [['schemeID', source.electronicAddress.schemeId]])), // BT-34 / BT-49
-    ...(seller ? sellerTaxRegistrations(seller) : []), // BT-31 / BT-32
+    ...taxRegistrations(source, seller), // BT-31 / BT-32 / BT-48
   );
 }
 
-function sellerTaxRegistrations(seller: Invoice['seller']): readonly Element[] {
+function taxRegistrations(source: Identified, seller?: Invoice['seller']): readonly Element[] {
   const registrations: Element[] = [];
-  if (seller.vatId !== undefined) registrations.push(group('ram:SpecifiedTaxRegistration', leaf('ram:ID', seller.vatId, [['schemeID', 'VA']]))); // BT-31
-  if (seller.taxRegistrationId !== undefined) registrations.push(group('ram:SpecifiedTaxRegistration', leaf('ram:ID', seller.taxRegistrationId, [['schemeID', 'FC']]))); // BT-32
+  if (source.vatId !== undefined) registrations.push(group('ram:SpecifiedTaxRegistration', leaf('ram:ID', source.vatId, [['schemeID', 'VA']]))); // BT-31 / BT-48
+  if (seller?.taxRegistrationId !== undefined) registrations.push(group('ram:SpecifiedTaxRegistration', leaf('ram:ID', seller.taxRegistrationId, [['schemeID', 'FC']]))); // BT-32
   return registrations;
 }
 
@@ -131,7 +133,7 @@ function settlement(invoice: Invoice): Element {
         'ram:ApplicableTradeTax', // BG-23
         amount('ram:CalculatedAmount', bucket.taxAmount), // BT-117
         leaf('ram:TypeCode', 'VAT'),
-        ...(bucket.treatment === 'kleinunternehmer' ? [leaf('ram:ExemptionReason', bucket.exemptionReason)] : []), // BT-120
+        ...(bucket.treatment !== 'standard' ? [leaf('ram:ExemptionReason', bucket.exemptionReason)] : []), // BT-120
         amount('ram:BasisAmount', bucket.taxableAmount), // BT-116
         leaf('ram:CategoryCode', bucket.category), // BT-118
         leaf('ram:RateApplicablePercent', bucket.rate), // BT-119

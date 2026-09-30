@@ -12,7 +12,8 @@
 // assessment is `accept`, and every message is explicitly triaged in tests/fixtures/xrechnung/kosit-triage.json.
 // A control document (a golden copy with BT-10 removed) must be rejected, which shows the harness accepts no
 // document unconditionally. The Kleinunternehmer fixtures are validated in UBL and CII, each with mutated controls
-// that must be rejected by the rule they break. A pass here is not legal certification and says nothing about tax correctness.
+// that must be rejected by the rule they break; the reverse-charge fixtures likewise (UBL and CII, both identifier
+// branches, mutated controls for BR-AE-02, -05, -09 and -10). A pass here is not legal certification and says nothing about tax correctness.
 
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -41,7 +42,7 @@ const CONTROL_NAME = 'control-missing-buyer-reference';
 type Syntax = 'ubl' | 'cii';
 const SCENARIOS: Record<Syntax, string> = { ubl: 'EN16931 XRechnung (UBL Invoice)', cii: 'EN16931 XRechnung (CII)' };
 // M1 current evidence: these fixtures are also validated in CII (their goldens are `<name>.cii.xml`).
-const CII_FIXTURES: readonly FixtureName[] = ['e-kleinunternehmer', 'f-kleinunternehmer-lines'];
+const CII_FIXTURES: readonly FixtureName[] = ['e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids'];
 const ciiName = (name: string): string => `${name}.cii`;
 
 // Mutated copies of a Kleinunternehmer golden that the official validator must reject, each by the named rules.
@@ -59,6 +60,31 @@ const KLEINUNTERNEHMER_CONTROLS: Record<string, { syntax: Syntax; base: FixtureN
   'control-ku-cii-nonzero-vat': { syntax: 'cii', base: 'e-kleinunternehmer', mutate: (x) => x.replace(/(<ram:CalculatedAmount>)0\.00/g, '$11.00'), codes: ['BR-E-09'] },
   'control-ku-cii-missing-seller-tax-id': { syntax: 'cii', base: 'e-kleinunternehmer', mutate: (x) => removeElement(x, /^ *<ram:SpecifiedTaxRegistration>\n(?:.*\n){2}/m), codes: ['BR-E-02', 'BR-DE-16'] },
 };
+// Applies `mutate` to the part of the document from `marker` on (the buyer party), so the seller's identifiers are left alone.
+const fromMarker = (xml: string, marker: string, mutate: (rest: string) => string): string => {
+  const at = xml.indexOf(marker);
+  if (at < 0) fail(`a control mutation found no ${marker}`);
+  return xml.slice(0, at) + mutate(xml.slice(at));
+};
+const UBL_BUYER = '<cac:AccountingCustomerParty>';
+const CII_BUYER = '<ram:BuyerTradeParty>';
+// Reverse charge (AE), MDR-23. RC-1 (g: seller BT-31, buyer BT-48) and RC-2 (h: seller BT-30 + BT-32, buyer BT-47) each
+// lose the one identifier that their branch of BR-AE-02 relies on; h keeps BR-CO-26 satisfied through BT-30, so only the AE rule fires.
+const REVERSE_CHARGE_CONTROLS: typeof KLEINUNTERNEHMER_CONTROLS = {
+  'control-rc-ubl-missing-buyer-bt48': { syntax: 'ubl', base: 'g-reverse-charge-vat-ids', mutate: (x) => fromMarker(x, UBL_BUYER, (s) => removeElement(s, /^ *<cac:PartyTaxScheme>\n(?:.*\n){5}/m)), codes: ['BR-AE-02'] },
+  'control-rc-ubl-missing-buyer-bt47': { syntax: 'ubl', base: 'h-reverse-charge-registration-ids', mutate: (x) => fromMarker(x, UBL_BUYER, (s) => removeElement(s, /^ *<cbc:CompanyID>.*<\/cbc:CompanyID>\n/m)), codes: ['BR-AE-02'] },
+  'control-rc-ubl-missing-seller-tax-id': { syntax: 'ubl', base: 'h-reverse-charge-registration-ids', mutate: (x) => removeElement(x, /^ *<cac:PartyTaxScheme>\n(?:.*\n){5}/m), codes: ['BR-AE-02', 'BR-DE-16'] },
+  'control-rc-ubl-nonzero-vat': { syntax: 'ubl', base: 'h-reverse-charge-registration-ids', mutate: (x) => x.replace(/(<cbc:TaxAmount currencyID="EUR">)0\.00/g, '$11.00'), codes: ['BR-AE-09'] },
+  'control-rc-ubl-nonzero-line-rate': { syntax: 'ubl', base: 'h-reverse-charge-registration-ids', mutate: (x) => x.replace(/(<cac:ClassifiedTaxCategory>\n *<cbc:ID>AE<\/cbc:ID>\n *<cbc:Percent>)0</g, '$119<'), codes: ['BR-AE-05'] },
+  'control-rc-ubl-missing-bt120': { syntax: 'ubl', base: 'h-reverse-charge-registration-ids', mutate: (x) => removeElement(x, /^ *<cbc:TaxExemptionReason>.*<\/cbc:TaxExemptionReason>\n/m), codes: ['BR-AE-10'] },
+  'control-rc-cii-missing-buyer-bt48': { syntax: 'cii', base: 'g-reverse-charge-vat-ids', mutate: (x) => fromMarker(x, CII_BUYER, (s) => removeElement(s, /^ *<ram:SpecifiedTaxRegistration>\n(?:.*\n){2}/m)), codes: ['BR-AE-02'] },
+  'control-rc-cii-missing-buyer-bt47': { syntax: 'cii', base: 'h-reverse-charge-registration-ids', mutate: (x) => fromMarker(x, CII_BUYER, (s) => removeElement(s, /^ *<ram:SpecifiedLegalOrganization>\n(?:.*\n){2}/m)), codes: ['BR-AE-02'] },
+  'control-rc-cii-missing-seller-tax-id': { syntax: 'cii', base: 'h-reverse-charge-registration-ids', mutate: (x) => removeElement(x, /^ *<ram:SpecifiedTaxRegistration>\n(?:.*\n){2}/m), codes: ['BR-AE-02', 'BR-DE-16'] },
+  'control-rc-cii-nonzero-vat': { syntax: 'cii', base: 'h-reverse-charge-registration-ids', mutate: (x) => x.replace(/(<ram:CalculatedAmount>)0\.00/g, '$11.00'), codes: ['BR-AE-09'] },
+  'control-rc-cii-nonzero-line-rate': { syntax: 'cii', base: 'h-reverse-charge-registration-ids', mutate: (x) => x.replace(/(<ram:CategoryCode>AE<\/ram:CategoryCode>\n *<ram:RateApplicablePercent>)0</g, '$119<'), codes: ['BR-AE-05'] },
+  'control-rc-cii-missing-bt120': { syntax: 'cii', base: 'h-reverse-charge-registration-ids', mutate: (x) => removeElement(x, /^ *<ram:ExemptionReason>.*<\/ram:ExemptionReason>\n/m), codes: ['BR-AE-10'] },
+};
+const SPECIAL_CONTROLS = { ...KLEINUNTERNEHMER_CONTROLS, ...REVERSE_CHARGE_CONTROLS };
 const REQUIRED_STEPS = ['val-xsd', 'val-sch.1', 'val-sch.2', 'val-xml'];
 
 const sha256Hex = (data: Buffer | string): string => createHash('sha256').update(data).digest('hex');
@@ -158,8 +184,8 @@ function writeControl(name: string, syntax: Syntax, xml: string, expectCodes: re
   return { name, syntax, xmlPath, xml, expectAccept: false, expectCodes };
 }
 
-function kleinunternehmerControlTarget(name: string): Target {
-  const control = KLEINUNTERNEHMER_CONTROLS[name];
+function specialControlTarget(name: string): Target {
+  const control = SPECIAL_CONTROLS[name];
   if (control === undefined) fail(`unknown control ${name}`);
   // The base is the committed golden, after it has been proven equal to the generated document.
   return writeControl(name, control.syntax, control.mutate(fixtureTarget(control.base, control.syntax).xml), control.codes);
@@ -256,7 +282,7 @@ function main(): void {
   const manifest = JSON.parse(readFileSync(join(ROOT, 'tools/kosit/kosit-manifest.json'), 'utf8')) as Manifest;
   const triage = JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/xrechnung/kosit-triage.json'), 'utf8')) as Triage;
   const requested = process.argv.slice(2);
-  const allNames = [...FIXTURE_NAMES, ...CII_FIXTURES.map(ciiName), CONTROL_NAME, ...Object.keys(KLEINUNTERNEHMER_CONTROLS)];
+  const allNames = [...FIXTURE_NAMES, ...CII_FIXTURES.map(ciiName), CONTROL_NAME, ...Object.keys(SPECIAL_CONTROLS)];
   const names = requested.length > 0 ? requested : allNames;
   for (const name of names) if (!allNames.includes(name)) fail(`unknown fixture ${name}`);
 
@@ -269,8 +295,8 @@ function main(): void {
     const target =
       name === CONTROL_NAME
         ? controlTarget()
-        : name in KLEINUNTERNEHMER_CONTROLS
-          ? kleinunternehmerControlTarget(name)
+        : name in SPECIAL_CONTROLS
+          ? specialControlTarget(name)
           : name.endsWith('.cii')
             ? fixtureTarget(name.slice(0, -'.cii'.length) as FixtureName, 'cii')
             : fixtureTarget(name as FixtureName, 'ubl');
