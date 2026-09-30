@@ -81,8 +81,8 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
 // EN16931/XRechnung requirement, reused from the CII binding (which does require it) for cross-syntax consistency.
 const UBL_TAX_REGISTRATION_SCHEME = 'FC';
 
-// BG-4 carries the seller identifiers (BT-29/30/31/32) and the seller contact (BG-6); BG-7 carries only BT-47 and BT-48
-// (MDR-23). Element order follows the UBL 2.1 PartyType sequence: EndpointID, PartyIdentification, PostalAddress,
+// BG-4 carries the seller identifiers (BT-29/30/31/32) and the seller contact (BG-6); BG-7 carries only BT-47 and BT-48.
+// Element order follows the UBL 2.1 PartyType sequence: EndpointID, PartyIdentification, PostalAddress,
 // PartyTaxScheme, PartyLegalEntity, Contact.
 type Identified = InvoiceParty & { readonly legalRegistrationId?: string; readonly vatId?: string };
 

@@ -77,8 +77,8 @@ export function serializeCiiInvoice(invoice: Invoice): CiiResult {
   return { ok: true, xml: `<?xml version="1.0" encoding="UTF-8"?>\n${render(root, 0).join('\n')}\n` };
 }
 
-// BG-4 carries the seller identifiers (BT-29/30/31/32) and the seller contact (BG-6); BG-7 carries only BT-47 and BT-48
-// (MDR-23). Element order follows the CII D16B TradePartyType sequence: ID, GlobalID, Name, Description, SpecifiedLegalOrganization,
+// BG-4 carries the seller identifiers (BT-29/30/31/32) and the seller contact (BG-6); BG-7 carries only BT-47 and BT-48.
+// Element order follows the CII D16B TradePartyType sequence: ID, GlobalID, Name, Description, SpecifiedLegalOrganization,
 // DefinedTradeContact, PostalTradeAddress, URIUniversalCommunication, SpecifiedTaxRegistration.
 type Identified = InvoiceParty & { readonly legalRegistrationId?: string; readonly vatId?: string };
 

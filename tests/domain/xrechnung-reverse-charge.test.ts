@@ -8,7 +8,7 @@ import { serializeUblInvoice } from '../../src/lib/domain/xrechnung/ubl.ts';
 import { loadFixtureInput, withoutValue, withValue, type JsonObject } from '../support/fixtures.ts';
 import { childNames, one, parseXml, select, textAt } from '../support/xml.ts';
 
-// Reverse charge (§ 13b UStG, category AE), MDR-23. Expectations come from the pinned KoSIT configuration 2026-08-31
+// Reverse charge (§ 13b UStG, category AE). Expectations come from the pinned KoSIT configuration 2026-08-31
 // (BR-AE-01..10, BR-CO-26, BR-DE-16, the SeMoX CIUS bindings) and § 14a Abs. 5 UStG, not from the code under test. The
 // statutory wording is repeated here on purpose: a changed constant must fail.
 

@@ -68,7 +68,7 @@ const fromMarker = (xml: string, marker: string, mutate: (rest: string) => strin
 };
 const UBL_BUYER = '<cac:AccountingCustomerParty>';
 const CII_BUYER = '<ram:BuyerTradeParty>';
-// Reverse charge (AE), MDR-23. RC-1 (g: seller BT-31, buyer BT-48) and RC-2 (h: seller BT-30 + BT-32, buyer BT-47) each
+// Reverse charge (AE). RC-1 (g: seller BT-31, buyer BT-48) and RC-2 (h: seller BT-30 + BT-32, buyer BT-47) each
 // lose the one identifier that their branch of BR-AE-02 relies on; h keeps BR-CO-26 satisfied through BT-30, so only the AE rule fires.
 const REVERSE_CHARGE_CONTROLS: typeof KLEINUNTERNEHMER_CONTROLS = {
   'control-rc-ubl-missing-buyer-bt48': { syntax: 'ubl', base: 'g-reverse-charge-vat-ids', mutate: (x) => fromMarker(x, UBL_BUYER, (s) => removeElement(s, /^ *<cac:PartyTaxScheme>\n(?:.*\n){5}/m)), codes: ['BR-AE-02'] },

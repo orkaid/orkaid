@@ -43,7 +43,7 @@ export const REVERSE_CHARGE_TEXT = 'Steuerschuldnerschaft des Leistungsempfänge
 
 /**
  * The semantic identity of a line's VAT treatment: `treatment` is the discriminator, `category` and `rate` are
- * carried alongside it rather than derived from it, so a further treatment (MDR-18, MDR-21, MDR-22, MDR-23) is
+ * carried alongside it rather than derived from it, so a further treatment (MDR-18, MDR-21) is
  * additive and never requires re-deriving this shape or the VAT bucket key below. `kleinunternehmer` is category E
  * with rate 0 (XRechnung 3.0.2 section 13.3, BR-E-05..07); `reverse-charge` is category AE with rate 0 (BR-AE-05..07).
  * Neither is a generic zero-rate mode and neither category is selectable on its own.
