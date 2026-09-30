@@ -26,7 +26,7 @@ import type { Decimal } from './decimal.ts';
 
 // PROFILE: unit codes (UN/ECE Recommendation 20/21). Each is present in the KoSIT configuration 2026-08-31 code list
 // (rule BR-CL-23); tools/kosit/validate.ts re-verifies that against the validator configuration on every run.
-export const UNIT_CODES = ['C62', 'HUR', 'DAY', 'MON', 'KGM', 'LTR', 'MTR'] as const;
+export const UNIT_CODES = ['C62', 'HUR', 'DAY', 'MON', 'KGM', 'LTR', 'MTR', 'H87'] as const;
 export type UnitCode = (typeof UNIT_CODES)[number];
 
 // Provisional defensive bound on a single text value, NOT a product rule (like the guards in number-notation.ts and invoice.ts).

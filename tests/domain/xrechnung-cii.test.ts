@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { serializeCiiInvoice } from '../../src/lib/domain/xrechnung/cii.ts';
-import { buildInvoice, type Invoice } from '../../src/lib/domain/xrechnung/document.ts';
+import { buildInvoice, UNIT_CODES, type Invoice } from '../../src/lib/domain/xrechnung/document.ts';
 import {
   CONTROLS,
   evaluateControl,
@@ -64,9 +64,16 @@ for (const control of CONTROLS.controls.filter((c) => ['M1', 'N1', 'N2', 'N3', '
   }
 }
 
-test('unit-code matrix: seven profile codes pass in both syntaxes, three boundary cases are rejected by the profile', () => {
+// Historical MDR-16 layer: unit-codes.json is the preregistered profile of that experiment (seven positive codes; H87, "c62"
+// and "" as boundary negatives). It is read as history, not as the current product profile, which is UNIT_CODES
+// (see xrechnung-unit-code-h87.test.ts). The M1 H87 increment deliberately widened the current profile, so H87 -- and only
+// H87 -- is a preregistered negative that the current domain now accepts.
+test('unit-code matrix (MDR-16 preregistration): positives pass in both syntaxes; the boundary negatives still hold except the one the current M1 profile widened (H87)', () => {
   for (const u of UNIT_CODE_CASES.positive) assert.equal(evaluateUnitCode(u.code, 'positive').asPreregistered, true, u.code);
-  for (const u of UNIT_CODE_CASES.boundaryNegative) assert.equal(evaluateUnitCode(u.code, 'boundary-negative').asPreregistered, true, JSON.stringify(u.code));
+  const widened = UNIT_CODE_CASES.boundaryNegative.filter((u) => (UNIT_CODES as readonly string[]).includes(u.code));
+  assert.deepEqual(widened.map((u) => u.code), ['H87']);
+  assert.equal(evaluateUnitCode('H87', 'positive').asPreregistered, true, 'H87 is supported by the current M1 profile');
+  for (const u of UNIT_CODE_CASES.boundaryNegative.filter((c) => !widened.includes(c))) assert.equal(evaluateUnitCode(u.code, 'boundary-negative').asPreregistered, true, JSON.stringify(u.code));
 });
 
 test('the frozen CII binding choices are checked structurally, independent of semantic equality', () => {
