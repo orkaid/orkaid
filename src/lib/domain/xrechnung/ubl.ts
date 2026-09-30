@@ -50,6 +50,7 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
       leaf('cbc:IssueDate', invoice.issueDate), // BT-2
       leaf('cbc:DueDate', invoice.paymentDueDate), // BT-9
       leaf('cbc:InvoiceTypeCode', invoice.documentTypeCode), // BT-3
+      ...invoice.notes.map((note) => leaf('cbc:Note', note.text)), // BG-1 / BT-22
       leaf('cbc:DocumentCurrencyCode', currency), // BT-5
       leaf('cbc:BuyerReference', invoice.buyerReference), // BT-10
       group('cac:AccountingSupplierParty', party(invoice.seller, invoice.seller)), // BG-4

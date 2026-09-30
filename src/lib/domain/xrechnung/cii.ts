@@ -58,6 +58,7 @@ export function serializeCiiInvoice(invoice: Invoice): CiiResult {
         leaf('ram:ID', invoice.invoiceNumber), // BT-1
         leaf('ram:TypeCode', invoice.documentTypeCode), // BT-3
         date('ram:IssueDateTime', invoice.issueDate), // BT-2
+        ...invoice.notes.map((note) => group('ram:IncludedNote', leaf('ram:Content', note.text))), // BG-1 / BT-22
       ),
       group(
         'rsm:SupplyChainTradeTransaction',

@@ -33,10 +33,19 @@ export type UnitCode = (typeof UNIT_CODES)[number];
 // Provisional defensive bound on a single text value, NOT a product rule (like the guards in number-notation.ts and invoice.ts).
 export const PROVISIONAL_MAX_TEXT_LENGTH = 512;
 
+// Orkaid defensive engineering limit for a multiline text (BT-22), NOT an EN 16931 / XRechnung maximum: the SeMoX
+// datatype "text" defines no field length limit. Large enough for a professional invoice note, but not unbounded.
+export const PROVISIONAL_MAX_MULTILINE_TEXT_LENGTH = 10_000;
+
 export type PartyInput = {
   name: string; // BT-27 / BT-44
   electronicAddress: { schemeId: string; value: string }; // BT-34 / BT-49
   address: { street: string; city: string; postCode: string; country: string }; // BG-5 / BG-8
+};
+
+/** BT-22, validated. An object rather than a bare string so BT-21 (subject code) can be added later without changing the element type. */
+export type InvoiceNote = {
+  readonly text: string;
 };
 
 /**
@@ -68,6 +77,7 @@ export type InvoiceDocumentInput = {
     vatId?: string; // BT-48
   };
   payment: { meansCode: string; iban: string }; // BT-81, BT-84
+  notes?: readonly { text: string }[]; // BG-1 / BT-22, 0..n, order preserved; text may contain LF (BT-21 is not supported)
   lines: readonly {
     name: string; // BT-153
     unitCode: string; // BT-130
@@ -122,6 +132,7 @@ export type Invoice = {
     readonly vatId?: string; // BT-48
   };
   readonly payment: { readonly meansCode: '58'; readonly iban: string };
+  readonly notes: readonly InvoiceNote[]; // BG-1 / BT-22, 0..n, in input order
   readonly lines: readonly InvoiceLine[];
   readonly totals: InvoiceTotals;
 };
@@ -157,12 +168,13 @@ export type DocumentResult =
   | { readonly ok: true; readonly value: Invoice }
   | { readonly ok: false; readonly errors: readonly DocumentError[]; readonly truncated: boolean };
 
-const DOCUMENT_FIELDS = ['invoiceNumber', 'issueDate', 'deliveryDate', 'paymentDueDate', 'buyerReference', 'seller', 'buyer', 'payment'];
+const DOCUMENT_FIELDS = ['invoiceNumber', 'issueDate', 'deliveryDate', 'paymentDueDate', 'buyerReference', 'seller', 'buyer', 'payment', 'notes'];
 const LINE_FIELDS = ['name', 'unitCode'];
 const PARTY_FIELDS = ['name', 'electronicAddress', 'address'];
 const SELLER_FIELDS = [...PARTY_FIELDS, 'sellerIdentifiers', 'legalRegistrationId', 'vatId', 'taxRegistrationId', 'contact'];
 const BUYER_FIELDS = [...PARTY_FIELDS, 'legalRegistrationId', 'vatId'];
 const ADDRESS_FIELDS = ['street', 'city', 'postCode', 'country'];
+const NOTE_FIELDS = ['text'];
 const ELECTRONIC_ADDRESS_FIELDS = ['schemeId', 'value'];
 
 const validated = new WeakSet<object>();
@@ -203,6 +215,7 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
   const seller = readSeller(input, errors);
   const buyer = readBuyer(input, usesReverseCharge(input), errors);
   const payment = readPayment(input, errors);
+  const notes = readNotes(input, errors);
   const { lines: lineData, stoppedAt } = readLineData(input, errors);
   // PROFILE: one VAT treatment per invoice. Whether treatments may be combined is an open decision (MDR-18,
   // oq-mixed-vat-treatments-in-m1); the semantic types allow it, only this profile check refuses it.
@@ -234,7 +247,7 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
         seller: money.value.lines.some((line) => line.vat.treatment === 'kleinunternehmer')
           ? { ...seller, additionalLegalInformation: KLEINUNTERNEHMER_EXEMPTION_TEXT }
           : seller,
-        buyer, payment,
+        buyer, payment, notes,
         lines,
         totals: money.value.totals,
       }),
@@ -442,6 +455,32 @@ function readPayment(parent: Record<string, unknown>, errors: DocumentError[]): 
   return meansCode === '58' && iban !== undefined ? { meansCode, iban } : undefined;
 }
 
+// BG-1 / BT-22: 0..n notes, order preserved. Absent is valid and gives an empty collection. A note is an object with
+// exactly `text`; BT-21 (subject code) is not supported, so any other field is reported as unknown. Notes are caller
+// content only: nothing here or in the serializers derives a note from a VAT exemption reason (BT-120).
+function readNotes(parent: Record<string, unknown>, errors: DocumentError[]): readonly InvoiceNote[] {
+  const value = parent.notes;
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) {
+    errors.push({ code: 'invalid_type', path: 'notes' });
+    return [];
+  }
+  const notes: InvoiceNote[] = [];
+  for (const [index, entry] of value.entries()) {
+    const path = `notes[${index}]`;
+    if (entry === undefined) {
+      errors.push({ code: 'missing_field', path });
+    } else if (!isRecord(entry)) {
+      errors.push({ code: 'invalid_type', path });
+    } else {
+      for (const name of Object.keys(entry)) if (!NOTE_FIELDS.includes(name)) errors.push({ code: 'unknown_field', path: `${path}.${name}` });
+      const text = readTextValue(entry.text, `${path}.text`, errors, true);
+      if (text !== undefined) notes.push({ text });
+    }
+  }
+  return notes;
+}
+
 // ------------------------------------------------------------------------------------------------ lines
 
 // Reads only the business part of each line (name, unit code). Monetary fields, non-record lines and holes are
@@ -499,13 +538,15 @@ function readObject(
 // text that is a single line, so they are rejected too. Other legal characters (for example U+00A0) are accepted.
 const ILLEGAL_TEXT = /[\u0000-\u001F\u007F-\u009F\u2028\u2029\uFFFE\uFFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
 
-function readTextValue(value: unknown, path: string, errors: DocumentError[]): string | undefined {
+// `multiline` (BT-22 only) additionally admits LF inside the text. PROFILE choice, not an EN/XRechnung rule: CR is
+// rejected rather than normalised (an XML parser would turn CR and CRLF into LF), and every other control stays illegal.
+function readTextValue(value: unknown, path: string, errors: DocumentError[], multiline = false): string | undefined {
   if (value === undefined) return report(errors, 'missing_field', path);
   if (typeof value !== 'string') return report(errors, 'invalid_type', path);
   if (value.trim() === '') return report(errors, 'empty_text', path);
-  if (value.length > PROVISIONAL_MAX_TEXT_LENGTH) return report(errors, 'text_too_long', path);
+  if (value.length > (multiline ? PROVISIONAL_MAX_MULTILINE_TEXT_LENGTH : PROVISIONAL_MAX_TEXT_LENGTH)) return report(errors, 'text_too_long', path);
   // Never trimmed or otherwise repaired: the caller is told, the text is not silently changed.
-  if (value !== value.trim() || ILLEGAL_TEXT.test(value)) return report(errors, 'invalid_text', path);
+  if (value !== value.trim() || ILLEGAL_TEXT.test(multiline ? value.replaceAll('\n', '') : value)) return report(errors, 'invalid_text', path);
   return value;
 }
 
