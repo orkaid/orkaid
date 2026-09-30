@@ -11,7 +11,8 @@
 // A document passes only if the matched scenario is the intended one, every validation step is valid, the
 // assessment is `accept`, and every message is explicitly triaged in tests/fixtures/xrechnung/kosit-triage.json.
 // A control document (a golden copy with BT-10 removed) must be rejected, which shows the harness accepts no
-// document unconditionally. A pass here is not legal certification and says nothing about tax correctness.
+// document unconditionally. The Kleinunternehmer fixtures are validated in UBL and CII, each with mutated controls
+// that must be rejected by the rule they break. A pass here is not legal certification and says nothing about tax correctness.
 
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -19,6 +20,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node
 import { basename, join, resolve } from 'node:path';
 
 import { buildInvoice, UNIT_CODES } from '../../src/lib/domain/xrechnung/document.ts';
+import { serializeCiiInvoice } from '../../src/lib/domain/xrechnung/cii.ts';
 import { serializeUblInvoice } from '../../src/lib/domain/xrechnung/ubl.ts';
 import { FIXTURE_NAMES, loadFixtureInput, type FixtureName } from '../../tests/support/fixtures.ts';
 import { parseReport, type ParsedReport } from './report.ts';
@@ -36,6 +38,27 @@ const ROOT = resolve(import.meta.dirname, '../..');
 export const CACHE = join(ROOT, '.cache/kosit');
 const GOLDEN = join(ROOT, 'tests/fixtures/xrechnung/golden');
 const CONTROL_NAME = 'control-missing-buyer-reference';
+type Syntax = 'ubl' | 'cii';
+const SCENARIOS: Record<Syntax, string> = { ubl: 'EN16931 XRechnung (UBL Invoice)', cii: 'EN16931 XRechnung (CII)' };
+// M1 current evidence: these fixtures are also validated in CII (their goldens are `<name>.cii.xml`).
+const CII_FIXTURES: readonly FixtureName[] = ['e-kleinunternehmer', 'f-kleinunternehmer-lines'];
+const ciiName = (name: string): string => `${name}.cii`;
+
+// Mutated copies of a Kleinunternehmer golden that the official validator must reject, each by the named rules.
+// The domain refuses to generate these documents, so they are derived from the golden text.
+const removeElement = (xml: string, pattern: RegExp): string => {
+  const mutated = xml.replace(pattern, '');
+  if (mutated === xml) fail('a control mutation did not change the document');
+  return mutated;
+};
+const KLEINUNTERNEHMER_CONTROLS: Record<string, { syntax: Syntax; base: FixtureName; mutate: (xml: string) => string; codes: string[] }> = {
+  'control-ku-ubl-missing-bt120': { syntax: 'ubl', base: 'e-kleinunternehmer', mutate: (x) => removeElement(x, /^ *<cbc:TaxExemptionReason>.*<\/cbc:TaxExemptionReason>\n/m), codes: ['BR-E-10'] },
+  'control-ku-ubl-nonzero-vat': { syntax: 'ubl', base: 'e-kleinunternehmer', mutate: (x) => x.replace(/(<cbc:TaxAmount currencyID="EUR">)0\.00/g, '$11.00'), codes: ['BR-E-09'] },
+  'control-ku-ubl-missing-seller-tax-id': { syntax: 'ubl', base: 'e-kleinunternehmer', mutate: (x) => removeElement(x, /^ *<cac:PartyTaxScheme>\n(?:.*\n){5}/m), codes: ['BR-E-02', 'BR-DE-16'] },
+  'control-ku-cii-missing-bt120': { syntax: 'cii', base: 'e-kleinunternehmer', mutate: (x) => removeElement(x, /^ *<ram:ExemptionReason>.*<\/ram:ExemptionReason>\n/m), codes: ['BR-E-10'] },
+  'control-ku-cii-nonzero-vat': { syntax: 'cii', base: 'e-kleinunternehmer', mutate: (x) => x.replace(/(<ram:CalculatedAmount>)0\.00/g, '$11.00'), codes: ['BR-E-09'] },
+  'control-ku-cii-missing-seller-tax-id': { syntax: 'cii', base: 'e-kleinunternehmer', mutate: (x) => removeElement(x, /^ *<ram:SpecifiedTaxRegistration>\n(?:.*\n){2}/m), codes: ['BR-E-02', 'BR-DE-16'] },
+};
 const REQUIRED_STEPS = ['val-xsd', 'val-sch.1', 'val-sch.2', 'val-xml'];
 
 const sha256Hex = (data: Buffer | string): string => createHash('sha256').update(data).digest('hex');
@@ -106,32 +129,47 @@ function verifyUnitCodes(configurationDirectory: string): void {
 
 // ---------------------------------------------------------------------------------------------- documents
 
-type Target = { name: string; xmlPath: string; xml: string; fixtureInput?: string; expectAccept: boolean };
+type Target = { name: string; syntax: Syntax; xmlPath: string; xml: string; fixtureInput?: string; expectAccept: boolean; expectCodes?: readonly string[] };
 
-function fixtureTarget(name: FixtureName): Target {
-  const goldenPath = join(GOLDEN, `${name}.xml`);
+function generate(name: FixtureName, syntax: Syntax): string {
+  const built = buildInvoice(loadFixtureInput(name));
+  if (!built.ok) fail(`fixture ${name} does not build: ${JSON.stringify(built.errors)}`);
+  const serialized = syntax === 'ubl' ? serializeUblInvoice(built.value) : serializeCiiInvoice(built.value);
+  if (!serialized.ok) fail(`fixture ${name} does not serialize`);
+  return serialized.xml;
+}
+
+function fixtureTarget(name: FixtureName, syntax: Syntax): Target {
+  const goldenPath = join(GOLDEN, `${syntax === 'ubl' ? name : ciiName(name)}.xml`);
   if (!existsSync(goldenPath)) fail(`missing golden file ${goldenPath}`);
   const golden = readFileSync(goldenPath, 'utf8');
 
   // The XML that is validated must be the XML the serializer generates from the fixture, byte for byte.
-  const built = buildInvoice(loadFixtureInput(name));
-  if (!built.ok) fail(`fixture ${name} does not build: ${JSON.stringify(built.errors)}`);
-  const serialized = serializeUblInvoice(built.value);
-  if (!serialized.ok) fail(`fixture ${name} does not serialize`);
-  if (serialized.xml !== golden) fail(`fixture ${name}: the generated XML differs from ${goldenPath}`);
+  if (generate(name, syntax) !== golden) fail(`fixture ${name}: the generated ${syntax} XML differs from ${goldenPath}`);
 
-  return { name, xmlPath: goldenPath, xml: golden, fixtureInput: readFileSync(join(ROOT, `tests/fixtures/xrechnung/${name}.json`), 'utf8'), expectAccept: true };
+  return { name: syntax === 'ubl' ? name : ciiName(name), syntax, xmlPath: goldenPath, xml: golden, fixtureInput: readFileSync(join(ROOT, `tests/fixtures/xrechnung/${name}.json`), 'utf8'), expectAccept: true };
+}
+
+function writeControl(name: string, syntax: Syntax, xml: string, expectCodes: readonly string[]): Target {
+  const directory = join(CACHE, 'work');
+  mkdirSync(directory, { recursive: true });
+  const xmlPath = join(directory, `${name}.xml`);
+  writeFileSync(xmlPath, xml);
+  return { name, syntax, xmlPath, xml, expectAccept: false, expectCodes };
+}
+
+function kleinunternehmerControlTarget(name: string): Target {
+  const control = KLEINUNTERNEHMER_CONTROLS[name];
+  if (control === undefined) fail(`unknown control ${name}`);
+  // The base is the committed golden, after it has been proven equal to the generated document.
+  return writeControl(name, control.syntax, control.mutate(fixtureTarget(control.base, control.syntax).xml), control.codes);
 }
 
 function controlTarget(): Target {
   const golden = readFileSync(join(GOLDEN, 'a-simple.xml'), 'utf8');
   const control = golden.replace(/^ *<cbc:BuyerReference>.*<\/cbc:BuyerReference>\n/m, '');
   if (control === golden) fail('the control document could not be derived from a-simple.xml');
-  const directory = join(CACHE, 'work');
-  mkdirSync(directory, { recursive: true });
-  const xmlPath = join(directory, `${CONTROL_NAME}.xml`);
-  writeFileSync(xmlPath, control);
-  return { name: CONTROL_NAME, xmlPath, xml: control, expectAccept: false };
+  return writeControl(CONTROL_NAME, 'ubl', control, ['BR-DE-15']);
 }
 
 // ---------------------------------------------------------------------------------------------- validation
@@ -166,7 +204,7 @@ function validate(target: Target, tooling: Tooling, manifest: Manifest, triage: 
   if (report === undefined) {
     if (reportText === undefined) problems.push('the validator wrote no report');
   } else {
-    if (report.scenario !== manifest.expectedScenario) problems.push(`matched scenario is "${report.scenario}", expected "${manifest.expectedScenario}"`);
+    if (report.scenario !== SCENARIOS[target.syntax]) problems.push(`matched scenario is "${report.scenario}", expected "${SCENARIOS[target.syntax]}"`);
     if (report.documentHashSha256Base64 !== sha256Base64(target.xml)) problems.push('the validator hashed different bytes than the ones that were generated');
     if (report.engine !== `KoSIT Validator ${manifest.validator.version}`) problems.push(`engine is "${report.engine}"`);
 
@@ -184,7 +222,7 @@ function validate(target: Target, tooling: Tooling, manifest: Manifest, triage: 
     } else {
       // Control: the harness must be able to say no.
       if (report.assessment !== 'reject') problems.push(`the control document was not rejected (assessment ${report.assessment})`);
-      if (!report.messages.some((m) => m.code === 'BR-DE-15')) problems.push('the control document did not trigger BR-DE-15');
+      for (const code of target.expectCodes ?? []) if (!report.messages.some((m) => m.code === code)) problems.push(`the control document did not trigger ${code}`);
     }
   }
 
@@ -218,8 +256,9 @@ function main(): void {
   const manifest = JSON.parse(readFileSync(join(ROOT, 'tools/kosit/kosit-manifest.json'), 'utf8')) as Manifest;
   const triage = JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/xrechnung/kosit-triage.json'), 'utf8')) as Triage;
   const requested = process.argv.slice(2);
-  const names = requested.length > 0 ? requested : [...FIXTURE_NAMES, CONTROL_NAME];
-  for (const name of names) if (name !== CONTROL_NAME && !(FIXTURE_NAMES as readonly string[]).includes(name)) fail(`unknown fixture ${name}`);
+  const allNames = [...FIXTURE_NAMES, ...CII_FIXTURES.map(ciiName), CONTROL_NAME, ...Object.keys(KLEINUNTERNEHMER_CONTROLS)];
+  const names = requested.length > 0 ? requested : allNames;
+  for (const name of names) if (!allNames.includes(name)) fail(`unknown fixture ${name}`);
 
   const tooling = prepareTooling(manifest);
   verifyUnitCodes(tooling.configurationDirectory);
@@ -227,7 +266,14 @@ function main(): void {
 
   let allPassed = true;
   for (const name of names) {
-    const target = name === CONTROL_NAME ? controlTarget() : fixtureTarget(name as FixtureName);
+    const target =
+      name === CONTROL_NAME
+        ? controlTarget()
+        : name in KLEINUNTERNEHMER_CONTROLS
+          ? kleinunternehmerControlTarget(name)
+          : name.endsWith('.cii')
+            ? fixtureTarget(name.slice(0, -'.cii'.length) as FixtureName, 'cii')
+            : fixtureTarget(name as FixtureName, 'ubl');
     const evidence = validate(target, tooling, manifest, triage);
     allPassed &&= evidence.pass;
     console.log(

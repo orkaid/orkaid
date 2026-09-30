@@ -151,12 +151,15 @@ const ORDER: Record<string, string[]> = {
   'cac:PostalAddress': ['cbc:StreetName', 'cbc:CityName', 'cbc:PostalZone', 'cac:Country'],
   'cac:PartyTaxScheme': ['cbc:CompanyID', 'cac:TaxScheme'],
   'cac:PartyLegalEntity': ['cbc:RegistrationName'],
+  'cac:PartyLegalEntity(BT-30, BT-33)': ['cbc:RegistrationName', 'cbc:CompanyID', 'cbc:CompanyLegalForm'],
+  'cac:PartyLegalEntity(BT-33)': ['cbc:RegistrationName', 'cbc:CompanyLegalForm'],
   'cac:Contact': ['cbc:Name', 'cbc:Telephone', 'cbc:ElectronicMail'],
   'cac:Delivery': ['cbc:ActualDeliveryDate'],
   'cac:PaymentMeans': ['cbc:PaymentMeansCode', 'cac:PayeeFinancialAccount'],
   'cac:TaxTotal': ['cbc:TaxAmount', 'cac:TaxSubtotal'],
   'cac:TaxSubtotal': ['cbc:TaxableAmount', 'cbc:TaxAmount', 'cac:TaxCategory'],
   'cac:TaxCategory': ['cbc:ID', 'cbc:Percent', 'cac:TaxScheme'],
+  'cac:TaxCategory(BT-120)': ['cbc:ID', 'cbc:Percent', 'cbc:TaxExemptionReason', 'cac:TaxScheme'],
   'cac:ClassifiedTaxCategory': ['cbc:ID', 'cbc:Percent', 'cac:TaxScheme'],
   'cac:LegalMonetaryTotal': ['cbc:LineExtensionAmount', 'cbc:TaxExclusiveAmount', 'cbc:TaxInclusiveAmount', 'cbc:PayableAmount'],
   'cac:InvoiceLine': ['cbc:ID', 'cbc:InvoicedQuantity', 'cbc:LineExtensionAmount', 'cac:Item', 'cac:Price'],
@@ -187,7 +190,14 @@ function checkOrder(node: XmlNode, key: string): void {
 test('element order follows the UBL 2.1 XSD sequences at every level', () => {
   const walk = (node: XmlNode, parent?: XmlNode): void => {
     // The two Party elements have different children, so the parent tells which sequence applies.
-    const key = node.name === 'cac:Party' ? `cac:Party(${parent?.name === 'cac:AccountingSupplierParty' ? 'supplier' : 'customer'})` : node.name;
+    const key =
+      node.name === 'cac:Party'
+        ? `cac:Party(${parent?.name === 'cac:AccountingSupplierParty' ? 'supplier' : 'customer'})`
+        : node.name === 'cac:TaxCategory' && childNames(node).includes('cbc:TaxExemptionReason')
+          ? 'cac:TaxCategory(BT-120)'
+          : node.name === 'cac:PartyLegalEntity' && childNames(node).includes('cbc:CompanyLegalForm')
+            ? `cac:PartyLegalEntity(${childNames(node).includes('cbc:CompanyID') ? 'BT-30, ' : ''}BT-33)`
+            : node.name;
     checkOrder(node, key);
     for (const child of node.children) walk(child, node);
   };

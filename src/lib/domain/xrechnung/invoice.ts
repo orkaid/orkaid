@@ -1,5 +1,6 @@
 // V1 XRechnung semantic invoice model and monetary calculation.
-// Scope: domestic German B2B invoice, EUR, BT-3 = 380, VAT category S at 19% or 7%, non-negative amounts.
+// Scope: domestic German B2B invoice, EUR, BT-3 = 380, VAT category S at 19% or 7% or the Kleinunternehmer treatment
+// (category E, rate 0), non-negative amounts.
 // Syntax-independent: no UBL/CII structures. Anything outside the scope is an explicit failure, never a fallback (MDR-12).
 //
 // Calculation contract, a project engineering policy for V1 (MDR-13). HALF_UP is not an EN 16931/XRechnung mandate;
@@ -18,16 +19,31 @@ export const SUPPORTED_VAT_RATES = ['19', '7'] as const;
 export type VatRate = (typeof SUPPORTED_VAT_RATES)[number];
 
 /**
- * The semantic identity of a line's VAT treatment: `treatment` is the discriminator, `category` and `rate` are
- * carried alongside it rather than derived from it, so a future treatment with its own category/rate (Kleinunternehmer,
- * reverse charge; MDR-18, MDR-21) is additive and never requires re-deriving this shape or the VAT bucket key below.
- * M1 implements only the standard treatment; the union has one member on purpose (WP-1 §6.3, corrected).
+ * BT-120 and BT-33 text for a Kleinunternehmer invoice. EXTERNAL (recommendation): XRechnung 3.0.2 section 13.3 gives
+ * this wording for both terms; no executable rule tests it and § 34a UStDV only requires a note that the exemption of
+ * § 19 UStG applies. Orkaid choice: this fixed German text, held here once and only rendered by the serializers, is not
+ * caller-editable in M1. No claim is made that it is legally sufficient beyond being the text the specification gives.
  */
-export type InvoiceLineVat = {
-  readonly treatment: 'standard';
-  readonly category: 'S'; // BT-151
-  readonly rate: VatRate; // BT-152
-};
+export const KLEINUNTERNEHMER_EXEMPTION_TEXT = 'Kein Ausweis von Umsatzsteuer, da Kleinunternehmer gemäß § 19 UStG';
+
+/**
+ * The semantic identity of a line's VAT treatment: `treatment` is the discriminator, `category` and `rate` are
+ * carried alongside it rather than derived from it, so a further treatment (reverse charge; MDR-18, MDR-21) is
+ * additive and never requires re-deriving this shape or the VAT bucket key below. `kleinunternehmer` is category E
+ * with rate 0 (XRechnung 3.0.2 section 13.3, BR-E-05..07); it is not a generic zero-rate mode and category E is not
+ * selectable on its own.
+ */
+export type InvoiceLineVat =
+  | {
+      readonly treatment: 'standard';
+      readonly category: 'S'; // BT-151
+      readonly rate: VatRate; // BT-152
+    }
+  | {
+      readonly treatment: 'kleinunternehmer';
+      readonly category: 'E'; // BT-151
+      readonly rate: '0'; // BT-152
+    };
 
 /** Shape the boundary expects. Every field is validated at runtime; amounts are decimal strings, never numbers. */
 export type InvoiceInput = {
@@ -38,9 +54,9 @@ export type InvoiceInput = {
 
 /** The unvalidated counterpart of InvoiceLineVat: every field is a string the caller wrote, checked independently. */
 export type VatInput = {
-  treatment: string; // must be 'standard' in M1 (PROFILE: Kleinunternehmer/reverse charge are a later increment)
-  category: string; // BT-151, must be 'S'; never inferred from the rate
-  rate: string; // BT-152, must equal 19 or 7
+  treatment: string; // 'standard' or 'kleinunternehmer' (PROFILE: reverse charge is a later increment)
+  category: string; // BT-151, must be 'S' for standard and 'E' for kleinunternehmer; never inferred from the rate
+  rate: string; // BT-152, must equal 19 or 7 for standard and 0 for kleinunternehmer
 };
 
 /**
@@ -75,17 +91,25 @@ export type InvoiceError = { readonly code: InvoiceErrorCode; readonly path: str
 
 /**
  * BG-23. Grouped by `(treatment, category, rate)`, not by rate alone: the bucket identity must never depend on
- * BT-120 reason text (research-gated for Kleinunternehmer/reverse charge; WP-1 VAT bucket-key correction). M1 has
- * only the standard treatment, so `treatment` and `category` are constant here, but the key stays composite so a
- * later treatment does not change this shape.
+ * BT-120 reason text. The Kleinunternehmer breakdown carries that text as `exemptionReason`, beside and not in the
+ * key. Its taxable amount is the sum of its lines and its tax amount is exactly zero (BR-E-08, BR-E-09).
  */
-export type VatBreakdown = {
-  readonly treatment: 'standard';
-  readonly category: 'S'; // BT-118
-  readonly rate: VatRate; // BT-119
-  readonly taxableAmount: Decimal; // BT-116
-  readonly taxAmount: Decimal; // BT-117
-};
+export type VatBreakdown =
+  | {
+      readonly treatment: 'standard';
+      readonly category: 'S'; // BT-118
+      readonly rate: VatRate; // BT-119
+      readonly taxableAmount: Decimal; // BT-116
+      readonly taxAmount: Decimal; // BT-117
+    }
+  | {
+      readonly treatment: 'kleinunternehmer';
+      readonly category: 'E'; // BT-118
+      readonly rate: '0'; // BT-119
+      readonly taxableAmount: Decimal; // BT-116
+      readonly taxAmount: Decimal; // BT-117, zero
+      readonly exemptionReason: typeof KLEINUNTERNEHMER_EXEMPTION_TEXT; // BT-120
+    };
 
 export type InvoiceTotals = {
   readonly lines: readonly { readonly netAmount: Decimal }[]; // BT-131, in input order
@@ -209,18 +233,23 @@ function validateLine(
   return { quantity, unitPrice, vat };
 }
 
-// PROFILE (M1): only the standard treatment is implemented; Kleinunternehmer and reverse charge are a later
-// increment (MDR-18, MDR-21). category and rate are validated independently of treatment, never inferred from it.
+// PROFILE (M1): the standard and kleinunternehmer treatments are implemented; reverse charge is a later increment
+// (MDR-18, MDR-21). category and rate are validated independently of each other, never inferred. A treatment that is
+// not recognised is judged against the standard expectation, so the caller still sees every field that is wrong.
 function validateVat(input: unknown, path: string, notation: NumberNotation, errors: InvoiceError[]): InvoiceLineVat | undefined {
   const record = isRecord(input) ? input : undefined;
-  const treatmentOk = record?.treatment === 'standard';
+  const kleinunternehmer = record?.treatment === 'kleinunternehmer';
+  const treatmentOk = kleinunternehmer || record?.treatment === 'standard';
   if (!treatmentOk) errors.push({ code: 'unsupported_vat_treatment', path: `${path}.treatment` });
-  const categoryOk = record?.category === 'S';
+  const categoryOk = record?.category === (kleinunternehmer ? 'E' : 'S');
   if (!categoryOk) errors.push({ code: 'unsupported_vat_category', path: `${path}.category` });
-  const rate = normalizeVatRate(record?.rate, notation);
-  if (rate === undefined) errors.push({ code: 'unsupported_vat_rate', path: `${path}.rate` });
+  const standardRate = kleinunternehmer ? undefined : normalizeVatRate(record?.rate, notation);
+  const rateOk = kleinunternehmer ? isZeroRate(record?.rate, notation) : standardRate !== undefined;
+  if (!rateOk) errors.push({ code: 'unsupported_vat_rate', path: `${path}.rate` });
   if (record !== undefined) reportUnknownFields(record, VAT_FIELDS, path, errors);
-  return treatmentOk && categoryOk && rate !== undefined ? { treatment: 'standard', category: 'S', rate } : undefined;
+  if (!treatmentOk || !categoryOk || !rateOk) return undefined;
+  if (kleinunternehmer) return { treatment: 'kleinunternehmer', category: 'E', rate: '0' };
+  return standardRate === undefined ? undefined : { treatment: 'standard', category: 'S', rate: standardRate };
 }
 
 function parseAmount(input: unknown, path: string, notation: NumberNotation, errors: InvoiceError[]): Decimal | undefined {
@@ -239,6 +268,12 @@ function normalizeVatRate(input: unknown, notation: NumberNotation): VatRate | u
   return SUPPORTED_VAT_RATES.find((rate) => units === BigInt(rate) * 10n ** BigInt(scale));
 }
 
+// The Kleinunternehmer rate is exactly zero, however it is spelled ('0', '0.00', '0,0'). Same exact-decimal comparison.
+function isZeroRate(input: unknown, notation: NumberNotation): boolean {
+  const parsed = parseDecimalInput(input, notation);
+  return parsed.ok && parsed.value.units === 0n;
+}
+
 function reportUnknownFields(record: Record<string, unknown>, allowed: readonly string[], path: string, errors: InvoiceError[]): void {
   for (const key of Object.keys(record)) {
     if (!allowed.includes(key)) errors.push({ code: 'unknown_field', path: path ? `${path}.${key}` : key });
@@ -248,17 +283,29 @@ function reportUnknownFields(record: Record<string, unknown>, allowed: readonly 
 function calculate(lines: readonly ParsedLine[]): InvoiceTotals {
   const netAmounts = lines.map((line) => roundHalfUp(multiply(line.quantity, line.unitPrice), CENT_SCALE));
 
-  // M1 has only the standard treatment, so grouping by rate and grouping by (treatment, category, rate) coincide;
-  // the bucket carries the full key regardless, so a future treatment does not change this loop's shape.
+  // The bucket carries the full key `(treatment, category, rate)`; the standard buckets come first, in
+  // SUPPORTED_VAT_RATES order, then the Kleinunternehmer bucket.
   const vatBreakdown: VatBreakdown[] = [];
   for (const rate of SUPPORTED_VAT_RATES) {
-    const bucket = lines.flatMap((line, index) => (line.vat.rate === rate ? [netAmounts[index] as Decimal] : []));
+    const bucket = lines.flatMap((line, index) => (line.vat.treatment === 'standard' && line.vat.rate === rate ? [netAmounts[index] as Decimal] : []));
     if (bucket.length === 0) continue;
 
     const taxableAmount = bucket.reduce(add, ZERO);
     // rate / 100 is the integer rate at scale 2; VAT is rounded once per bucket.
     const taxAmount = roundHalfUp(multiply(taxableAmount, { units: BigInt(rate), scale: 2 }), CENT_SCALE);
     vatBreakdown.push({ treatment: 'standard', category: 'S', rate, taxableAmount, taxAmount });
+  }
+  const kleinunternehmerNets = lines.flatMap((line, index) => (line.vat.treatment === 'kleinunternehmer' ? [netAmounts[index] as Decimal] : []));
+  if (kleinunternehmerNets.length > 0) {
+    // No VAT is computed: BR-E-09 requires exactly zero. BT-116 is the real sum of the lines, not forced to zero (BR-E-08).
+    vatBreakdown.push({
+      treatment: 'kleinunternehmer',
+      category: 'E',
+      rate: '0',
+      taxableAmount: kleinunternehmerNets.reduce(add, ZERO),
+      taxAmount: ZERO,
+      exemptionReason: KLEINUNTERNEHMER_EXEMPTION_TEXT,
+    });
   }
 
   const sumOfLineNetAmounts = netAmounts.reduce(add, ZERO);

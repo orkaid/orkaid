@@ -101,6 +101,7 @@ function party(source: InvoiceParty, seller?: Invoice['seller']): Element {
       'cac:PartyLegalEntity',
       leaf('cbc:RegistrationName', source.name), // BT-27 / BT-44
       ...(seller?.legalRegistrationId !== undefined ? [leaf('cbc:CompanyID', seller.legalRegistrationId)] : []), // BT-30
+      ...(seller?.additionalLegalInformation !== undefined ? [leaf('cbc:CompanyLegalForm', seller.additionalLegalInformation)] : []), // BT-33
     ),
     ...(seller
       ? [
@@ -137,6 +138,7 @@ function taxTotal(invoice: Invoice, currency: string): Element {
           'cac:TaxCategory',
           leaf('cbc:ID', bucket.category), // BT-118
           leaf('cbc:Percent', bucket.rate), // BT-119
+          ...(bucket.treatment === 'kleinunternehmer' ? [leaf('cbc:TaxExemptionReason', bucket.exemptionReason)] : []), // BT-120
           group('cac:TaxScheme', leaf('cbc:ID', 'VAT')),
         ),
       ),

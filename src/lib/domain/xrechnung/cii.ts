@@ -78,13 +78,14 @@ export function serializeCiiInvoice(invoice: Invoice): CiiResult {
 }
 
 // BG-4 carries the seller identifiers (BT-29/30/31/32) and the seller contact (BG-6); BG-7 has neither in this
-// profile. Element order follows the CII D16B TradePartyType sequence: ID, GlobalID, Name, SpecifiedLegalOrganization,
+// profile. Element order follows the CII D16B TradePartyType sequence: ID, GlobalID, Name, Description, SpecifiedLegalOrganization,
 // DefinedTradeContact, PostalTradeAddress, URIUniversalCommunication, SpecifiedTaxRegistration.
 function party(name: string, source: InvoiceParty, seller?: Invoice['seller']): Element {
   return group(
     name,
     ...(seller?.sellerIdentifiers.map((identifier) => leaf('ram:ID', identifier.value)) ?? []), // BT-29, unscoped: no scheme in M1
     leaf('ram:Name', source.name), // BT-27 / BT-44
+    ...(seller?.additionalLegalInformation !== undefined ? [leaf('ram:Description', seller.additionalLegalInformation)] : []), // BT-33
     ...(seller?.legalRegistrationId !== undefined ? [group('ram:SpecifiedLegalOrganization', leaf('ram:ID', seller.legalRegistrationId))] : []), // BT-30
     ...(seller
       ? [
@@ -130,6 +131,7 @@ function settlement(invoice: Invoice): Element {
         'ram:ApplicableTradeTax', // BG-23
         amount('ram:CalculatedAmount', bucket.taxAmount), // BT-117
         leaf('ram:TypeCode', 'VAT'),
+        ...(bucket.treatment === 'kleinunternehmer' ? [leaf('ram:ExemptionReason', bucket.exemptionReason)] : []), // BT-120
         amount('ram:BasisAmount', bucket.taxableAmount), // BT-116
         leaf('ram:CategoryCode', bucket.category), // BT-118
         leaf('ram:RateApplicablePercent', bucket.rate), // BT-119

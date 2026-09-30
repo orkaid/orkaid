@@ -14,6 +14,7 @@
 
 import {
   calculateInvoice,
+  KLEINUNTERNEHMER_EXEMPTION_TEXT,
   PROVISIONAL_MAX_REPORTED_ERRORS,
   type InvoiceError,
   type InvoiceErrorCode,
@@ -110,6 +111,7 @@ export type Invoice = {
     readonly legalRegistrationId?: string; // BT-30
     readonly vatId?: string; // BT-31
     readonly taxRegistrationId?: string; // BT-32
+    readonly additionalLegalInformation?: string; // BT-33, set by buildInvoice for the Kleinunternehmer treatment, never by the caller
     readonly contact: { readonly name: string; readonly telephone: string; readonly email: string };
   };
   readonly buyer: InvoiceParty;
@@ -134,7 +136,8 @@ export type DocumentErrorCode =
   | 'unsupported_payment_means'
   | 'unsupported_unit_code'
   | 'missing_seller_identification' // BR-CO-26: none of BT-29, BT-30, BT-31 is present
-  | 'missing_seller_tax_identifier' // standard treatment: neither BT-31 nor BT-32 is present
+  | 'missing_seller_tax_identifier' // neither BT-31 nor BT-32 is present (BR-S-02, BR-E-02, BR-DE-16)
+  | 'unsupported_mixed_vat_treatments' // PROFILE: an invoice is all-standard or all-kleinunternehmer
   | 'internal_inconsistency';
 
 export type DocumentError = { readonly code: DocumentErrorCode; readonly path: string };
@@ -193,6 +196,11 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
   const buyer = readParty(input, 'buyer', 'buyer', errors);
   const payment = readPayment(input, errors);
   const { lines: lineData, stoppedAt } = readLineData(input, errors);
+  // PROFILE: one VAT treatment per invoice. Whether treatments may be combined is an open decision (MDR-18,
+  // oq-mixed-vat-treatments-in-m1); the semantic types allow it, only this profile check refuses it.
+  if (money.ok && new Set(money.value.lines.map((line) => line.vat.treatment)).size > 1) {
+    errors.push({ code: 'unsupported_mixed_vat_treatments', path: 'lines' });
+  }
 
   if (money.ok && errors.length === 0 && stoppedAt === undefined) {
     if (
@@ -214,7 +222,11 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
         documentTypeCode: '380',
         currency: 'EUR',
         invoiceNumber, issueDate, deliveryDate, paymentDueDate, buyerReference,
-        seller, buyer, payment,
+        // BT-33: XRechnung 3.0.2 section 13.3 asks for the exemption text here as well as in BT-120.
+        seller: money.value.lines.some((line) => line.vat.treatment === 'kleinunternehmer')
+          ? { ...seller, additionalLegalInformation: KLEINUNTERNEHMER_EXEMPTION_TEXT }
+          : seller,
+        buyer, payment,
         lines,
         totals: money.value.totals,
       }),
@@ -325,8 +337,9 @@ function readSeller(parent: Record<string, unknown>, errors: DocumentError[]): I
   if (!suppliesBt29 && !suppliesBt30 && !suppliesBt31) {
     errors.push({ code: 'missing_seller_identification', path: 'seller' });
   }
-  // Standard-treatment seller tax identifier: BT-31 or BT-32. BT-63/BG-11 (the tax representative branch these
-  // rules also accept) is not implemented in M1, so only these two are checked here (MDR-21).
+  // Seller tax identifier: BT-31 or BT-32. Both implemented treatments need it: standard (BR-S-02, BR-DE-16) and
+  // kleinunternehmer (BR-E-02, BR-DE-16, verified in UBL and CII; it is not relaxed for category E). BT-63/BG-11 (the
+  // tax representative branch these rules also accept) is not implemented in M1, so only these two are checked (MDR-21).
   if (!suppliesBt31 && !suppliesBt32) {
     errors.push({ code: 'missing_seller_tax_identifier', path: 'seller' });
   }
