@@ -23,6 +23,9 @@ export type VatRate = (typeof SUPPORTED_VAT_RATES)[number];
  * this wording for both terms; no executable rule tests it and § 34a UStDV only requires a note that the exemption of
  * § 19 UStG applies. Orkaid choice: this fixed German text, held here once and only rendered by the serializers, is not
  * caller-editable in M1. No claim is made that it is legally sufficient beyond being the text the specification gives.
+ * The whole Kleinunternehmer contract (category E, rate 0, BT-120 and BT-33 wording, BT-121 omitted, seller tax
+ * identifier BT-31 or BT-32, one treatment per invoice, no eligibility check) is the accepted implementation decision
+ * (MDR-22, resting on MDR-18 and MDR-21); the law and the specification above remain the authority for the rule itself.
  */
 export const KLEINUNTERNEHMER_EXEMPTION_TEXT = 'Kein Ausweis von Umsatzsteuer, da Kleinunternehmer gemäß § 19 UStG';
 
