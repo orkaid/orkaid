@@ -10,8 +10,9 @@ export type ParseResult =
   | { readonly ok: false; readonly code: DecimalErrorCode };
 
 // Provisional protective guardrail against pathological input, NOT a product rule. It bounds the raw input text
-// (grouping separators included) at every parsing boundary and is not a precision or magnitude policy: the real
-// quantity/unit-price limits are still an OPEN decision and are not decided here. Do not rely on this value.
+// (grouping separators included) at every parsing boundary for resource protection only. It is not a precision or
+// magnitude policy and is no evidence of what precision or magnitude is supported: the semantic quantity and
+// unit-price limits are profile rules in invoice.ts, applied after parsing. Do not rely on this value.
 export const PROVISIONAL_INPUT_LENGTH_GUARD = 128;
 
 const DECIMAL_PATTERN = /^(-?)([0-9]+)(?:\.([0-9]+))?$/;
@@ -46,6 +47,23 @@ export function roundHalfUp(value: Decimal, scale: number): Decimal {
   const quotient = value.units / divisor;
   const remainder = value.units % divisor;
   return { units: remainder * 2n >= divisor ? quotient + 1n : quotient, scale };
+}
+
+export function compare(a: Decimal, b: Decimal): -1 | 0 | 1 {
+  const scale = Math.max(a.scale, b.scale);
+  const left = rescaleUp(a, scale);
+  const right = rescaleUp(b, scale);
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+/** Fractional digits that carry value: trailing fractional zeros do not count (1.2300 -> 2). The value is not changed. */
+export function effectiveFractionDigits(value: Decimal): number {
+  let { units, scale } = value;
+  while (scale > 0 && units % 10n === 0n) {
+    units /= 10n;
+    scale -= 1;
+  }
+  return scale;
 }
 
 export function formatDecimal(value: Decimal): string {

@@ -172,7 +172,7 @@ test('BR-CO-10/13/14/15/17 hold for every vector, checked with independent integ
     invoice([line('2', '10.00'), line('1', '5.50', '7'), line('3', '1.10')]),
     invoice([line('0.5', '0.01'), line('2.5', '0.01'), line('1.005', '1', '7'), line('0.0049', '1', '7')]),
     invoice([line('1', '0.005'), line('1', '0.005', '7'), line('7', '19.99'), line('12.345', '9.876', '7')]),
-    invoice([line('1000000', '999999.99'), line('0.001', '0.001', '7')]),
+    invoice([line('1000', '999999.99'), line('9.999999', '777777777.777777', '7'), line('0.001', '0.001', '7')]),
   ];
   for (const input of vectors) {
     const totals = ok(input);
@@ -212,11 +212,12 @@ test('BR-CO-18: at least one VAT breakdown is present for any accepted invoice',
 });
 
 test('large exact values do not lose precision', () => {
-  // 1,000,000 x 999,999.99 = 999,999,990,000.00; VAT 19%: x 0.19 = 189,999,998,100.00 exactly
-  const totals = ok(invoice([line('1000000', '999999.99')]));
-  assert.equal(formatDecimal(totals.totalWithoutVat), '999999990000.00');
-  assert.equal(formatDecimal(totals.totalVat), '189999998100.00');
-  assert.equal(formatDecimal(totals.totalWithVat), '1189999988100.00');
+  // Within the M1 profile (amounts below 10^10): 1,000 x 8,403,361.34453 = 8,403,361,344.53;
+  // VAT 19%: 1,596,638,655.4607 -> 1,596,638,655.46; gross 9,999,999,999.99, one cent below the ceiling.
+  const totals = ok(invoice([line('1000', '8403361.34453')]));
+  assert.equal(formatDecimal(totals.totalWithoutVat), '8403361344.53');
+  assert.equal(formatDecimal(totals.totalVat), '1596638655.46');
+  assert.equal(formatDecimal(totals.totalWithVat), '9999999999.99');
 });
 
 // ---------------------------------------------------------------- rejection: invalid decimals and negatives

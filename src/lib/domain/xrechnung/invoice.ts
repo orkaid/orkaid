@@ -10,13 +10,27 @@
 //   BT-117 = round(BT-116 x BT-119 / 100, 2)          once per bucket (BR-CO-17), never summed per line
 //   BT-110 = sum of BT-117
 //   BT-115 = BT-112, as BR-CO-16 with BT-113 and BT-114 absent
+// Numeric bounds, PROFILE (M1), checked on exact decimals: BT-129 and BT-146 each at most 6 effective fractional
+// digits and below 10^9; every amount calculated above below 10^10 EUR, checked after the calculation.
 // Identification, parties, dates and payment data belong to document.ts, which delegates every amount to this module.
 
-import { add, multiply, roundHalfUp, type Decimal, type DecimalErrorCode } from './decimal.ts';
+import { add, compare, effectiveFractionDigits, multiply, roundHalfUp, type Decimal, type DecimalErrorCode } from './decimal.ts';
 import { parseDecimalInput, type NumberNotation } from './number-notation.ts';
 
 export const SUPPORTED_VAT_RATES = ['19', '7'] as const;
 export type VatRate = (typeof SUPPORTED_VAT_RATES)[number];
+
+// PROFILE (M1) numeric bounds. Upper bounds are exclusive and compared exactly; precision counts effective fractional
+// digits (trailing zeros ignored), while the parsed value keeps the scale the caller wrote. The amount ceiling is an
+// interoperability guard for the pinned validation baseline, chosen with a margin below the amounts at which that
+// validator was observed to fail; it is not an EN 16931, XRechnung or XSD maximum. The non-negative lower bound is the
+// existing sign rule of the decimal parser; zero is neither rejected nor singled out here.
+export const MAX_QUANTITY_EFFECTIVE_FRACTION_DIGITS = 6; // BT-129
+export const MAX_UNIT_PRICE_EFFECTIVE_FRACTION_DIGITS = 6; // BT-146
+export const MAX_QUANTITY_EXCLUSIVE: Decimal = Object.freeze({ units: 1_000_000_000n, scale: 0 }); // BT-129
+export const MAX_UNIT_PRICE_EXCLUSIVE: Decimal = Object.freeze({ units: 1_000_000_000n, scale: 0 }); // BT-146
+// BT-131, BT-116, BT-117, BT-106, BT-109, BT-110, BT-112 and BT-115, in EUR.
+export const MAX_CALCULATED_AMOUNT_EXCLUSIVE: Decimal = Object.freeze({ units: 10_000_000_000n, scale: 0 });
 
 /**
  * BT-120 and BT-33 text for a Kleinunternehmer invoice. EXTERNAL (recommendation): XRechnung 3.0.2 section 13.3 gives
@@ -101,6 +115,9 @@ export type InvoiceErrorCode =
   | 'unknown_field'
   | 'no_lines'
   | 'error_list_truncated'
+  | 'fraction_digits_limit'
+  | 'magnitude_limit'
+  | 'calculated_amount_limit'
   | 'unsupported_document_type'
   | 'unsupported_currency'
   | 'unsupported_vat_treatment'
@@ -200,7 +217,30 @@ export function calculateInvoice(input: unknown, options: InvoiceOptions = {}, c
   const validated = validate(input, options.notation ?? 'canonical', errors, callerFields);
   if (validated === undefined) return { ok: false, errors, truncated: false };
   if (errors.length > 0) return { ok: false, errors, truncated: validated.truncated };
-  return { ok: true, value: { lines: validated.lines, totals: calculate(validated.lines) } };
+  const totals = calculate(validated.lines);
+  const ceilingErrors = calculatedAmountErrors(totals);
+  if (ceilingErrors.length > 0) return { ok: false, errors: ceilingErrors, truncated: false };
+  return { ok: true, value: { lines: validated.lines, totals } };
+}
+
+// Ownership: a line whose BT-131 reaches the ceiling owns the diagnostic (lines[i]). The totals that contain it (its
+// BT-116, BT-106, BT-109, BT-112, BT-115) then reach it too, so no document diagnostic is added. Only when no line
+// reaches it, and a breakdown or document amount still does, is one diagnostic reported for the document, at 'lines'.
+function calculatedAmountErrors(totals: InvoiceTotals): InvoiceError[] {
+  const reachesCeiling = (amount: Decimal) => compare(amount, MAX_CALCULATED_AMOUNT_EXCLUSIVE) >= 0;
+  const lineErrors = totals.lines.flatMap(({ netAmount }, index) =>
+    reachesCeiling(netAmount) ? [{ code: 'calculated_amount_limit' as const, path: `lines[${index}]` }] : [],
+  );
+  if (lineErrors.length > 0) return lineErrors;
+  const documentAmounts = [
+    ...totals.vatBreakdown.flatMap((bucket) => [bucket.taxableAmount, bucket.taxAmount]), // BT-116, BT-117
+    totals.sumOfLineNetAmounts, // BT-106
+    totals.totalWithoutVat, // BT-109
+    totals.totalVat, // BT-110
+    totals.totalWithVat, // BT-112
+    totals.amountDue, // BT-115
+  ];
+  return documentAmounts.some(reachesCeiling) ? [{ code: 'calculated_amount_limit', path: 'lines' }] : [];
 }
 
 function validate(
@@ -253,8 +293,8 @@ function validateLine(
   }
 
   const errorsBefore = errors.length;
-  const quantity = parseAmount(line.quantity, `${path}.quantity`, notation, errors);
-  const unitPrice = parseAmount(line.unitPrice, `${path}.unitPrice`, notation, errors);
+  const quantity = parseLineValue(line.quantity, `${path}.quantity`, notation, MAX_QUANTITY_EFFECTIVE_FRACTION_DIGITS, MAX_QUANTITY_EXCLUSIVE, errors);
+  const unitPrice = parseLineValue(line.unitPrice, `${path}.unitPrice`, notation, MAX_UNIT_PRICE_EFFECTIVE_FRACTION_DIGITS, MAX_UNIT_PRICE_EXCLUSIVE, errors);
   const vat = validateVat(line.vat, `${path}.vat`, notation, errors);
   reportUnknownFields(line, [...LINE_FIELDS, ...callerLineFields], path, errors);
 
@@ -284,10 +324,23 @@ function validateVat(input: unknown, path: string, notation: NumberNotation, err
   return standardRate === undefined ? undefined : { treatment: 'standard', category: 'S', rate: standardRate };
 }
 
-function parseAmount(input: unknown, path: string, notation: NumberNotation, errors: InvoiceError[]): Decimal | undefined {
+// BT-129 and BT-146 only, in order: raw-input guard and grammar and sign (the parser), then precision, then magnitude.
+// The first failure is the one reported. The value is returned with the scale the caller wrote.
+function parseLineValue(
+  input: unknown,
+  path: string,
+  notation: NumberNotation,
+  maxFractionDigits: number,
+  maxExclusive: Decimal,
+  errors: InvoiceError[],
+): Decimal | undefined {
   const result = parseDecimalInput(input, notation);
-  if (result.ok) return result.value;
-  errors.push({ code: result.code, path });
+  let code: InvoiceErrorCode;
+  if (!result.ok) code = result.code;
+  else if (effectiveFractionDigits(result.value) > maxFractionDigits) code = 'fraction_digits_limit';
+  else if (compare(result.value, maxExclusive) >= 0) code = 'magnitude_limit';
+  else return result.value;
+  errors.push({ code, path });
   return undefined;
 }
 

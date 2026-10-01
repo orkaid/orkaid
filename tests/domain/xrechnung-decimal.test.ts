@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  compare,
+  effectiveFractionDigits,
   formatDecimal,
   multiply,
   parseDecimal,
@@ -106,4 +108,26 @@ test('parseDecimal rejects negative amounts with a dedicated code', () => {
 test('parseDecimal applies a protective length guard with its own distinct code', () => {
   const huge = '1'.repeat(10_000);
   assert.deepEqual(parseDecimal(huge), { ok: false, code: 'input_length_guard' });
+});
+
+// Engine capability, independent of any invoice profile: these helpers work at any size and never change the value.
+
+test('effectiveFractionDigits ignores insignificant trailing zeros and leaves the value untouched', () => {
+  const cases: Array<[string, number]> = [
+    ['1.23', 2], ['1.230000', 2], ['1.2300000', 2], ['1.0000000', 0], ['0.000001', 6], ['0.0000001', 7],
+    ['0', 0], ['0.000', 0], ['120', 0], ['120.50', 1], ['123456789012345678901234567890.123456789000', 9],
+  ];
+  for (const [input, digits] of cases) {
+    const value = parsed(input);
+    assert.equal(effectiveFractionDigits(value), digits, input);
+    assert.equal(formatDecimal(value), input, `${input} keeps its scale`);
+  }
+});
+
+test('compare orders exact values regardless of scale', () => {
+  assert.equal(compare(parsed('1000000000'), parsed('1000000000.000000')), 0);
+  assert.equal(compare(parsed('999999999.999999'), parsed('1000000000')), -1);
+  assert.equal(compare(parsed('10000000000.00'), parsed('9999999999.99')), 1);
+  assert.equal(compare(parsed('0'), parsed('0.00')), 0);
+  assert.equal(compare(parsed('123456789012345678901234567890.1'), parsed('123456789012345678901234567890.10')), 0);
 });

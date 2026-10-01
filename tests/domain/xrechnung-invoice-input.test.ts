@@ -369,33 +369,36 @@ test('the provisional input guard is reported per field in every notation', () =
 
 // ---------------------------------------------------------------- large exact values and retained behaviour
 
-test('large exact values stay exact through the whole calculation', () => {
-  // 12345678901234567890.5 x 2 = 24691357802469135781.0 -> 24691357802469135781.00
-  // VAT 19%: 24691357802469135781.00 x 19 / 100 = 4691357982469135798.39 (exact; 24691357802469135781 x 19 = 469135798246913579839)
-  // Gross: 24691357802469135781.00 + 4691357982469135798.39 = 29382715784938271579.39
-  const inputs: Array<[notation: 'canonical' | 'de' | 'en', quantity: string]> = [
-    ['canonical', '12345678901234567890.5'],
-    ['de', '12345678901234567890,5'],
-    ['en', '12345678901234567890.5'],
+test('high-boundary values of the M1 profile stay exact through the whole calculation', () => {
+  // Decimal-engine capability beyond the profile (arbitrary bigint size) is covered in xrechnung-decimal.test.ts;
+  // this is the invoice-profile allowance: 6 effective fractional digits, values below 10^9, amounts below 10^10.
+  // 0.5 x 999999999.99 = 499999999.995 -> exact half, HALF_UP 500000000.00
+  // 9.999999 x 777777777.777777 = 7777776999.999992222223 -> 7777777000.00
+  // BT-106 8277777000.00; VAT 19% = 1572777630.00 (exact); gross 9850554630.00
+  const inputs: Array<[notation: 'canonical' | 'de' | 'en', lines: Array<[quantity: string, price: string]>]> = [
+    ['canonical', [['0.5', '999999999.99'], ['9.999999', '777777777.777777']]],
+    ['de', [['0,5', '999.999.999,99'], ['9,999999', '777.777.777,777777']]],
+    ['en', [['0.5', '999,999,999.99'], ['9.999999', '777,777,777.777777']]],
   ];
-  for (const [notation, quantity] of inputs) {
-    const totals = ok(invoice([line(quantity, '2')]), { notation });
-    assert.equal(formatDecimal(totals.lines[0]!.netAmount), '24691357802469135781.00', notation);
-    assert.equal(formatDecimal(totals.totalVat), '4691357982469135798.39', notation);
-    assert.equal(formatDecimal(totals.totalWithVat), '29382715784938271579.39', notation);
+  for (const [notation, lines] of inputs) {
+    const totals = ok(invoice(lines.map(([quantity, price]) => line(quantity, price))), { notation });
+    assert.deepEqual(totals.lines.map((l) => formatDecimal(l.netAmount)), ['500000000.00', '7777777000.00'], notation);
+    assert.equal(formatDecimal(totals.sumOfLineNetAmounts), '8277777000.00', notation);
+    assert.equal(formatDecimal(totals.totalVat), '1572777630.00', notation);
+    assert.equal(formatDecimal(totals.totalWithVat), '9850554630.00', notation);
   }
 });
 
 test('grouped German and English input reaches the same large totals as canonical input', () => {
-  // 1,000,000 x 999,999.99 = 999,999,990,000.00; VAT 19% = 189,999,998,100.00; gross 1,189,999,988,100.00
+  // 1,000 x 999,999.99 = 999,999,990.00; VAT 19% = 189,999,998.10; gross 1,189,999,988.10
   for (const [notation, quantity, price] of [
-    ['de', '1.000.000', '999.999,99'],
-    ['en', '1,000,000', '999,999.99'],
+    ['de', '1.000', '999.999,99'],
+    ['en', '1,000', '999,999.99'],
   ] as const) {
     const totals = ok(invoice([line(quantity, price)]), { notation });
-    assert.equal(formatDecimal(totals.totalWithoutVat), '999999990000.00', notation);
-    assert.equal(formatDecimal(totals.totalVat), '189999998100.00', notation);
-    assert.equal(formatDecimal(totals.totalWithVat), '1189999988100.00', notation);
+    assert.equal(formatDecimal(totals.totalWithoutVat), '999999990.00', notation);
+    assert.equal(formatDecimal(totals.totalVat), '189999998.10', notation);
+    assert.equal(formatDecimal(totals.totalWithVat), '1189999988.10', notation);
   }
 });
 
