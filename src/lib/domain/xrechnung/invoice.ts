@@ -24,7 +24,9 @@ export type VatRate = (typeof SUPPORTED_VAT_RATES)[number];
 // digits (trailing zeros ignored), while the parsed value keeps the scale the caller wrote. The amount ceiling is an
 // interoperability guard for the pinned validation baseline, chosen with a margin below the amounts at which that
 // validator was observed to fail; it is not an EN 16931, XRechnung or XSD maximum. The non-negative lower bound is the
-// existing sign rule of the decimal parser; zero is neither rejected nor singled out here.
+// existing sign rule of the decimal parser; zero is neither rejected nor singled out here. These bounds are the accepted
+// M1 numeric policy (MDR-24, resting on MDR-13, MDR-14 and MDR-18); the validator observation is evidence for it, not
+// a rule of the specification.
 export const MAX_QUANTITY_EFFECTIVE_FRACTION_DIGITS = 6; // BT-129
 export const MAX_UNIT_PRICE_EFFECTIVE_FRACTION_DIGITS = 6; // BT-146
 export const MAX_QUANTITY_EXCLUSIVE: Decimal = Object.freeze({ units: 1_000_000_000n, scale: 0 }); // BT-129
