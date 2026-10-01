@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 // (example.com / example.org addresses, the official test-suite dummy IBAN). Expected amounts are worked out by
 // hand, never produced by the code under test.
 
-export const FIXTURE_NAMES = ['a-simple', 'b-ten-lines', 'c-rounded-line-net', 'd-mixed-rates', 'e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms'] as const;
+export const FIXTURE_NAMES = ['a-simple', 'b-ten-lines', 'c-rounded-line-net', 'd-mixed-rates', 'e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms', 'm-payment-means-30', 'n-payment-means-30-account-details'] as const;
 export type FixtureName = (typeof FIXTURE_NAMES)[number];
 
 export type JsonObject = { [key: string]: unknown };
@@ -53,6 +53,7 @@ export type ExpectedAmounts = {
 // H (reverse charge, seller BT-30 + BT-32, buyer BT-47): same two lines as E under category AE: taxable 219.80, VAT 0.00.
 // I, J (invoice notes, BT-22): the two lines of A, unchanged amounts; only the notes differ.
 // K, L (BT-20 alone; BT-9 with multiline BT-20): the two lines of A, unchanged amounts; only the payment terms differ.
+// M, N (payment means 30; N adds BT-85 and BT-86): the two lines of A, unchanged amounts; only the payment means differ.
 // D: 100.00 at 19% -> 19.00; 3 x 33.33 = 99.99 at 7% -> 6.9993 -> 7.00; 199.99 + 26.00 = 225.99.
 export const EXPECTED: Record<FixtureName, ExpectedAmounts> = {
   'a-simple': {
@@ -136,6 +137,20 @@ export const EXPECTED: Record<FixtureName, ExpectedAmounts> = {
     gross: '261.56',
   },
   'l-payment-due-date-and-terms': {
+    lineNets: ['99.80', '120.00'],
+    breakdown: [{ rate: '19', taxable: '219.80', tax: '41.76' }],
+    sumOfLineNets: '219.80',
+    totalVat: '41.76',
+    gross: '261.56',
+  },
+  'm-payment-means-30': {
+    lineNets: ['99.80', '120.00'],
+    breakdown: [{ rate: '19', taxable: '219.80', tax: '41.76' }],
+    sumOfLineNets: '219.80',
+    totalVat: '41.76',
+    gross: '261.56',
+  },
+  'n-payment-means-30-account-details': {
     lineNets: ['99.80', '120.00'],
     breakdown: [{ rate: '19', taxable: '219.80', tax: '41.76' }],
     sumOfLineNets: '219.80',

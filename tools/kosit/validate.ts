@@ -13,7 +13,8 @@
 // A control document (a golden copy with BT-10 removed) must be rejected, which shows the harness accepts no
 // document unconditionally. The Kleinunternehmer fixtures are validated in UBL and CII, each with mutated controls
 // that must be rejected by the rule they break; the reverse-charge fixtures likewise (UBL and CII, both identifier
-// branches, mutated controls for BR-AE-02, -05, -09 and -10). A pass here is not legal certification and says nothing about tax correctness.
+// branches, mutated controls for BR-AE-02, -05, -09 and -10); payment means 30 likewise (BR-50, BR-61, CII-SR-470,
+// BR-DE-23-a, BR-CL-16). A pass here is not legal certification and says nothing about tax correctness.
 
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -42,7 +43,7 @@ const CONTROL_NAME = 'control-missing-buyer-reference';
 type Syntax = 'ubl' | 'cii';
 const SCENARIOS: Record<Syntax, string> = { ubl: 'EN16931 XRechnung (UBL Invoice)', cii: 'EN16931 XRechnung (CII)' };
 // M1 current evidence: these fixtures are also validated in CII (their goldens are `<name>.cii.xml`).
-const CII_FIXTURES: readonly FixtureName[] = ['e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms'];
+const CII_FIXTURES: readonly FixtureName[] = ['e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms', 'm-payment-means-30', 'n-payment-means-30-account-details'];
 const ciiName = (name: string): string => `${name}.cii`;
 
 // Mutated copies of a Kleinunternehmer golden that the official validator must reject, each by the named rules.
@@ -84,7 +85,16 @@ const REVERSE_CHARGE_CONTROLS: typeof KLEINUNTERNEHMER_CONTROLS = {
   'control-rc-cii-nonzero-line-rate': { syntax: 'cii', base: 'h-reverse-charge-registration-ids', mutate: (x) => x.replace(/(<ram:CategoryCode>AE<\/ram:CategoryCode>\n *<ram:RateApplicablePercent>)0</g, '$119<'), codes: ['BR-AE-05'] },
   'control-rc-cii-missing-bt120': { syntax: 'cii', base: 'h-reverse-charge-registration-ids', mutate: (x) => removeElement(x, /^ *<ram:ExemptionReason>.*<\/ram:ExemptionReason>\n/m), codes: ['BR-AE-10'] },
 };
-const SPECIAL_CONTROLS = { ...KLEINUNTERNEHMER_CONTROLS, ...REVERSE_CHARGE_CONTROLS };
+// Payment means 30 (m: IBAN only): the account identifier, the whole BG-17, or a code outside UNTDID 4461 is removed or replaced.
+const PAYMENT_MEANS_CONTROLS: typeof KLEINUNTERNEHMER_CONTROLS = {
+  'control-pm30-ubl-missing-bt84': { syntax: 'ubl', base: 'm-payment-means-30', mutate: (x) => removeElement(x, /^ *<cbc:ID>DE79000000001234567890<\/cbc:ID>\n/m), codes: ['BR-50', 'BR-61'] },
+  'control-pm30-ubl-missing-bg17': { syntax: 'ubl', base: 'm-payment-means-30', mutate: (x) => removeElement(x, /^ *<cac:PayeeFinancialAccount>\n(?:.*\n){2}/m), codes: ['BR-61', 'BR-DE-23-a'] },
+  'control-pm30-ubl-unknown-code': { syntax: 'ubl', base: 'm-payment-means-30', mutate: (x) => x.replace('<cbc:PaymentMeansCode>30<', '<cbc:PaymentMeansCode>99<'), codes: ['BR-CL-16'] },
+  'control-pm30-cii-missing-bt84': { syntax: 'cii', base: 'm-payment-means-30', mutate: (x) => removeElement(x, /^ *<ram:IBANID>.*<\/ram:IBANID>\n/m), codes: ['BR-50', 'BR-61', 'CII-SR-470'] },
+  'control-pm30-cii-missing-bg17': { syntax: 'cii', base: 'm-payment-means-30', mutate: (x) => removeElement(x, /^ *<ram:PayeePartyCreditorFinancialAccount>\n(?:.*\n){2}/m), codes: ['CII-SR-470', 'BR-DE-23-a'] },
+  'control-pm30-cii-unknown-code': { syntax: 'cii', base: 'm-payment-means-30', mutate: (x) => x.replace('<ram:TypeCode>30<', '<ram:TypeCode>99<'), codes: ['BR-CL-16'] },
+};
+const SPECIAL_CONTROLS = { ...KLEINUNTERNEHMER_CONTROLS, ...REVERSE_CHARGE_CONTROLS, ...PAYMENT_MEANS_CONTROLS };
 const REQUIRED_STEPS = ['val-xsd', 'val-sch.1', 'val-sch.2', 'val-xml'];
 
 const sha256Hex = (data: Buffer | string): string => createHash('sha256').update(data).digest('hex');

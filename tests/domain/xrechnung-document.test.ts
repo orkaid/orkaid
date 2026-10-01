@@ -89,7 +89,7 @@ test('input outside the implemented profile fails explicitly, per field, without
     ['a foreign buyer country', withValue(base(), 'buyer.address.country', 'FR'), 'unsupported_country@buyer.address.country'],
     ['a seller electronic address scheme outside EM / 0204 / 0088', withValue(base(), 'seller.electronicAddress.schemeId', '0009'), 'unsupported_electronic_address_scheme@seller.electronicAddress.schemeId'],
     ['a buyer electronic address scheme outside EM / 0204 / 0088', withValue(base(), 'buyer.electronicAddress.schemeId', '9930'), 'unsupported_electronic_address_scheme@buyer.electronicAddress.schemeId'],
-    ['a payment means code other than 58', withValue(base(), 'payment.means.code', '30'), 'unsupported_payment_means@payment.means.code'],
+    ['a payment means code other than 30 or 58', withValue(base(), 'payment.means.code', '42'), 'unsupported_payment_means@payment.means.code'],
     ['a unit code outside the supported list', withValue(base(), 'lines.0.unitCode', 'ZZZ'), 'unsupported_unit_code@lines[0].unitCode'],
   ];
   for (const [what, input, expected] of cases) assert.deepEqual(asPairs(input), [expected], what);
@@ -105,7 +105,7 @@ test('out-of-profile errors say "unsupported", never that the input is legally i
   const outOfProfile = [
     withValue(base(), 'seller.address.country', 'AT'),
     withValue(base(), 'seller.electronicAddress.schemeId', '0009'),
-    withValue(base(), 'payment.means.code', '30'),
+    withValue(base(), 'payment.means.code', '42'),
     withValue(base(), 'lines.0.unitCode', 'ZZZ'),
   ];
   for (const input of outOfProfile) {

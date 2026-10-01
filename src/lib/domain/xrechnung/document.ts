@@ -78,7 +78,11 @@ export type InvoiceDocumentInput = {
   payment: {
     dueDate?: string; // BT-9, 0..1, YYYY-MM-DD
     termsText?: string; // BT-20, 0..1, one text that may contain LF; no `#` in M1
-    means: { kind: string; code: string; account: { id: { scheme: string; value: string } } }; // BG-16: BT-81, BG-17: BT-84
+    means: {
+      kind: string;
+      code: string; // BT-81
+      account: { id: { scheme: string; value: string }; name?: string; bic?: string }; // BG-17: BT-84, BT-85, BT-86
+    };
   };
   notes?: readonly { text: string }[]; // BG-1 / BT-22, 0..n, order preserved; text may contain LF (BT-21 is not supported)
   lines: readonly {
@@ -111,14 +115,22 @@ export type InvoiceLine = {
   readonly netAmount: Decimal; // BT-131, from the monetary calculation
 };
 
-/** BT-84 with the kind of identifier it is. M1 supports IBAN only; a non-IBAN variant needs research first. */
+/** BT-84 with the kind of identifier it is. PROFILE: IBAN only; a non-IBAN identifier (CII ProprietaryID) is outside M1. */
 export type PaymentAccountId = { readonly scheme: 'IBAN'; readonly value: string };
+
+/** BG-17, one account in M1 (the standard allows 0..n). */
+export type PaymentAccount = {
+  readonly id: PaymentAccountId; // BT-84
+  readonly name?: string; // BT-85, 0..1
+  readonly bic?: string; // BT-86, 0..1; PROFILE: a BIC (ISO 9362)
+};
 
 /**
  * BG-16 payment means. `kind` separates credit transfer (BG-17) from card (BG-18) and direct debit (BG-19), none of which
- * besides credit transfer is in M1; `code` is BT-81. Only code 58 is executable in this increment.
+ * besides credit transfer is in M1; `code` is BT-81: 30 (credit transfer) or 58 (SEPA credit transfer), the two codes
+ * BR-DE-23 names as credit transfer.
  */
-export type PaymentMeans = { readonly kind: 'credit-transfer'; readonly code: '58'; readonly account: { readonly id: PaymentAccountId } };
+export type PaymentMeans = { readonly kind: 'credit-transfer'; readonly code: '30' | '58'; readonly account: PaymentAccount };
 
 /** BT-9 and BT-20 are independent and both optional; BR-CO-25 (checked by buildInvoice) needs one of them when BT-115 > 0. */
 export type Payment = {
@@ -166,6 +178,7 @@ export type DocumentErrorCode =
   | 'invalid_email'
   | 'invalid_telephone'
   | 'invalid_iban'
+  | 'invalid_bic'
   | 'unsupported_country'
   | 'unsupported_electronic_address_scheme'
   | 'unsupported_payment_means'
@@ -198,6 +211,7 @@ const ADDRESS_FIELDS = ['street', 'city', 'postCode', 'country'];
 const NOTE_FIELDS = ['text'];
 const PAYMENT_FIELDS = ['dueDate', 'termsText', 'means'];
 const PAYMENT_MEANS_FIELDS = ['kind', 'code', 'account'];
+const PAYMENT_ACCOUNT_FIELDS = ['id', 'name', 'bic'];
 const ELECTRONIC_ADDRESS_FIELDS = ['schemeId', 'value'];
 
 const validated = new WeakSet<object>();
@@ -499,16 +513,20 @@ function readPaymentTerms(value: unknown, errors: DocumentError[]): string | und
 function readPaymentMeans(parent: Record<string, unknown>, errors: DocumentError[]): PaymentMeans | undefined {
   const means = readObject(parent, 'means', 'payment.means', PAYMENT_MEANS_FIELDS, errors);
   if (means === undefined) return undefined;
-  // PROFILE: credit transfer with code 58 (SEPA credit transfer) only.
+  // PROFILE: credit transfer with code 30 (credit transfer) or 58 (SEPA credit transfer) only.
   const kind = readChoice(means, 'kind', 'payment.means.kind', ['credit-transfer'], 'unsupported_payment_means', errors);
-  const code = readChoice(means, 'code', 'payment.means.code', ['58'], 'unsupported_payment_means', errors);
-  // EXTERNAL, BR-DE-23: a credit transfer carries BG-17, so the account is required. One account in M1.
-  const account = readObject(means, 'account', 'payment.means.account', ['id'], errors);
+  const code = readChoice(means, 'code', 'payment.means.code', ['30', '58'], 'unsupported_payment_means', errors);
+  // EXTERNAL, BR-DE-23 (codes 30 and 58): a credit transfer carries BG-17, so the account is required; BR-50/BR-61: it
+  // carries BT-84. PROFILE: one account (BG-17 is 0..n) identified by an IBAN; a non-IBAN BT-84 (CII ProprietaryID) is
+  // not supported. BT-85 and BT-86 are each 0..1, and nothing requires BT-86 for code 30.
+  const account = readObject(means, 'account', 'payment.means.account', PAYMENT_ACCOUNT_FIELDS, errors);
   const id = account && readObject(account, 'id', 'payment.means.account.id', ['scheme', 'value'], errors);
   const scheme = id && readChoice(id, 'scheme', 'payment.means.account.id.scheme', ['IBAN'], 'unsupported_payment_account_scheme', errors);
   const value = id && readIban(id, 'value', 'payment.means.account.id.value', errors);
+  const name = account && readOptionalText(account, 'name', 'payment.means.account.name', errors);
+  const bic = account && readOptionalBic(account, 'bic', 'payment.means.account.bic', errors);
   if (kind === undefined || code === undefined || scheme === undefined || value === undefined) return undefined;
-  return { kind, code, account: { id: { scheme, value } } };
+  return { kind, code, account: { id: { scheme, value }, ...(name !== undefined ? { name } : {}), ...(bic !== undefined ? { bic } : {}) } };
 }
 
 // BG-1 / BT-22: 0..n notes, order preserved. Absent is valid and gives an empty collection. A note is an object with
@@ -672,7 +690,8 @@ function readOptionalVatId(parent: Record<string, unknown>, key: string, path: s
 }
 
 // CONDITIONAL: with payment means 58, XRechnung BR-DE-19 expects a valid IBAN (a SHOULD, severity warning). ISO 13616
-// mod-97 on the electronic form; like the validator, this does not check the per-country length.
+// mod-97 on the electronic form; like the validator, this does not check the per-country length. With code 30 no rule
+// checks the IBAN; the same check applies there because the account identifier is declared to be an IBAN (PROFILE).
 function isValidIban(iban: string): boolean {
   if (!/^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/.test(iban)) return false;
   let digits = '';
@@ -684,6 +703,14 @@ function readIban(parent: Record<string, unknown>, key: string, path: string, er
   const text = readText(parent, key, path, errors);
   if (text === undefined) return undefined;
   return isValidIban(text) ? text : report(errors, 'invalid_iban', path);
+}
+
+// PROFILE: BT-86 is a BIC (ISO 9362: four-letter institution code, ISO 3166 country, two-character location, optional
+// three-character branch), the identifier SeMoX describes and the CII binding (BICID) names. No inspected rule checks it.
+function readOptionalBic(parent: Record<string, unknown>, key: string, path: string, errors: DocumentError[]): string | undefined {
+  const text = readOptionalText(parent, key, path, errors);
+  if (text === undefined) return undefined;
+  return /^[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}([A-Z0-9]{3})?$/.test(text) ? text : report(errors, 'invalid_bic', path);
 }
 
 // EXTERNAL for BT-43: the e-mail check of BR-DE-28 (its XR-EMAIL-REGEX, a SHOULD with severity warning). PROFILE: the

@@ -127,7 +127,7 @@ function settlement(invoice: Invoice): Element {
     group(
       'ram:SpecifiedTradeSettlementPaymentMeans', // BG-16
       leaf('ram:TypeCode', invoice.payment.means.code), // BT-81
-      group('ram:PayeePartyCreditorFinancialAccount', leaf('ram:IBANID', invoice.payment.means.account.id.value)), // BG-17, BT-84
+      ...creditTransfer(invoice.payment.means.account), // BG-17
     ),
     ...totals.vatBreakdown.map((bucket) =>
       group(
@@ -150,6 +150,20 @@ function settlement(invoice: Invoice): Element {
       amount('ram:DuePayableAmount', totals.amountDue), // BT-115
     ),
   );
+}
+
+// BG-17 is split over two siblings of TypeCode: the account (IBANID, then AccountName) and, for BT-86, the institution.
+// SeMoX binds BT-84 to IBANID for an IBAN (ProprietaryID otherwise, not in M1) and BT-86 to
+// PayeeSpecifiedCreditorFinancialInstitution/BICID for a credit transfer.
+function creditTransfer(account: Invoice['payment']['means']['account']): readonly Element[] {
+  return [
+    group(
+      'ram:PayeePartyCreditorFinancialAccount',
+      leaf('ram:IBANID', account.id.value), // BT-84
+      ...(account.name !== undefined ? [leaf('ram:AccountName', account.name)] : []), // BT-85
+    ),
+    ...(account.bic !== undefined ? [group('ram:PayeeSpecifiedCreditorFinancialInstitution', leaf('ram:BICID', account.bic))] : []), // BT-86
+  ];
 }
 
 // One SpecifiedTradePaymentTerms (CII-SR rule: at most one) holding BT-20 and/or BT-9 in XSD order: Description, then

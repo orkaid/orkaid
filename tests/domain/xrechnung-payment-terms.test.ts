@@ -205,15 +205,12 @@ test('the pre-envelope input shapes are rejected, with no aliases', () => {
   assert.deepEqual(rejected(flat), ['unknown_field@payment.meansCode', 'unknown_field@payment.iban', 'missing_field@payment.means', 'missing_payment_due_information@payment']);
 });
 
-test('payment means: only credit transfer, code 58, IBAN account identifier; unknown fields rejected at every level', () => {
+test('payment means: only credit transfer, IBAN account identifier; unknown fields rejected at every level', () => {
   assert.deepEqual(rejected(withValue(base(), 'payment.means.kind', 'direct-debit')), ['unsupported_payment_means@payment.means.kind']);
-  assert.deepEqual(rejected(withValue(base(), 'payment.means.code', '30')), ['unsupported_payment_means@payment.means.code']);
   assert.deepEqual(rejected(withValue(base(), 'payment.means.account.id.scheme', 'PROPRIETARY')), ['unsupported_payment_account_scheme@payment.means.account.id.scheme']);
   assert.deepEqual(rejected(withValue(base(), 'payment.means.account.id.value', 'DE79000000001234567891')), ['invalid_iban@payment.means.account.id.value']);
   for (const path of ['payment.surplus', 'payment.means.surplus', 'payment.means.account.surplus', 'payment.means.account.id.surplus']) {
     assert.deepEqual(rejected(withValue(base(), path, 'x')), [`unknown_field@${path}`], path);
   }
-  // BT-85 / BT-86 are not in this increment.
-  assert.deepEqual(rejected(withValue(base(), 'payment.means.account.name', 'Beispiel')), ['unknown_field@payment.means.account.name']);
-  assert.deepEqual(rejected(withValue(base(), 'payment.means.account.bic', 'COBADEFFXXX')), ['unknown_field@payment.means.account.bic']);
+  // Code 30, BT-85 and BT-86: see xrechnung-payment-means.test.ts.
 });

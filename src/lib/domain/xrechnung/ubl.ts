@@ -59,7 +59,7 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
       group(
         'cac:PaymentMeans', // BG-16
         leaf('cbc:PaymentMeansCode', invoice.payment.means.code), // BT-81
-        group('cac:PayeeFinancialAccount', leaf('cbc:ID', invoice.payment.means.account.id.value)), // BG-17, BT-84
+        payeeFinancialAccount(invoice.payment.means.account), // BG-17
       ),
       ...(invoice.payment.termsText !== undefined ? [group('cac:PaymentTerms', leaf('cbc:Note', invoice.payment.termsText))] : []), // BT-20
       taxTotal(invoice, currency),
@@ -75,6 +75,16 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
   };
 
   return { ok: true, xml: `<?xml version="1.0" encoding="UTF-8"?>\n${render(root, 0).join('\n')}\n` };
+}
+
+// FinancialAccountType order: ID, Name, then FinancialInstitutionBranch. No schemeID on either ID (UBL-CR-654, UBL-CR-655).
+function payeeFinancialAccount(account: Invoice['payment']['means']['account']): Element {
+  return group(
+    'cac:PayeeFinancialAccount',
+    leaf('cbc:ID', account.id.value), // BT-84
+    ...(account.name !== undefined ? [leaf('cbc:Name', account.name)] : []), // BT-85
+    ...(account.bic !== undefined ? [group('cac:FinancialInstitutionBranch', leaf('cbc:ID', account.bic))] : []), // BT-86
+  );
 }
 
 // BT-32's TaxScheme/ID: the SeMoX UBL binding requires only `!= 'VAT'` (verified against the pinned EN16931-UBL and
