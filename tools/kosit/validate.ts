@@ -14,7 +14,9 @@
 // document unconditionally. The Kleinunternehmer fixtures are validated in UBL and CII, each with mutated controls
 // that must be rejected by the rule they break; the reverse-charge fixtures likewise (UBL and CII, both identifier
 // branches, mutated controls for BR-AE-02, -05, -09 and -10); payment means 30 likewise (BR-50, BR-61, CII-SR-470,
-// BR-DE-23-a, BR-CL-16). A pass here is not legal certification and says nothing about tax correctness.
+// BR-DE-23-a, BR-CL-16); the electronic-address schemes 0204 and 0088 in both party roles (control: an unknown scheme,
+// BR-CL-25) and seller BT-29 with BT-32 (control: BT-29 removed, so BT-32 alone is left, BR-CO-26) likewise.
+// A pass here is not legal certification and says nothing about tax correctness.
 
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -43,7 +45,7 @@ const CONTROL_NAME = 'control-missing-buyer-reference';
 type Syntax = 'ubl' | 'cii';
 const SCENARIOS: Record<Syntax, string> = { ubl: 'EN16931 XRechnung (UBL Invoice)', cii: 'EN16931 XRechnung (CII)' };
 // M1 current evidence: these fixtures are also validated in CII (their goldens are `<name>.cii.xml`).
-const CII_FIXTURES: readonly FixtureName[] = ['e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms', 'm-payment-means-30', 'n-payment-means-30-account-details'];
+const CII_FIXTURES: readonly FixtureName[] = ['e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms', 'm-payment-means-30', 'n-payment-means-30-account-details', 'o-eas-0204-seller-0088-buyer', 'p-eas-0088-seller-0204-buyer', 'q-seller-bt29-bt32'];
 const ciiName = (name: string): string => `${name}.cii`;
 
 // Mutated copies of a Kleinunternehmer golden that the official validator must reject, each by the named rules.
@@ -94,7 +96,21 @@ const PAYMENT_MEANS_CONTROLS: typeof KLEINUNTERNEHMER_CONTROLS = {
   'control-pm30-cii-missing-bg17': { syntax: 'cii', base: 'm-payment-means-30', mutate: (x) => removeElement(x, /^ *<ram:PayeePartyCreditorFinancialAccount>\n(?:.*\n){2}/m), codes: ['CII-SR-470', 'BR-DE-23-a'] },
   'control-pm30-cii-unknown-code': { syntax: 'cii', base: 'm-payment-means-30', mutate: (x) => x.replace('<ram:TypeCode>30<', '<ram:TypeCode>99<'), codes: ['BR-CL-16'] },
 };
-const SPECIAL_CONTROLS = { ...KLEINUNTERNEHMER_CONTROLS, ...REVERSE_CHARGE_CONTROLS, ...PAYMENT_MEANS_CONTROLS };
+// M1 evidence controls. The domain cannot build either document: an unknown scheme is refused, and BT-32 alone fails
+// BR-CO-26 in the core too. EAS (o): the seller scheme 0204 becomes 9999, outside the CEF EAS list. BT-29 (q: seller
+// BT-29 + BT-32, no BT-31): BT-29 is removed and BT-32 is kept, so the tax-identifier rule still holds and only the
+// seller-identification rule fails.
+const replaceExact = (xml: string, from: string, to: string): string => {
+  if (!xml.includes(from)) fail(`a control mutation found no ${from}`);
+  return xml.replace(from, to);
+};
+const EVIDENCE_CONTROLS: typeof KLEINUNTERNEHMER_CONTROLS = {
+  'control-eas-ubl-unknown-scheme': { syntax: 'ubl', base: 'o-eas-0204-seller-0088-buyer', mutate: (x) => replaceExact(x, '<cbc:EndpointID schemeID="0204">', '<cbc:EndpointID schemeID="9999">'), codes: ['BR-CL-25'] },
+  'control-eas-cii-unknown-scheme': { syntax: 'cii', base: 'o-eas-0204-seller-0088-buyer', mutate: (x) => replaceExact(x, '<ram:URIID schemeID="0204">', '<ram:URIID schemeID="9999">'), codes: ['BR-CL-25'] },
+  'control-bt29-ubl-bt32-only': { syntax: 'ubl', base: 'q-seller-bt29-bt32', mutate: (x) => removeElement(x, /^ *<cac:PartyIdentification>\n *<cbc:ID>Kreditor-4711<\/cbc:ID>\n *<\/cac:PartyIdentification>\n/m), codes: ['BR-CO-26'] },
+  'control-bt29-cii-bt32-only': { syntax: 'cii', base: 'q-seller-bt29-bt32', mutate: (x) => removeElement(x, /^ *<ram:ID>Kreditor-4711<\/ram:ID>\n/m), codes: ['BR-CO-26'] },
+};
+const SPECIAL_CONTROLS = { ...KLEINUNTERNEHMER_CONTROLS, ...REVERSE_CHARGE_CONTROLS, ...PAYMENT_MEANS_CONTROLS, ...EVIDENCE_CONTROLS };
 const REQUIRED_STEPS = ['val-xsd', 'val-sch.1', 'val-sch.2', 'val-xml'];
 
 const sha256Hex = (data: Buffer | string): string => createHash('sha256').update(data).digest('hex');

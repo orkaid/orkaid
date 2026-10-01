@@ -167,7 +167,7 @@ const ORDER: Record<string, string[]> = {
   'cac:InvoiceLine': ['cbc:ID', 'cbc:InvoicedQuantity', 'cbc:LineExtensionAmount', 'cac:Item', 'cac:Price'],
   'cac:Item': ['cbc:Name', 'cac:ClassifiedTaxCategory'],
   'cac:Price': ['cbc:PriceAmount'],
-  'cac:Party(supplier)': ['cbc:EndpointID', 'cac:PostalAddress', 'cac:PartyTaxScheme', 'cac:PartyLegalEntity', 'cac:Contact'],
+  'cac:Party(supplier)': ['cbc:EndpointID', 'cac:PartyIdentification', 'cac:PostalAddress', 'cac:PartyTaxScheme', 'cac:PartyLegalEntity', 'cac:Contact'],
   'cac:Party(customer)': ['cbc:EndpointID', 'cac:PostalAddress', 'cac:PartyLegalEntity'],
   'cac:Party(customer, BT-48)': ['cbc:EndpointID', 'cac:PostalAddress', 'cac:PartyTaxScheme', 'cac:PartyLegalEntity'],
 };
@@ -184,8 +184,9 @@ function distinctInOrder(names: string[]): string[] {
   return out;
 }
 
-// Elements that are optional in the XSD and only present on some fixtures (BT-22 notes, BT-9 due date, BT-20 terms).
-const OPTIONAL_ELEMENTS = ['cbc:Note', 'cbc:DueDate', 'cac:PaymentTerms'];
+// Elements that are optional in the XSD and only present on some fixtures (BT-22 notes, BT-9 due date, BT-20 terms,
+// BT-29 seller identifier).
+const OPTIONAL_ELEMENTS = ['cbc:Note', 'cbc:DueDate', 'cac:PaymentTerms', 'cac:PartyIdentification'];
 
 function checkOrder(node: XmlNode, key: string): void {
   const names = childNames(node);

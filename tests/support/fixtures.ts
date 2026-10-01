@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 // (example.com / example.org addresses, the official test-suite dummy IBAN). Expected amounts are worked out by
 // hand, never produced by the code under test.
 
-export const FIXTURE_NAMES = ['a-simple', 'b-ten-lines', 'c-rounded-line-net', 'd-mixed-rates', 'e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms', 'm-payment-means-30', 'n-payment-means-30-account-details'] as const;
+export const FIXTURE_NAMES = ['a-simple', 'b-ten-lines', 'c-rounded-line-net', 'd-mixed-rates', 'e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms', 'm-payment-means-30', 'n-payment-means-30-account-details', 'o-eas-0204-seller-0088-buyer', 'p-eas-0088-seller-0204-buyer', 'q-seller-bt29-bt32'] as const;
 export type FixtureName = (typeof FIXTURE_NAMES)[number];
 
 export type JsonObject = { [key: string]: unknown };
@@ -54,6 +54,8 @@ export type ExpectedAmounts = {
 // I, J (invoice notes, BT-22): the two lines of A, unchanged amounts; only the notes differ.
 // K, L (BT-20 alone; BT-9 with multiline BT-20): the two lines of A, unchanged amounts; only the payment terms differ.
 // M, N (payment means 30; N adds BT-85 and BT-86): the two lines of A, unchanged amounts; only the payment means differ.
+// O, P (electronic-address schemes 0204 and 0088, each in both party roles), Q (seller BT-29 + BT-32, no BT-31): the
+// two lines of A, unchanged amounts; only the electronic addresses or the seller identifiers differ.
 // D: 100.00 at 19% -> 19.00; 3 x 33.33 = 99.99 at 7% -> 6.9993 -> 7.00; 199.99 + 26.00 = 225.99.
 export const EXPECTED: Record<FixtureName, ExpectedAmounts> = {
   'a-simple': {
@@ -151,6 +153,27 @@ export const EXPECTED: Record<FixtureName, ExpectedAmounts> = {
     gross: '261.56',
   },
   'n-payment-means-30-account-details': {
+    lineNets: ['99.80', '120.00'],
+    breakdown: [{ rate: '19', taxable: '219.80', tax: '41.76' }],
+    sumOfLineNets: '219.80',
+    totalVat: '41.76',
+    gross: '261.56',
+  },
+  'o-eas-0204-seller-0088-buyer': {
+    lineNets: ['99.80', '120.00'],
+    breakdown: [{ rate: '19', taxable: '219.80', tax: '41.76' }],
+    sumOfLineNets: '219.80',
+    totalVat: '41.76',
+    gross: '261.56',
+  },
+  'p-eas-0088-seller-0204-buyer': {
+    lineNets: ['99.80', '120.00'],
+    breakdown: [{ rate: '19', taxable: '219.80', tax: '41.76' }],
+    sumOfLineNets: '219.80',
+    totalVat: '41.76',
+    gross: '261.56',
+  },
+  'q-seller-bt29-bt32': {
     lineNets: ['99.80', '120.00'],
     breakdown: [{ rate: '19', taxable: '219.80', tax: '41.76' }],
     sumOfLineNets: '219.80',
