@@ -126,8 +126,8 @@ function settlement(invoice: Invoice): Element {
     leaf('ram:InvoiceCurrencyCode', invoice.currency), // BT-5
     group(
       'ram:SpecifiedTradeSettlementPaymentMeans', // BG-16
-      leaf('ram:TypeCode', invoice.payment.meansCode), // BT-81
-      group('ram:PayeePartyCreditorFinancialAccount', leaf('ram:IBANID', invoice.payment.iban)), // BG-17, BT-84
+      leaf('ram:TypeCode', invoice.payment.means.code), // BT-81
+      group('ram:PayeePartyCreditorFinancialAccount', leaf('ram:IBANID', invoice.payment.means.account.id.value)), // BG-17, BT-84
     ),
     ...totals.vatBreakdown.map((bucket) =>
       group(
@@ -140,7 +140,7 @@ function settlement(invoice: Invoice): Element {
         leaf('ram:RateApplicablePercent', bucket.rate), // BT-119
       ),
     ),
-    group('ram:SpecifiedTradePaymentTerms', date('ram:DueDateDateTime', invoice.paymentDueDate)), // BT-9
+    ...paymentTerms(invoice.payment),
     group(
       'ram:SpecifiedTradeSettlementHeaderMonetarySummation', // BG-22
       amount('ram:LineTotalAmount', totals.sumOfLineNetAmounts), // BT-106
@@ -150,6 +150,16 @@ function settlement(invoice: Invoice): Element {
       amount('ram:DuePayableAmount', totals.amountDue), // BT-115
     ),
   );
+}
+
+// One SpecifiedTradePaymentTerms (CII-SR rule: at most one) holding BT-20 and/or BT-9 in XSD order: Description, then
+// DueDateDateTime. Absent when neither is supplied (BR-CO-25 allows that only for a zero amount due; buildInvoice checks it).
+function paymentTerms(payment: Invoice['payment']): readonly Element[] {
+  const children = [
+    ...(payment.termsText !== undefined ? [leaf('ram:Description', payment.termsText)] : []), // BT-20
+    ...(payment.dueDate !== undefined ? [date('ram:DueDateDateTime', payment.dueDate)] : []), // BT-9
+  ];
+  return children.length > 0 ? [group('ram:SpecifiedTradePaymentTerms', ...children)] : [];
 }
 
 function lineItem(line: InvoiceLine, index: number): Element {

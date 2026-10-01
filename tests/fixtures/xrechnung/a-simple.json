@@ -4,7 +4,6 @@
   "invoiceNumber": "RE-2026-0001",
   "issueDate": "2026-09-24",
   "deliveryDate": "2026-09-20",
-  "paymentDueDate": "2026-10-24",
   "buyerReference": "PO-2026-0815",
   "seller": {
     "name": "Beispiel Beratung GmbH",
@@ -39,8 +38,17 @@
     }
   },
   "payment": {
-    "meansCode": "58",
-    "iban": "DE79000000001234567890"
+    "dueDate": "2026-10-24",
+    "means": {
+      "kind": "credit-transfer",
+      "code": "58",
+      "account": {
+        "id": {
+          "scheme": "IBAN",
+          "value": "DE79000000001234567890"
+        }
+      }
+    }
   },
   "lines": [
     {

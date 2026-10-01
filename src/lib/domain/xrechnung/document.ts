@@ -63,7 +63,6 @@ export type InvoiceDocumentInput = {
   invoiceNumber: string; // BT-1
   issueDate: string; // BT-2, YYYY-MM-DD
   deliveryDate: string; // BT-72, YYYY-MM-DD
-  paymentDueDate: string; // BT-9, YYYY-MM-DD
   buyerReference: string; // BT-10, buyer-provided business information (not a generated Leitweg-ID)
   seller: PartyInput & {
     sellerIdentifiers?: readonly string[]; // BT-29, 0..n; no scheme in M1 (MDR-21)
@@ -76,7 +75,11 @@ export type InvoiceDocumentInput = {
     legalRegistrationId?: string; // BT-47; no scheme in M1
     vatId?: string; // BT-48
   };
-  payment: { meansCode: string; iban: string }; // BT-81, BT-84
+  payment: {
+    dueDate?: string; // BT-9, 0..1, YYYY-MM-DD
+    termsText?: string; // BT-20, 0..1, one text that may contain LF; no `#` in M1
+    means: { kind: string; code: string; account: { id: { scheme: string; value: string } } }; // BG-16: BT-81, BG-17: BT-84
+  };
   notes?: readonly { text: string }[]; // BG-1 / BT-22, 0..n, order preserved; text may contain LF (BT-21 is not supported)
   lines: readonly {
     name: string; // BT-153
@@ -108,6 +111,22 @@ export type InvoiceLine = {
   readonly netAmount: Decimal; // BT-131, from the monetary calculation
 };
 
+/** BT-84 with the kind of identifier it is. M1 supports IBAN only; a non-IBAN variant needs research first. */
+export type PaymentAccountId = { readonly scheme: 'IBAN'; readonly value: string };
+
+/**
+ * BG-16 payment means. `kind` separates credit transfer (BG-17) from card (BG-18) and direct debit (BG-19), none of which
+ * besides credit transfer is in M1; `code` is BT-81. Only code 58 is executable in this increment.
+ */
+export type PaymentMeans = { readonly kind: 'credit-transfer'; readonly code: '58'; readonly account: { readonly id: PaymentAccountId } };
+
+/** BT-9 and BT-20 are independent and both optional; BR-CO-25 (checked by buildInvoice) needs one of them when BT-115 > 0. */
+export type Payment = {
+  readonly dueDate?: string; // BT-9
+  readonly termsText?: string; // BT-20, unstructured; may contain LF
+  readonly means: PaymentMeans;
+};
+
 declare const validatedBrand: unique symbol;
 
 export type Invoice = {
@@ -117,7 +136,6 @@ export type Invoice = {
   readonly invoiceNumber: string; // BT-1
   readonly issueDate: string; // BT-2
   readonly deliveryDate: string; // BT-72
-  readonly paymentDueDate: string; // BT-9
   readonly buyerReference: string; // BT-10
   readonly seller: InvoiceParty & {
     readonly sellerIdentifiers: readonly SellerIdentifier[]; // BT-29, 0..n
@@ -131,7 +149,7 @@ export type Invoice = {
     readonly legalRegistrationId?: string; // BT-47
     readonly vatId?: string; // BT-48
   };
-  readonly payment: { readonly meansCode: '58'; readonly iban: string };
+  readonly payment: Payment;
   readonly notes: readonly InvoiceNote[]; // BG-1 / BT-22, 0..n, in input order
   readonly lines: readonly InvoiceLine[];
   readonly totals: InvoiceTotals;
@@ -151,6 +169,9 @@ export type DocumentErrorCode =
   | 'unsupported_country'
   | 'unsupported_electronic_address_scheme'
   | 'unsupported_payment_means'
+  | 'unsupported_payment_account_scheme'
+  | 'unsupported_hash_in_payment_terms' // PROFILE: `#` in BT-20 (structured Skonto, BR-DE-18, is not in M1)
+  | 'missing_payment_due_information' // BR-CO-25: BT-115 > 0 and neither BT-9 nor BT-20 is present
   | 'unsupported_unit_code'
   | 'missing_seller_identification' // BR-CO-26: none of BT-29, BT-30, BT-31 is present
   | 'missing_seller_tax_identifier' // neither BT-31 nor BT-32 is present (BR-S-02, BR-E-02, BR-DE-16)
@@ -168,13 +189,15 @@ export type DocumentResult =
   | { readonly ok: true; readonly value: Invoice }
   | { readonly ok: false; readonly errors: readonly DocumentError[]; readonly truncated: boolean };
 
-const DOCUMENT_FIELDS = ['invoiceNumber', 'issueDate', 'deliveryDate', 'paymentDueDate', 'buyerReference', 'seller', 'buyer', 'payment', 'notes'];
+const DOCUMENT_FIELDS = ['invoiceNumber', 'issueDate', 'deliveryDate', 'buyerReference', 'seller', 'buyer', 'payment', 'notes'];
 const LINE_FIELDS = ['name', 'unitCode'];
 const PARTY_FIELDS = ['name', 'electronicAddress', 'address'];
 const SELLER_FIELDS = [...PARTY_FIELDS, 'sellerIdentifiers', 'legalRegistrationId', 'vatId', 'taxRegistrationId', 'contact'];
 const BUYER_FIELDS = [...PARTY_FIELDS, 'legalRegistrationId', 'vatId'];
 const ADDRESS_FIELDS = ['street', 'city', 'postCode', 'country'];
 const NOTE_FIELDS = ['text'];
+const PAYMENT_FIELDS = ['dueDate', 'termsText', 'means'];
+const PAYMENT_MEANS_FIELDS = ['kind', 'code', 'account'];
 const ELECTRONIC_ADDRESS_FIELDS = ['schemeId', 'value'];
 
 const validated = new WeakSet<object>();
@@ -210,7 +233,6 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
   const invoiceNumber = readText(input, 'invoiceNumber', 'invoiceNumber', errors);
   const issueDate = readDate(input, 'issueDate', 'issueDate', errors);
   const deliveryDate = readDate(input, 'deliveryDate', 'deliveryDate', errors);
-  const paymentDueDate = readDate(input, 'paymentDueDate', 'paymentDueDate', errors);
   const buyerReference = readText(input, 'buyerReference', 'buyerReference', errors);
   const seller = readSeller(input, errors);
   const buyer = readBuyer(input, usesReverseCharge(input), errors);
@@ -222,10 +244,17 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
   if (money.ok && new Set(money.value.lines.map((line) => line.vat.treatment)).size > 1) {
     errors.push({ code: 'unsupported_mixed_vat_treatments', path: 'lines' });
   }
+  // EXTERNAL, BR-CO-25 (SeMoX CIUS model; not implemented by the pinned Schematron, so the domain owns it): with a
+  // positive amount due (BT-115) at least one of BT-9 and BT-20 is present. It needs the computed BT-115, so it is
+  // checked only when the calculation succeeded. Presence is read from the raw input: a supplied-but-malformed value is
+  // reported by its own diagnostic, not also as missing.
+  if (money.ok && money.value.totals.amountDue.units > 0n && isRecord(input.payment) && input.payment.dueDate === undefined && input.payment.termsText === undefined) {
+    errors.push({ code: 'missing_payment_due_information', path: 'payment' });
+  }
 
   if (money.ok && errors.length === 0 && stoppedAt === undefined) {
     if (
-      invoiceNumber === undefined || issueDate === undefined || deliveryDate === undefined || paymentDueDate === undefined ||
+      invoiceNumber === undefined || issueDate === undefined || deliveryDate === undefined ||
       buyerReference === undefined || seller === undefined || buyer === undefined || payment === undefined
     ) {
       return { ok: false, errors: [{ code: 'internal_inconsistency', path: '' }], truncated: false };
@@ -242,7 +271,7 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
       value: seal({
         documentTypeCode: '380',
         currency: 'EUR',
-        invoiceNumber, issueDate, deliveryDate, paymentDueDate, buyerReference,
+        invoiceNumber, issueDate, deliveryDate, buyerReference,
         // BT-33: XRechnung 3.0.2 section 13.3 asks for the exemption text here as well as in BT-120.
         seller: money.value.lines.some((line) => line.vat.treatment === 'kleinunternehmer')
           ? { ...seller, additionalLegalInformation: KLEINUNTERNEHMER_EXEMPTION_TEXT }
@@ -277,11 +306,11 @@ function failure(
 }
 
 // Deep copy of own enumerable data properties. Accessors are never executed: a property that is not a plain data
-// property is reported at its path. Containers deeper than the input can legitimately be (root, party or lines,
-// address or line, then a line's `vat`, then only values) are replaced by an empty object, which also ends any
-// cycle. The copy of a huge sparse array stays sparse. Ceiling: a hostile object with very many keys is copied in
-// full (no entry budget).
-const MAX_SNAPSHOT_DEPTH = 4;
+// property is reported at its path. Containers deeper than the input can legitimately be (root, then payment, then
+// its `means`, then the `account`, then the account `id`, then only values) are replaced by an empty object, which
+// also ends any cycle. The copy of a huge sparse array stays sparse. Ceiling: a hostile object with very many keys is
+// copied in full (no entry budget).
+const MAX_SNAPSHOT_DEPTH = 5;
 
 function snapshot(value: unknown, path: string, depth: number, problems: string[]): unknown {
   if (typeof value !== 'object' || value === null) return value;
@@ -446,13 +475,40 @@ function readContact(record: Record<string, unknown>, errors: DocumentError[]): 
   return name !== undefined && telephone !== undefined && email !== undefined ? { name, telephone, email } : undefined;
 }
 
-function readPayment(parent: Record<string, unknown>, errors: DocumentError[]): Invoice['payment'] | undefined {
-  const record = readObject(parent, 'payment', 'payment', ['meansCode', 'iban'], errors);
+function readPayment(parent: Record<string, unknown>, errors: DocumentError[]): Payment | undefined {
+  const record = readObject(parent, 'payment', 'payment', PAYMENT_FIELDS, errors);
   if (record === undefined) return undefined;
-  // PROFILE: payment means code 58 (SEPA credit transfer) only.
-  const meansCode = readChoice(record, 'meansCode', 'payment.meansCode', ['58'], 'unsupported_payment_means', errors);
-  const iban = readIban(record, 'iban', 'payment.iban', errors);
-  return meansCode === '58' && iban !== undefined ? { meansCode, iban } : undefined;
+  const errorsBefore = errors.length;
+  // BT-9 and BT-20 are each 0..1. Nothing is derived: no due date from the issue date or the terms, no default terms.
+  const dueDate = record.dueDate === undefined ? undefined : readDate(record, 'dueDate', 'payment.dueDate', errors);
+  const termsText = record.termsText === undefined ? undefined : readPaymentTerms(record.termsText, errors);
+  const means = readPaymentMeans(record, errors);
+  if (errors.length > errorsBefore || means === undefined) return undefined;
+  return { ...(dueDate !== undefined ? { dueDate } : {}), ...(termsText !== undefined ? { termsText } : {}), means };
+}
+
+// BT-20 is one text value that may span several lines (the BT-22 multiline policy). PROFILE: no `#` at all. XRechnung
+// forbids `#` in unstructured BT-20 text and reserves it for structured Skonto lines (BR-DE-18), which M1 does not
+// support, so any `#` is refused rather than parsed.
+function readPaymentTerms(value: unknown, errors: DocumentError[]): string | undefined {
+  const text = readTextValue(value, 'payment.termsText', errors, true);
+  if (text === undefined) return undefined;
+  return text.includes('#') ? report(errors, 'unsupported_hash_in_payment_terms', 'payment.termsText') : text;
+}
+
+function readPaymentMeans(parent: Record<string, unknown>, errors: DocumentError[]): PaymentMeans | undefined {
+  const means = readObject(parent, 'means', 'payment.means', PAYMENT_MEANS_FIELDS, errors);
+  if (means === undefined) return undefined;
+  // PROFILE: credit transfer with code 58 (SEPA credit transfer) only.
+  const kind = readChoice(means, 'kind', 'payment.means.kind', ['credit-transfer'], 'unsupported_payment_means', errors);
+  const code = readChoice(means, 'code', 'payment.means.code', ['58'], 'unsupported_payment_means', errors);
+  // EXTERNAL, BR-DE-23: a credit transfer carries BG-17, so the account is required. One account in M1.
+  const account = readObject(means, 'account', 'payment.means.account', ['id'], errors);
+  const id = account && readObject(account, 'id', 'payment.means.account.id', ['scheme', 'value'], errors);
+  const scheme = id && readChoice(id, 'scheme', 'payment.means.account.id.scheme', ['IBAN'], 'unsupported_payment_account_scheme', errors);
+  const value = id && readIban(id, 'value', 'payment.means.account.id.value', errors);
+  if (kind === undefined || code === undefined || scheme === undefined || value === undefined) return undefined;
+  return { kind, code, account: { id: { scheme, value } } };
 }
 
 // BG-1 / BT-22: 0..n notes, order preserved. Absent is valid and gives an empty collection. A note is an object with

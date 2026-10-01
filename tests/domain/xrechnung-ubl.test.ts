@@ -145,7 +145,7 @@ test('every business field is written at its BT binding (fixture A)', () => {
 
 // Child element order per the UBL 2.1 XSD sequences (UBL-Invoice-2.1.xsd, UBL-CommonAggregateComponents-2.1.xsd).
 const ORDER: Record<string, string[]> = {
-  'Invoice': ['cbc:CustomizationID', 'cbc:ProfileID', 'cbc:ID', 'cbc:IssueDate', 'cbc:DueDate', 'cbc:InvoiceTypeCode', 'cbc:Note', 'cbc:DocumentCurrencyCode', 'cbc:BuyerReference', 'cac:AccountingSupplierParty', 'cac:AccountingCustomerParty', 'cac:Delivery', 'cac:PaymentMeans', 'cac:TaxTotal', 'cac:LegalMonetaryTotal', 'cac:InvoiceLine'],
+  'Invoice': ['cbc:CustomizationID', 'cbc:ProfileID', 'cbc:ID', 'cbc:IssueDate', 'cbc:DueDate', 'cbc:InvoiceTypeCode', 'cbc:Note', 'cbc:DocumentCurrencyCode', 'cbc:BuyerReference', 'cac:AccountingSupplierParty', 'cac:AccountingCustomerParty', 'cac:Delivery', 'cac:PaymentMeans', 'cac:PaymentTerms', 'cac:TaxTotal', 'cac:LegalMonetaryTotal', 'cac:InvoiceLine'],
   'cac:AccountingSupplierParty': ['cac:Party'],
   'cac:AccountingCustomerParty': ['cac:Party'],
   'cac:PostalAddress': ['cbc:StreetName', 'cbc:CityName', 'cbc:PostalZone', 'cac:Country'],
@@ -157,6 +157,7 @@ const ORDER: Record<string, string[]> = {
   'cac:Contact': ['cbc:Name', 'cbc:Telephone', 'cbc:ElectronicMail'],
   'cac:Delivery': ['cbc:ActualDeliveryDate'],
   'cac:PaymentMeans': ['cbc:PaymentMeansCode', 'cac:PayeeFinancialAccount'],
+  'cac:PaymentTerms': ['cbc:Note'],
   'cac:TaxTotal': ['cbc:TaxAmount', 'cac:TaxSubtotal'],
   'cac:TaxSubtotal': ['cbc:TaxableAmount', 'cbc:TaxAmount', 'cac:TaxCategory'],
   'cac:TaxCategory': ['cbc:ID', 'cbc:Percent', 'cac:TaxScheme'],
@@ -183,8 +184,8 @@ function distinctInOrder(names: string[]): string[] {
   return out;
 }
 
-// Elements that are optional in the XSD and only present on some fixtures (BT-22 notes).
-const OPTIONAL_ELEMENTS = ['cbc:Note'];
+// Elements that are optional in the XSD and only present on some fixtures (BT-22 notes, BT-9 due date, BT-20 terms).
+const OPTIONAL_ELEMENTS = ['cbc:Note', 'cbc:DueDate', 'cac:PaymentTerms'];
 
 function checkOrder(node: XmlNode, key: string): void {
   const names = childNames(node);

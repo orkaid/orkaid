@@ -48,7 +48,7 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
       leaf('cbc:ProfileID', BUSINESS_PROCESS_TYPE), // BT-23
       leaf('cbc:ID', invoice.invoiceNumber), // BT-1
       leaf('cbc:IssueDate', invoice.issueDate), // BT-2
-      leaf('cbc:DueDate', invoice.paymentDueDate), // BT-9
+      ...(invoice.payment.dueDate !== undefined ? [leaf('cbc:DueDate', invoice.payment.dueDate)] : []), // BT-9
       leaf('cbc:InvoiceTypeCode', invoice.documentTypeCode), // BT-3
       ...invoice.notes.map((note) => leaf('cbc:Note', note.text)), // BG-1 / BT-22
       leaf('cbc:DocumentCurrencyCode', currency), // BT-5
@@ -58,9 +58,10 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
       group('cac:Delivery', leaf('cbc:ActualDeliveryDate', invoice.deliveryDate)), // BT-72
       group(
         'cac:PaymentMeans', // BG-16
-        leaf('cbc:PaymentMeansCode', invoice.payment.meansCode), // BT-81
-        group('cac:PayeeFinancialAccount', leaf('cbc:ID', invoice.payment.iban)), // BG-17, BT-84
+        leaf('cbc:PaymentMeansCode', invoice.payment.means.code), // BT-81
+        group('cac:PayeeFinancialAccount', leaf('cbc:ID', invoice.payment.means.account.id.value)), // BG-17, BT-84
       ),
+      ...(invoice.payment.termsText !== undefined ? [group('cac:PaymentTerms', leaf('cbc:Note', invoice.payment.termsText))] : []), // BT-20
       taxTotal(invoice, currency),
       group(
         'cac:LegalMonetaryTotal', // BG-22

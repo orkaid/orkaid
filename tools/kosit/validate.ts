@@ -42,7 +42,7 @@ const CONTROL_NAME = 'control-missing-buyer-reference';
 type Syntax = 'ubl' | 'cii';
 const SCENARIOS: Record<Syntax, string> = { ubl: 'EN16931 XRechnung (UBL Invoice)', cii: 'EN16931 XRechnung (CII)' };
 // M1 current evidence: these fixtures are also validated in CII (their goldens are `<name>.cii.xml`).
-const CII_FIXTURES: readonly FixtureName[] = ['e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline'];
+const CII_FIXTURES: readonly FixtureName[] = ['e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms'];
 const ciiName = (name: string): string => `${name}.cii`;
 
 // Mutated copies of a Kleinunternehmer golden that the official validator must reject, each by the named rules.

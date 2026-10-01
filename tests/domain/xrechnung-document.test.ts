@@ -47,7 +47,7 @@ test('the validated invoice carries the business data and the typed line quantit
   assert.equal(invoice.invoiceNumber, 'RE-2026-0003');
   assert.equal(invoice.seller.vatId, 'DE123456789');
   assert.equal(invoice.buyer.address.city, 'Hamburg');
-  assert.equal(invoice.payment.iban, 'DE79000000001234567890');
+  assert.deepEqual(invoice.payment.means, { kind: 'credit-transfer', code: '58', account: { id: { scheme: 'IBAN', value: 'DE79000000001234567890' } } });
   assert.deepEqual(
     invoice.lines.map((l) => [l.name, l.unitCode, formatDecimal(l.quantity), formatDecimal(l.unitPrice), l.vat.rate]),
     [['Lieferung Kleinmaterial', 'C62', '3', '0.335', '19'], ['Sonderanfertigung', 'KGM', '2.5', '1.999', '19']],
@@ -89,7 +89,7 @@ test('input outside the implemented profile fails explicitly, per field, without
     ['a foreign buyer country', withValue(base(), 'buyer.address.country', 'FR'), 'unsupported_country@buyer.address.country'],
     ['a seller electronic address scheme outside EM / 0204 / 0088', withValue(base(), 'seller.electronicAddress.schemeId', '0009'), 'unsupported_electronic_address_scheme@seller.electronicAddress.schemeId'],
     ['a buyer electronic address scheme outside EM / 0204 / 0088', withValue(base(), 'buyer.electronicAddress.schemeId', '9930'), 'unsupported_electronic_address_scheme@buyer.electronicAddress.schemeId'],
-    ['a payment means code other than 58', withValue(base(), 'payment.meansCode', '30'), 'unsupported_payment_means@payment.meansCode'],
+    ['a payment means code other than 58', withValue(base(), 'payment.means.code', '30'), 'unsupported_payment_means@payment.means.code'],
     ['a unit code outside the supported list', withValue(base(), 'lines.0.unitCode', 'ZZZ'), 'unsupported_unit_code@lines[0].unitCode'],
   ];
   for (const [what, input, expected] of cases) assert.deepEqual(asPairs(input), [expected], what);
@@ -105,7 +105,7 @@ test('out-of-profile errors say "unsupported", never that the input is legally i
   const outOfProfile = [
     withValue(base(), 'seller.address.country', 'AT'),
     withValue(base(), 'seller.electronicAddress.schemeId', '0009'),
-    withValue(base(), 'payment.meansCode', '30'),
+    withValue(base(), 'payment.means.code', '30'),
     withValue(base(), 'lines.0.unitCode', 'ZZZ'),
   ];
   for (const input of outOfProfile) {
@@ -121,12 +121,13 @@ test('every required business field is reported when it is missing', () => {
   // seller.vatId (BT-31) is not in this list: since MDR-21 it is one of three disjunctive branches (BT-29/30/31)
   // that satisfy seller identification, not an unconditionally required field. See the seller-identity tests.
   const required = [
-    'invoiceNumber', 'issueDate', 'deliveryDate', 'paymentDueDate', 'buyerReference',
+    'invoiceNumber', 'issueDate', 'deliveryDate', 'buyerReference',
     'seller', 'seller.name', 'seller.electronicAddress', 'seller.electronicAddress.value',
     'seller.address', 'seller.address.street', 'seller.address.city', 'seller.address.postCode', 'seller.address.country',
     'seller.contact', 'seller.contact.name', 'seller.contact.telephone', 'seller.contact.email',
     'buyer', 'buyer.name', 'buyer.electronicAddress', 'buyer.address.street', 'buyer.address.city', 'buyer.address.postCode',
-    'payment', 'payment.meansCode', 'payment.iban',
+    'payment', 'payment.means', 'payment.means.kind', 'payment.means.code', 'payment.means.account', 'payment.means.account.id',
+    'payment.means.account.id.scheme', 'payment.means.account.id.value',
     'lines.0.name', 'lines.0.unitCode',
   ];
   for (const path of required) {
@@ -153,7 +154,7 @@ test('wrong types are reported as invalid_type at the field', () => {
 });
 
 test('unknown fields are rejected at every level', () => {
-  for (const path of ['surplus', 'seller.surplus', 'seller.address.surplus', 'seller.contact.surplus', 'seller.electronicAddress.surplus', 'buyer.surplus', 'payment.surplus']) {
+  for (const path of ['surplus', 'seller.surplus', 'seller.address.surplus', 'seller.contact.surplus', 'seller.electronicAddress.surplus', 'buyer.surplus', 'payment.surplus', 'payment.means.surplus', 'payment.means.account.surplus', 'payment.means.account.id.surplus']) {
     assert.deepEqual(asPairs(withValue(base(), path, 'x')), [`unknown_field@${path}`], path);
   }
   assert.deepEqual(asPairs(withValue(base(), 'lines.0.surplus', 'x')), ['unknown_field@lines[0].surplus']);
@@ -197,7 +198,7 @@ test('dates must be real calendar dates in YYYY-MM-DD form', () => {
     assert.match(errors[0] as string, /^(invalid_date|invalid_text|empty_text|invalid_type)@issueDate$/, JSON.stringify(date));
   }
   assert.deepEqual(asPairs(withValue(base(), 'deliveryDate', '2026-02-30')), ['invalid_date@deliveryDate']);
-  assert.deepEqual(asPairs(withValue(base(), 'paymentDueDate', '2026-10-32')), ['invalid_date@paymentDueDate']);
+  assert.deepEqual(asPairs(withValue(base(), 'payment.dueDate', '2026-10-32')), ['invalid_date@payment.dueDate']);
 });
 
 test('the seller USt-IdNr must be DE followed by nine digits', () => {
@@ -210,10 +211,10 @@ test('the seller USt-IdNr must be DE followed by nine digits', () => {
 
 test('the IBAN must pass the ISO 13616 mod-97 check and is not normalised', () => {
   for (const iban of ['DE79000000001234567890', 'DE89370400440532013000', 'GB82WEST12345698765432']) {
-    assert.equal(buildInvoice(withValue(base(), 'payment.iban', iban)).ok, true, iban);
+    assert.equal(buildInvoice(withValue(base(), 'payment.means.account.id.value', iban)).ok, true, iban);
   }
   for (const iban of ['DE79000000001234567891', 'DE89370400440532013001', 'DE00000000001234567890', 'de79000000001234567890', 'DE79 0000 0000 1234 5678 90', 'DE79', 'DE79000000001234567890X1234567890123456789012345']) {
-    assert.deepEqual(asPairs(withValue(base(), 'payment.iban', iban)), ['invalid_iban@payment.iban'], iban);
+    assert.deepEqual(asPairs(withValue(base(), 'payment.means.account.id.value', iban)), ['invalid_iban@payment.means.account.id.value'], iban);
   }
 });
 
