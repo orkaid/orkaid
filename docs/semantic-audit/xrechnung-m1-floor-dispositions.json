@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "milestone": "M1",
+  "definition": "Reconciled Reference Floor (core): every capability in the non-UI capability inventory derived from the reference implementation has exactly one explicit disposition; every disposition other than parity or re-derived states its reason.",
+  "decisionBasis": ["MDR-18"],
+  "inventorySource": "Non-UI rows of the 2026-09-26 reference-implementation capability assessment: S1-S17 (semantic/business) and O1-O9 (output). UI rows (U*) are not part of this inventory. The reference implementation is evidence, not design authority.",
+  "referenceStateLegend": {
+    "X": "executed and valid",
+    "S": "present in source only, not executed",
+    "DEF": "executed and defective",
+    "LIB": "library only, not reachable as a delivered capability",
+    "NO": "absent"
+  },
+  "dispositionLegend": {
+    "parity": "the legitimate reference capability is present in M1 with materially equivalent purpose and coverage, within the M1 profile; not identical code or bytes",
+    "re-derived": "the capability belongs to M1, but its semantics were rebuilt from authoritative artefacts and Accepted decisions instead of following the reference behaviour",
+    "intentionally-not-copied": "the reference behaviour is deliberately not reproduced in M1 (reason required); not a statement about eventual product scope",
+    "outside-floor": "not part of the M1 reconciled floor (reason required); not a permanent product-scope rejection"
+  },
+  "inventory": [
+    {
+      "id": "S1",
+      "capability": "Invoice type code BT-3 fixed to 380 (commercial invoice).",
+      "referenceState": "X",
+      "disposition": "parity",
+      "rationale": "M1 emits BT-3 = 380 for every invoice and rejects any other value explicitly; same purpose and coverage as the reference.",
+      "decisionRefs": ["MDR-12", "MDR-15"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/document.ts", "src/lib/domain/xrechnung/invoice.ts", "tests/domain/xrechnung-document.test.ts"],
+      "validatorEvidence": ["a-simple"]
+    },
+    {
+      "id": "S2",
+      "capability": "Standard VAT regime: category S at 19 % and 7 %, several rates in one invoice; the reference also mapped any 0 % rate to category Z labelled as an exemption.",
+      "referenceState": "X",
+      "disposition": "re-derived",
+      "rationale": "Retained: category S at 19 % and 7 %, mixed rates, VAT breakdown per rate. Rebuilt: the line VAT is an explicit treatment ('standard') with category and rate validated independently and never inferred from each other, and the breakdown is grouped by (treatment, category, rate). Not reproduced: deriving a category from a 0 % rate and the 0 % -> Z 'VAT exempt' mapping; a 0 % rate on a standard line is rejected, and no generic zero-rate (Z) treatment exists in M1. Arbitrary rates accepted by the reference library are outside the M1 profile.",
+      "decisionRefs": ["MDR-12", "MDR-13", "MDR-15", "MDR-22", "MDR-23"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/invoice.ts", "tests/domain/xrechnung-invoice.test.ts", "tests/domain/xrechnung-invoice-input.test.ts"],
+      "validatorEvidence": ["a-simple", "d-mixed-rates"]
+    },
+    {
+      "id": "S3",
+      "capability": "Kleinunternehmer treatment (section 19 UStG): category E, rate 0, exemption text.",
+      "referenceState": "DEF",
+      "disposition": "re-derived",
+      "rationale": "Reference output was rejected or failed schema validation. M1 re-derives the treatment from the XRechnung 3.0.2 guidance and validator artefacts: category E, rate 0, fixed BT-120 and BT-33 text, no BT-121, seller BT-31 or BT-32 required, homogeneous invoice, no eligibility determination, in UBL and CII.",
+      "decisionRefs": ["MDR-18", "MDR-22"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/invoice.ts", "src/lib/domain/xrechnung/document.ts", "tests/domain/xrechnung-kleinunternehmer.test.ts"],
+      "validatorEvidence": ["e-kleinunternehmer", "f-kleinunternehmer-lines"]
+    },
+    {
+      "id": "S4",
+      "capability": "Reverse-charge treatment (section 13b UStG): category AE, rate 0, exemption text.",
+      "referenceState": "DEF",
+      "disposition": "re-derived",
+      "rationale": "Reference output was rejected without a buyer identifier and failed schema validation in CII. M1 re-derives the treatment: category AE, rate 0, fixed BT-120 text, no BT-121, buyer BT-47 or BT-48 required, seller BT-31 or BT-32 required, domestic, homogeneous invoice, no applicability determination, in UBL and CII.",
+      "decisionRefs": ["MDR-18", "MDR-23"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/invoice.ts", "src/lib/domain/xrechnung/document.ts", "tests/domain/xrechnung-reverse-charge.test.ts"],
+      "validatorEvidence": ["g-reverse-charge-vat-ids", "h-reverse-charge-registration-ids"]
+    },
+    {
+      "id": "S5",
+      "capability": "Intra-community supply.",
+      "referenceState": "LIB",
+      "disposition": "outside-floor",
+      "rationale": "Not a delivered reference capability: it existed only as a library type, was not selectable as a regime, and was mapped to category E instead of K. Category K and cross-border capability are excluded from M1 scope by Accepted decision. Its placement in a later milestone is not decided here.",
+      "decisionRefs": ["MDR-18"],
+      "implementationEvidence": [],
+      "validatorEvidence": []
+    },
+    {
+      "id": "S6",
+      "capability": "Exemption text duplicated into the invoice note (BT-22) and into a line-level exemption reason.",
+      "referenceState": "DEF",
+      "disposition": "intentionally-not-copied",
+      "rationale": "Defect: the duplication produced a validator warning in UBL and mixed tax wording into business notes. M1 carries the exemption reason only as BT-120 in the VAT breakdown, and BT-22 contains only caller-supplied notes; an exemption reason is never copied into a note.",
+      "decisionRefs": ["MDR-18", "MDR-22", "MDR-23"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/ubl.ts", "src/lib/domain/xrechnung/cii.ts", "tests/domain/xrechnung-invoice-notes.test.ts"],
+      "validatorEvidence": ["e-kleinunternehmer", "h-reverse-charge-registration-ids"]
+    },
+    {
+      "id": "S7",
+      "capability": "Payment instructions: payment means code 58 or 30, IBAN, optional account name (BT-85) and BIC (BT-86); a free payment-means code in the library.",
+      "referenceState": "S",
+      "disposition": "re-derived",
+      "rationale": "M1 preserves the credit-transfer capability (codes 30 and 58, one account with IBAN, optional BT-85 and BT-86) with conditions and bindings derived from the validator artefacts (BR-DE-23, BR-50, BR-61) rather than taken from the reference. Narrowed to the verified profile: IBAN-only account identifier, BT-86 validated as a BIC. Not reproduced: a free payment-means code.",
+      "decisionRefs": ["MDR-15", "MDR-18"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/document.ts", "tests/domain/xrechnung-payment-means.test.ts"],
+      "validatorEvidence": ["a-simple", "m-payment-means-30", "n-payment-means-30-account-details"]
+    },
+    {
+      "id": "S8",
+      "capability": "Payment terms BT-20 as free text, optional due date BT-9, and the 'due date or terms' rule.",
+      "referenceState": "X",
+      "disposition": "re-derived",
+      "rationale": "M1 keeps BT-9 and BT-20 as independent optional fields and enforces BR-CO-25 as defined: one of them is required only when the amount due BT-115 is positive, checked after the monetary calculation because the pinned validator does not implement it. The reference's attribution of BR-CO-25 to a date-ordering rule is not reproduced. Structured Skonto ('#' in BT-20) is outside the M1 profile.",
+      "decisionRefs": ["MDR-18"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/document.ts", "tests/domain/xrechnung-payment-terms.test.ts"],
+      "validatorEvidence": ["k-payment-terms-only", "l-payment-due-date-and-terms"]
+    },
+    {
+      "id": "S9",
+      "capability": "Invoice note BT-22 as free text.",
+      "referenceState": "S",
+      "disposition": "parity",
+      "rationale": "M1 provides caller-supplied invoice notes (0..n, multiline, order preserved) in UBL and CII. The reference's concatenation of exemption text into the note is a separate defect (S6) and is not reproduced. BT-21 (subject code) is not supported in M1.",
+      "decisionRefs": ["MDR-18"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/document.ts", "tests/domain/xrechnung-invoice-notes.test.ts"],
+      "validatorEvidence": ["i-invoice-note", "j-invoice-notes-multiline"]
+    },
+    {
+      "id": "S10",
+      "capability": "Party data: names, addresses, electronic address with scheme, seller legal form, company register, tax number, VAT identifiers, buyer VAT identifier.",
+      "referenceState": "S",
+      "disposition": "re-derived",
+      "rationale": "M1 re-derives seller and buyer identity from the validator artefacts and Accepted decisions: BT-29 (0..n), BT-30, BT-31 and BT-32 as separate optional fields with the BR-CO-26 invariant; the tax number is emitted as BT-32 (the reference collected but did not emit it); buyer BT-47 and BT-48; electronic-address schemes EM, 0204 and 0088 as scheme identifiers only; addresses with street, city and post code. Bounded: both parties in Germany only; no identifier schemes on BT-29 or BT-30; no general seller legal-form field (BT-33 carries only the Kleinunternehmer text), because the reference mapping was unverified and M1 commits no such field; managing directors appeared only in the reference PDF, never in its XML, and are not carried in M1.",
+      "decisionRefs": ["MDR-15", "MDR-18", "MDR-21", "MDR-23"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/document.ts", "tests/domain/xrechnung-seller-identity.test.ts", "tests/domain/xrechnung-electronic-address.test.ts"],
+      "validatorEvidence": ["o-eas-0204-seller-0088-buyer", "p-eas-0088-seller-0204-buyer", "q-seller-bt29-bt32", "h-reverse-charge-registration-ids"]
+    },
+    {
+      "id": "S11",
+      "capability": "Seller contact (BG-6), with the contact name taken from the company name.",
+      "referenceState": "S",
+      "disposition": "re-derived",
+      "rationale": "M1 provides the seller contact as explicit caller-supplied BT-41, BT-42 and BT-43, required by the XRechnung rules BR-DE-2, -5, -6 and -7. The contact name is never derived from the seller name; a caller may still supply the company name, which BR-DE-5 permits.",
+      "decisionRefs": ["MDR-12", "MDR-15"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/document.ts", "tests/domain/xrechnung-document.test.ts"],
+      "validatorEvidence": ["a-simple"]
+    },
+    {
+      "id": "S12",
+      "capability": "Invoice dates: issue date, due date and date of supply.",
+      "referenceState": "DEF",
+      "disposition": "re-derived",
+      "rationale": "M1 requires a complete issue date BT-2 and a complete delivery date BT-72, emitted as BT-72 in both UBL and CII; BT-9 is optional and never derived. Not reproduced: the silent fallback of the supply date to the issue date, the invoicing period with start equal to end in UBL only, and date prefilling. Calendar-month indications and invoicing periods are outside the M1 profile.",
+      "decisionRefs": ["MDR-12", "MDR-15", "MDR-18"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/document.ts", "src/lib/domain/xrechnung/ubl.ts", "src/lib/domain/xrechnung/cii.ts", "tests/domain/xrechnung-document.test.ts"],
+      "validatorEvidence": ["a-simple", "l-payment-due-date-and-terms"]
+    },
+    {
+      "id": "S13",
+      "capability": "Monetary calculation: decimal quantity and unit price input, line net amounts, VAT and document totals in EUR.",
+      "referenceState": "DEF",
+      "disposition": "re-derived",
+      "rationale": "The capability is in M1, but the arithmetic was rebuilt: exact decimal arithmetic without binary floating point, line nets rounded HALF_UP to two decimals, VAT computed once per breakdown bucket, quantity and unit price with at most 6 effective fractional digits and below 10^9, calculated amounts below 10^10 EUR as a profile guard. Not reproduced: floating-point arithmetic and VAT as the sum of rounded line VAT, which gave a reproducible wrong total. Still EUR only, non-negative, no allowances or charges, as in the reference.",
+      "decisionRefs": ["MDR-13", "MDR-14", "MDR-24"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/decimal.ts", "src/lib/domain/xrechnung/invoice.ts", "tests/domain/xrechnung-invoice.test.ts", "tests/domain/xrechnung-numeric-bounds.test.ts", "tests/domain/xrechnung-static-checks.test.ts"],
+      "validatorEvidence": ["b-ten-lines", "c-rounded-line-net", "d-mixed-rates", "r-numeric-precision-boundary"]
+    },
+    {
+      "id": "S14",
+      "capability": "Invoice lines: several lines with name, quantity, unit code (H87 in the reference form), unit price and VAT rate; the description was written as both item name and item description.",
+      "referenceState": "X",
+      "disposition": "re-derived",
+      "rationale": "M1 keeps multi-line invoices with line id, item name BT-153, quantity, unit price and VAT. Rebuilt: unit codes come from a closed list checked against the validator code list, including H87. Not reproduced: writing the same text as item name and item description, and free unit codes.",
+      "decisionRefs": ["MDR-15", "MDR-18"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/document.ts", "tests/domain/xrechnung-unit-code-h87.test.ts", "tests/domain/xrechnung-ubl.test.ts"],
+      "validatorEvidence": ["b-ten-lines", "f-kleinunternehmer-lines"]
+    },
+    {
+      "id": "S15",
+      "capability": "Buyer reference BT-10.",
+      "referenceState": "DEF",
+      "disposition": "re-derived",
+      "rationale": "M1 requires BT-10 as buyer-provided business information (BR-DE-15) and never generates, defaults or substitutes it. Not reproduced: a placeholder default, the fallback to the invoice number and a Leitweg-ID format check; M1 attaches no B2G routing or Leitweg-ID meaning to BT-10.",
+      "decisionRefs": ["MDR-15", "MDR-18"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/document.ts", "tests/domain/xrechnung-document.test.ts"],
+      "validatorEvidence": ["a-simple"]
+    },
+    {
+      "id": "S16",
+      "capability": "Selectable output profiles: XRechnung 3.0 CIUS, a generic EN 16931 profile labelled 'Basic', and Peppol (library only).",
+      "referenceState": "S",
+      "disposition": "outside-floor",
+      "rationale": "Profile selection is outside the M1 floor: M1 has one fixed output profile, the XRechnung CIUS in UBL and CII (covered by S1, O1 and O2). Generic EN 16931 output and the Peppol customization are excluded from M1 by Accepted scope; the placement of generic EN 16931 output remains open and is not decided here. The 'Basic' label is not a formal term and is not reproduced.",
+      "decisionRefs": ["MDR-18"],
+      "implementationEvidence": [],
+      "validatorEvidence": []
+    },
+    {
+      "id": "S17",
+      "capability": "Pre-check product rules from business-letter practice: legal form, register and managing directors required for corporate forms; e-mail and telephone required.",
+      "referenceState": "S",
+      "disposition": "intentionally-not-copied",
+      "rationale": "Unresearched product rules: they are not EN 16931 or XRechnung rules and no Accepted decision adopts them. M1 enforces only external, conditional and stated profile rules. Seller e-mail and telephone are required in M1 because of BR-DE-6 and BR-DE-7, not because of this reference rule.",
+      "decisionRefs": ["MDR-12", "MDR-18"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/document.ts"],
+      "validatorEvidence": []
+    },
+    {
+      "id": "O1",
+      "capability": "UBL 2.1 Invoice output.",
+      "referenceState": "X",
+      "disposition": "parity",
+      "rationale": "M1 produces UBL 2.1 Invoice XML for the CIUS XRechnung from a validated invoice, accepted by the pinned KoSIT configuration for every M1 fixture. The reference's UBL defects belong to S3, S4, S6, S12 and S14 and are handled there. Not claimed: CreditNote, Extension or general EN 16931 completeness.",
+      "decisionRefs": ["MDR-12", "MDR-15", "MDR-18"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/ubl.ts", "tests/domain/xrechnung-ubl.test.ts", "tools/kosit/validate.ts"],
+      "validatorEvidence": ["a-simple", "b-ten-lines", "c-rounded-line-net", "d-mixed-rates"]
+    },
+    {
+      "id": "O2",
+      "capability": "CII (UN/CEFACT D16B) output.",
+      "referenceState": "DEF",
+      "disposition": "re-derived",
+      "rationale": "The reference CII output failed schema validation in every special case (exemption reason in the wrong position). M1 CII was built independently from the official artefacts on the same syntax-independent model, first in a preregistered experiment, and is required for every M1 capability alongside UBL.",
+      "decisionRefs": ["MDR-16", "MDR-18"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/cii.ts", "tests/domain/xrechnung-cii.test.ts", "tools/kosit/validate.ts"],
+      "validatorEvidence": ["e-kleinunternehmer", "g-reverse-charge-vat-ids", "m-payment-means-30", "r-numeric-precision-boundary"]
+    },
+    {
+      "id": "O3",
+      "capability": "Internal pre-check: field-specific errors before output.",
+      "referenceState": "S",
+      "disposition": "re-derived",
+      "rationale": "M1 has a core diagnostic contract: buildInvoice returns every error as a code and a field path, separates 'unsupported by this profile' from invalid input, marks a truncated error list, and never yields XML for unvalidated input. Its rule set is re-derived from external, conditional and profile rules instead of the reference rules (see S8 and S17). Bounded: no warning severity and no per-diagnostic rule-provenance field; user-facing validation presentation is deferred and not decided here.",
+      "decisionRefs": ["MDR-12", "MDR-15", "MDR-17"],
+      "implementationEvidence": ["src/lib/domain/xrechnung/document.ts", "src/lib/domain/xrechnung/invoice.ts", "tests/domain/xrechnung-document.test.ts"],
+      "validatorEvidence": []
+    },
+    {
+      "id": "O4",
+      "capability": "Offline KoSIT validation gate during development.",
+      "referenceState": "DEF",
+      "disposition": "re-derived",
+      "rationale": "The reference gate ignored the report's validity, assessment and severities and discarded the report. M1 has a development-only local harness with hash-pinned validator and configuration, byte-identical regenerated goldens, a required scenario match and accept assessment, every message triaged, and controls that must be rejected by the rule they break. It is not part of CI and not a user-facing service.",
+      "decisionRefs": ["MDR-15"],
+      "implementationEvidence": ["tools/kosit/validate.ts", "tools/kosit/kosit-manifest.json", "tests/fixtures/xrechnung/kosit-triage.json", "tests/tools/kosit-report.test.ts"],
+      "validatorEvidence": ["a-simple"]
+    },
+    {
+      "id": "O5",
+      "capability": "KoSIT validation offered to the end user.",
+      "referenceState": "NO",
+      "disposition": "outside-floor",
+      "rationale": "Not delivered by the reference implementation. A user-facing validation service needs UI or server capability, both excluded from M1 by Accepted scope; any later placement is not decided here.",
+      "decisionRefs": ["MDR-12", "MDR-17", "MDR-18"],
+      "implementationEvidence": [],
+      "validatorEvidence": []
+    },
+    {
+      "id": "O6",
+      "capability": "XML download with a generated file name, and XML preview.",
+      "referenceState": "S",
+      "disposition": "outside-floor",
+      "rationale": "Download and preview are user-facing product surface, and functional UI is excluded from M1 by Accepted scope. The underlying ability to produce the XML document is covered by O1 and O2.",
+      "decisionRefs": ["MDR-17", "MDR-18"],
+      "implementationEvidence": [],
+      "validatorEvidence": []
+    },
+    {
+      "id": "O7",
+      "capability": "PDF rendering of the invoice.",
+      "referenceState": "S",
+      "disposition": "outside-floor",
+      "rationale": "PDF and rendering are not committed to M1 or to any milestone by Accepted decision. XML generation is not rendering. The reference PDF was also built from the input object rather than the XML and diverged from it (no BT-3, no VAT breakdown by rate), so it is not a reusable floor in any case.",
+      "decisionRefs": ["MDR-17", "MDR-18"],
+      "implementationEvidence": [],
+      "validatorEvidence": []
+    },
+    {
+      "id": "O8",
+      "capability": "PDF/A with embedded XML (hybrid invoice).",
+      "referenceState": "NO",
+      "disposition": "outside-floor",
+      "rationale": "Not delivered by the reference implementation, and hybrid output is not committed to any milestone by Accepted decision. Nothing here implies ZUGFeRD or Factur-X support.",
+      "decisionRefs": ["MDR-17", "MDR-18"],
+      "implementationEvidence": [],
+      "validatorEvidence": []
+    },
+    {
+      "id": "O9",
+      "capability": "UBL CreditNote, attachments, document-level allowances and charges, Extension or CVD output.",
+      "referenceState": "NO",
+      "disposition": "outside-floor",
+      "rationale": "Not delivered by the reference implementation. CreditNote, Extension XRechnung and CVD are excluded from M1 by Accepted scope; allowances, charges and corrections are outside the M1 profile and their policy remains open.",
+      "decisionRefs": ["MDR-13", "MDR-15", "MDR-18"],
+      "implementationEvidence": [],
+      "validatorEvidence": []
+    }
+  ]
+}
