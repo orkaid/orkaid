@@ -249,7 +249,7 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
   const deliveryDate = readDate(input, 'deliveryDate', 'deliveryDate', errors);
   const buyerReference = readText(input, 'buyerReference', 'buyerReference', errors);
   const seller = readSeller(input, errors);
-  const buyer = readBuyer(input, usesReverseCharge(input), errors);
+  const buyer = readBuyer(input, usesReverseCharge(input, money), errors);
   const payment = readPayment(input, errors);
   const notes = readNotes(input, errors);
   const { lines: lineData, stoppedAt } = readLineData(input, errors);
@@ -455,8 +455,17 @@ function readBuyer(parent: Record<string, unknown>, reverseCharge: boolean, erro
   };
 }
 
-function usesReverseCharge(input: Record<string, unknown>): boolean {
-  return Array.isArray(input.lines) && input.lines.some((line) => isRecord(line) && isRecord(line.vat) && line.vat.treatment === 'reverse-charge');
+// Reads only the lines the monetary scan reached (MDR-14: once the error bound is hit, further lines are not scanned).
+// A truncated scan names its first unscanned line in its last error; nothing from there on is inspected.
+function usesReverseCharge(input: Record<string, unknown>, money: ReturnType<typeof calculateInvoice>): boolean {
+  const list = input.lines;
+  if (!Array.isArray(list)) return false;
+  const stoppedAt = !money.ok && money.truncated ? money.errors.at(-1)?.path : undefined;
+  for (let index = 0; index < list.length && `lines[${index}]` !== stoppedAt; index++) {
+    const line: unknown = list[index];
+    if (isRecord(line) && isRecord(line.vat) && line.vat.treatment === 'reverse-charge') return true;
+  }
+  return false;
 }
 
 function readPartyFields(record: Record<string, unknown>, path: string, errors: DocumentError[]): InvoiceParty | undefined {

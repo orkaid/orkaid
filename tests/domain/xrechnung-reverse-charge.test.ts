@@ -3,7 +3,7 @@ import test from 'node:test';
 
 import { serializeCiiInvoice } from '../../src/lib/domain/xrechnung/cii.ts';
 import { buildInvoice, type Invoice } from '../../src/lib/domain/xrechnung/document.ts';
-import { REVERSE_CHARGE_TEXT } from '../../src/lib/domain/xrechnung/invoice.ts';
+import { PROVISIONAL_MAX_REPORTED_ERRORS, REVERSE_CHARGE_TEXT } from '../../src/lib/domain/xrechnung/invoice.ts';
 import { serializeUblInvoice } from '../../src/lib/domain/xrechnung/ubl.ts';
 import { loadFixtureInput, withoutValue, withValue, type JsonObject } from '../support/fixtures.ts';
 import { childNames, one, parseXml, select, textAt } from '../support/xml.ts';
@@ -140,6 +140,34 @@ test('presence and validity are separate: a malformed BT-48 or BT-47 is invalid,
 test('the AE buyer rule is reported even when a line is wrong for another reason', () => {
   const input = withoutValue(withValue(rc1(), 'lines.0.vat.rate', '19'), 'buyer.vatId');
   assert.deepEqual(rejected(input), ['missing_buyer_identifier@buyer', 'unsupported_vat_rate@lines[0].vat.rate']);
+});
+
+test('the AE buyer rule reads only the lines the bounded scan reached (MDR-14)', () => {
+  const noBuyerId = withoutValue(rc1(), 'buyer.vatId');
+  const rcLine = (rc1().lines as JsonObject[])[0];
+  const invalidLine = { ...rcLine, vat: { treatment: 'standard', category: 'S', rate: '19' }, quantity: 'x' };
+  const invalidLines = () => Array.from({ length: PROVISIONAL_MAX_REPORTED_ERRORS + 100 }, () => invalidLine);
+  const errors = (lines: unknown[]) => {
+    const result = buildInvoice(withValue(noBuyerId, 'lines', lines));
+    return result.ok ? assert.fail('expected rejection') : result;
+  };
+
+  const before = errors([rcLine, ...invalidLines()]);
+  assert.equal(before.truncated, true);
+  assert.ok(before.errors.some((e) => e.code === 'missing_buyer_identifier' && e.path === 'buyer'));
+
+  const after = errors([...invalidLines(), rcLine]);
+  assert.equal(after.truncated, true);
+  assert.deepEqual(after.errors.at(-1), { code: 'error_list_truncated', path: `lines[${PROVISIONAL_MAX_REPORTED_ERRORS}]` });
+  assert.equal(after.errors.some((e) => e.code === 'missing_buyer_identifier'), false);
+
+  // A huge sparse list whose only line, far past the cutoff, is reverse charge: the hole at index 0 onward is reported
+  // and the line itself is never reached.
+  const sparse = new Array(4294967295);
+  sparse[4294967294] = rcLine;
+  const sparseResult = errors(sparse);
+  assert.equal(sparseResult.truncated, true);
+  assert.equal(sparseResult.errors.some((e) => e.code === 'missing_buyer_identifier'), false);
 });
 
 test('standard and Kleinunternehmer invoices are never forced to supply BT-47 or BT-48', () => {
