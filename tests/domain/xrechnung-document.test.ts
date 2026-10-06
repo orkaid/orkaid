@@ -375,6 +375,38 @@ test('when the business scan and the monetary scan both stop early, each names w
   assert.equal(result.errors.at(-1)?.path, 'lines[100]', 'a marker is always the last entry');
 });
 
+// MDR-14: once the monetary scan stops at lines[N], no line-derived check reads lines[N] or any later line.
+test('business line fields are read only before the first line the monetary scan did not reach (MDR-14)', () => {
+  const CAP = PROVISIONAL_MAX_REPORTED_ERRORS;
+  const vat = { treatment: 'standard', category: 'S', rate: '19' };
+  const moneyInvalid = { name: 'n', unitCode: 'C62', quantity: 'x', unitPrice: '1.00', vat }; // 1 monetary error, no business error
+  const businessInvalid = { name: ' ', unitCode: 'XXX', quantity: '1', unitPrice: '1.00', vat }; // 2 business errors, no monetary error
+  const lineErrors = (lines: unknown[], index: number) =>
+    failure(withValue(base(), 'lines', lines)).errors.filter((e) => e.path.startsWith(`lines[${index}].`) && e.code !== 'invalid_decimal');
+  const cutAt = (lines: unknown[]) => failure(withValue(base(), 'lines', lines)).errors.at(-1);
+
+  // Exactly at the cutoff: lines[CAP] is the first unscanned line.
+  const atCutoff = [...Array.from({ length: CAP }, () => moneyInvalid), businessInvalid];
+  assert.deepEqual(cutAt(atCutoff), { code: 'error_list_truncated', path: `lines[${CAP}]` });
+  assert.deepEqual(lineErrors(atCutoff, CAP), []);
+
+  // A later dense line.
+  const dense = [...Array.from({ length: 199 }, () => moneyInvalid), businessInvalid];
+  assert.deepEqual(cutAt(dense), { code: 'error_list_truncated', path: `lines[${CAP}]` });
+  assert.deepEqual(lineErrors(dense, 199), []);
+
+  // A huge sparse list: the holes exhaust the monetary bound, the one malformed line far past it is never read.
+  const sparse = new Array(4294967295);
+  sparse[4294967294] = businessInvalid;
+  assert.deepEqual(cutAt(sparse), { code: 'error_list_truncated', path: `lines[${CAP}]` });
+  assert.deepEqual(lineErrors(sparse, 4294967294), []);
+
+  // Before the cutoff, business validation is unchanged.
+  const before = [businessInvalid, ...Array.from({ length: CAP + 50 }, () => moneyInvalid)];
+  assert.deepEqual(cutAt(before), { code: 'error_list_truncated', path: `lines[${CAP + 1}]` });
+  assert.deepEqual(lineErrors(before, 0).map((e) => `${e.code}@${e.path}`), ['empty_text@lines[0].name', 'unsupported_unit_code@lines[0].unitCode']);
+});
+
 // ------------------------------------------------------------------------------------------- text edge cases
 
 test('line and paragraph separators are rejected inside a single-line text', () => {

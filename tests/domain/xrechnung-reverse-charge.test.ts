@@ -161,8 +161,8 @@ test('the AE buyer rule reads only the lines the bounded scan reached (MDR-14)',
   assert.deepEqual(after.errors.at(-1), { code: 'error_list_truncated', path: `lines[${PROVISIONAL_MAX_REPORTED_ERRORS}]` });
   assert.equal(after.errors.some((e) => e.code === 'missing_buyer_identifier'), false);
 
-  // A huge sparse list whose only line, far past the cutoff, is reverse charge: the hole at index 0 onward is reported
-  // and the line itself is never reached.
+  // A huge sparse list whose only line, far past the cutoff, is reverse charge: the holes from index 0 are reported and
+  // the reverse-charge detection never reads that line (whole-builder cutoff: xrechnung-document.test.ts).
   const sparse = new Array(4294967295);
   sparse[4294967294] = rcLine;
   const sparseResult = errors(sparse);

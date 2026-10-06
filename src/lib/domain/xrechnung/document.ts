@@ -242,6 +242,7 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
 
   const money = calculateInvoice(input, options, { invoice: DOCUMENT_FIELDS, line: LINE_FIELDS });
   if (!isRecord(input)) return failure([], money, undefined);
+  const scanLimit = firstUnscannedLine(money);
 
   const errors: DocumentError[] = [];
   const invoiceNumber = readText(input, 'invoiceNumber', 'invoiceNumber', errors);
@@ -249,10 +250,10 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
   const deliveryDate = readDate(input, 'deliveryDate', 'deliveryDate', errors);
   const buyerReference = readText(input, 'buyerReference', 'buyerReference', errors);
   const seller = readSeller(input, errors);
-  const buyer = readBuyer(input, usesReverseCharge(input, money), errors);
+  const buyer = readBuyer(input, usesReverseCharge(input, scanLimit), errors);
   const payment = readPayment(input, errors);
   const notes = readNotes(input, errors);
-  const { lines: lineData, stoppedAt } = readLineData(input, errors);
+  const { lines: lineData, stoppedAt } = readLineData(input, scanLimit, errors);
   // PROFILE: one VAT treatment per invoice. Whether treatments may be combined is an open decision (MDR-18,
   // oq-mixed-vat-treatments-in-m1); the semantic types allow it, only this profile check refuses it.
   if (money.ok && new Set(money.value.lines.map((line) => line.vat.treatment)).size > 1) {
@@ -455,13 +456,21 @@ function readBuyer(parent: Record<string, unknown>, reverseCharge: boolean, erro
   };
 }
 
-// Reads only the lines the monetary scan reached (MDR-14: once the error bound is hit, further lines are not scanned).
-// A truncated scan names its first unscanned line in its last error; nothing from there on is inspected.
-function usesReverseCharge(input: Record<string, unknown>, money: ReturnType<typeof calculateInvoice>): boolean {
+// MDR-14: once the error bound is hit, further lines are not scanned. A truncated monetary scan names its first unscanned
+// line in its last error; every line-derived check after it reads only the indices below that one (exclusive bound).
+// undefined when the scan was not cut short. A marker that does not name a line gives 0: nothing is read rather than too
+// much. A bigint, not a Number, so no text reaches a binary floating-point conversion in this module.
+function firstUnscannedLine(money: ReturnType<typeof calculateInvoice>): bigint | undefined {
+  if (money.ok || !money.truncated) return undefined;
+  const match = /^lines\[(0|[1-9][0-9]*)\]$/.exec(money.errors.at(-1)?.path ?? '');
+  return match ? BigInt(match[1] ?? '0') : 0n;
+}
+
+// Reads only the lines the monetary scan reached (see firstUnscannedLine).
+function usesReverseCharge(input: Record<string, unknown>, scanLimit: bigint | undefined): boolean {
   const list = input.lines;
   if (!Array.isArray(list)) return false;
-  const stoppedAt = !money.ok && money.truncated ? money.errors.at(-1)?.path : undefined;
-  for (let index = 0; index < list.length && `lines[${index}]` !== stoppedAt; index++) {
+  for (let index = 0; index < list.length && (scanLimit === undefined || BigInt(index) < scanLimit); index++) {
     const line: unknown = list[index];
     if (isRecord(line) && isRecord(line.vat) && line.vat.treatment === 'reverse-charge') return true;
   }
@@ -567,14 +576,16 @@ function readNotes(parent: Record<string, unknown>, errors: DocumentError[]): re
 // ------------------------------------------------------------------------------------------------ lines
 
 // Reads only the business part of each line (name, unit code). Monetary fields, non-record lines and holes are
-// reported by invoice.ts. Object.keys visits the elements that exist, so a huge sparse array cannot stall the scan.
-function readLineData(input: Record<string, unknown>, errors: DocumentError[]): { lines: Record<string, { name: string; unitCode: UnitCode }>; stoppedAt: string | undefined } {
+// reported by invoice.ts. Object.keys visits the elements that exist, so a huge sparse array cannot stall the scan, and
+// lists array indices in ascending order, so the scan ends at the first index the monetary scan did not reach.
+function readLineData(input: Record<string, unknown>, scanLimit: bigint | undefined, errors: DocumentError[]): { lines: Record<string, { name: string; unitCode: UnitCode }>; stoppedAt: string | undefined } {
   const lines: Record<string, { name: string; unitCode: UnitCode }> = {};
   const list = input.lines;
   if (!Array.isArray(list)) return { lines, stoppedAt: undefined };
 
   for (const key of Object.keys(list)) {
     if (!/^(0|[1-9][0-9]*)$/.test(key)) continue;
+    if (scanLimit !== undefined && BigInt(key) >= scanLimit) break;
     if (errors.length >= PROVISIONAL_MAX_REPORTED_ERRORS) return { lines, stoppedAt: `lines[${key}]` };
     const line: unknown = Reflect.get(list, key);
     if (!isRecord(line)) continue;
