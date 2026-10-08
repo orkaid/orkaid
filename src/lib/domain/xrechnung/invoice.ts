@@ -1,6 +1,7 @@
 // V1 XRechnung semantic invoice model and monetary calculation.
 // Scope: domestic German B2B invoice, EUR, BT-3 = 380, VAT category S at 19% or 7%, the Kleinunternehmer treatment
-// (category E, rate 0) or the reverse-charge treatment (category AE, rate 0), non-negative amounts.
+// (category E, rate 0) or the reverse-charge treatment (category AE, rate 0), non-negative amounts. Which treatments
+// may share one invoice is a document rule (document.ts); this module computes one bucket per treatment and rate.
 // Syntax-independent: no UBL/CII structures. Anything outside the scope is an explicit failure, never a fallback (MDR-12).
 //
 // Calculation contract, a project engineering policy for V1 (MDR-13). HALF_UP is not an EN 16931/XRechnung mandate;
@@ -53,7 +54,8 @@ export const KLEINUNTERNEHMER_EXEMPTION_TEXT = 'Kein Ausweis von Umsatzsteuer, d
  * Orkaid choice, and BT-121 is omitted). No claim is made that it is legally sufficient beyond being the phrase the
  * statute names. The whole reverse-charge contract (category AE, rate 0, seller BT-31 or BT-32, buyer BT-47 or BT-48,
  * one treatment per invoice, domestic, no § 13b applicability check) is the accepted implementation decision (MDR-23,
- * resting on MDR-18, MDR-21 and MDR-22).
+ * resting on MDR-18, MDR-21 and MDR-22). MDR-23 records only that homogeneous profile; the later profile extension that
+ * lets reverse-charge lines share an invoice with standard lines (document.ts) changes neither this text nor the bucket.
  */
 export const REVERSE_CHARGE_TEXT = 'Steuerschuldnerschaft des Leistungsempfängers';
 

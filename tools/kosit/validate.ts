@@ -15,7 +15,8 @@
 // that must be rejected by the rule they break; the reverse-charge fixtures likewise (UBL and CII, both identifier
 // branches, mutated controls for BR-AE-02, -05, -09 and -10); payment means 30 likewise (BR-50, BR-61, CII-SR-470,
 // BR-DE-23-a, BR-CL-16); the electronic-address schemes 0204 and 0088 in both party roles (control: an unknown scheme,
-// BR-CL-25) and seller BT-29 with BT-32 (control: BT-29 removed, so BT-32 alone is left, BR-CO-26) likewise.
+// BR-CL-25) and seller BT-29 with BT-32 (control: BT-29 removed, so BT-32 alone is left, BR-CO-26) likewise; standard
+// and reverse charge in one invoice likewise (controls for BR-AE-02, -05 and -10 with the standard bucket present).
 // A pass here is not legal certification and says nothing about tax correctness.
 
 import { spawnSync } from 'node:child_process';
@@ -45,7 +46,7 @@ const CONTROL_NAME = 'control-missing-buyer-reference';
 type Syntax = 'ubl' | 'cii';
 const SCENARIOS: Record<Syntax, string> = { ubl: 'EN16931 XRechnung (UBL Invoice)', cii: 'EN16931 XRechnung (CII)' };
 // M1 current evidence: these fixtures are also validated in CII (their goldens are `<name>.cii.xml`).
-const CII_FIXTURES: readonly FixtureName[] = ['e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms', 'm-payment-means-30', 'n-payment-means-30-account-details', 'o-eas-0204-seller-0088-buyer', 'p-eas-0088-seller-0204-buyer', 'q-seller-bt29-bt32', 'r-numeric-precision-boundary'];
+const CII_FIXTURES: readonly FixtureName[] = ['e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms', 'm-payment-means-30', 'n-payment-means-30-account-details', 'o-eas-0204-seller-0088-buyer', 'p-eas-0088-seller-0204-buyer', 'q-seller-bt29-bt32', 'r-numeric-precision-boundary', 's-standard-and-reverse-charge'];
 const ciiName = (name: string): string => `${name}.cii`;
 
 // Mutated copies of a Kleinunternehmer golden that the official validator must reject, each by the named rules.
@@ -110,7 +111,17 @@ const EVIDENCE_CONTROLS: typeof KLEINUNTERNEHMER_CONTROLS = {
   'control-bt29-ubl-bt32-only': { syntax: 'ubl', base: 'q-seller-bt29-bt32', mutate: (x) => removeElement(x, /^ *<cac:PartyIdentification>\n *<cbc:ID>Kreditor-4711<\/cbc:ID>\n *<\/cac:PartyIdentification>\n/m), codes: ['BR-CO-26'] },
   'control-bt29-cii-bt32-only': { syntax: 'cii', base: 'q-seller-bt29-bt32', mutate: (x) => removeElement(x, /^ *<ram:ID>Kreditor-4711<\/ram:ID>\n/m), codes: ['BR-CO-26'] },
 };
-const SPECIAL_CONTROLS = { ...KLEINUNTERNEHMER_CONTROLS, ...REVERSE_CHARGE_CONTROLS, ...PAYMENT_MEANS_CONTROLS, ...EVIDENCE_CONTROLS };
+// Standard + reverse charge (s: S19 line and AE line, seller BT-31, buyer BT-48). Each control breaks one AE rule while the
+// standard line and bucket stay intact: the buyer's BT-48, the AE line rate, or the AE BT-120.
+const MIXED_CONTROLS: typeof KLEINUNTERNEHMER_CONTROLS = {
+  'control-mixed-ubl-missing-buyer-bt48': { syntax: 'ubl', base: 's-standard-and-reverse-charge', mutate: (x) => fromMarker(x, UBL_BUYER, (s) => removeElement(s, /^ *<cac:PartyTaxScheme>\n(?:.*\n){5}/m)), codes: ['BR-AE-02'] },
+  'control-mixed-ubl-ae-line-rate-19': { syntax: 'ubl', base: 's-standard-and-reverse-charge', mutate: (x) => x.replace(/(<cac:ClassifiedTaxCategory>\n *<cbc:ID>AE<\/cbc:ID>\n *<cbc:Percent>)0</g, '$119<'), codes: ['BR-AE-05'] },
+  'control-mixed-ubl-missing-bt120': { syntax: 'ubl', base: 's-standard-and-reverse-charge', mutate: (x) => removeElement(x, /^ *<cbc:TaxExemptionReason>.*<\/cbc:TaxExemptionReason>\n/m), codes: ['BR-AE-10'] },
+  'control-mixed-cii-missing-buyer-bt48': { syntax: 'cii', base: 's-standard-and-reverse-charge', mutate: (x) => fromMarker(x, CII_BUYER, (s) => removeElement(s, /^ *<ram:SpecifiedTaxRegistration>\n(?:.*\n){2}/m)), codes: ['BR-AE-02'] },
+  'control-mixed-cii-ae-line-rate-19': { syntax: 'cii', base: 's-standard-and-reverse-charge', mutate: (x) => x.replace(/(<ram:CategoryCode>AE<\/ram:CategoryCode>\n *<ram:RateApplicablePercent>)0</g, '$119<'), codes: ['BR-AE-05'] },
+  'control-mixed-cii-missing-bt120': { syntax: 'cii', base: 's-standard-and-reverse-charge', mutate: (x) => removeElement(x, /^ *<ram:ExemptionReason>.*<\/ram:ExemptionReason>\n/m), codes: ['BR-AE-10'] },
+};
+const SPECIAL_CONTROLS = { ...KLEINUNTERNEHMER_CONTROLS, ...REVERSE_CHARGE_CONTROLS, ...PAYMENT_MEANS_CONTROLS, ...EVIDENCE_CONTROLS, ...MIXED_CONTROLS };
 const REQUIRED_STEPS = ['val-xsd', 'val-sch.1', 'val-sch.2', 'val-xml'];
 
 const sha256Hex = (data: Buffer | string): string => createHash('sha256').update(data).digest('hex');

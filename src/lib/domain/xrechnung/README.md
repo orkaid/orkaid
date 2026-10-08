@@ -28,7 +28,7 @@ syntax-independent. Both serializers consume the same validated `Invoice`; neith
 
 Scenario: ordinary German domestic commercial B2B invoice, invoice type 380, EUR, VAT category S at 19% and/or 7%, or
 the Kleinunternehmer treatment (§ 19 UStG: category E, rate 0, fixed XRechnung 3.0.2 section 13.3 wording in BT-120 and
-BT-33, no BT-121) or the reverse-charge treatment (§ 13b UStG: category AE, rate 0, the § 14a Abs. 5 UStG phrase in BT-120, no BT-121, buyer BT-47 or BT-48; an invoice is all-standard, all-Kleinunternehmer or all-reverse-charge), nonnegative amounts, no document-level allowances or charges, no corrections or credit notes.
+BT-33, no BT-121) or the reverse-charge treatment (§ 13b UStG: category AE, rate 0, the § 14a Abs. 5 UStG phrase in BT-120, no BT-121, buyer BT-47 or BT-48; an invoice is all-standard, all-Kleinunternehmer, all-reverse-charge, or standard combined with reverse charge; Kleinunternehmer is never combined), nonnegative amounts, no document-level allowances or charges, no corrections or credit notes.
 
 Three kinds of rule are kept apart, in the code comments as well:
 

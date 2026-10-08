@@ -189,7 +189,7 @@ export type DocumentErrorCode =
   | 'missing_seller_identification' // BR-CO-26: none of BT-29, BT-30, BT-31 is present
   | 'missing_seller_tax_identifier' // neither BT-31 nor BT-32 is present (BR-S-02, BR-E-02, BR-DE-16)
   | 'missing_buyer_identifier' // BR-AE-02: a reverse-charge invoice has neither BT-47 nor BT-48
-  | 'unsupported_mixed_vat_treatments' // PROFILE: an invoice is all-standard, all-kleinunternehmer or all-reverse-charge
+  | 'unsupported_mixed_vat_treatments' // PROFILE: a combination of treatments other than standard + reverse-charge
   | 'internal_inconsistency';
 
 export type DocumentError = { readonly code: DocumentErrorCode; readonly path: string };
@@ -254,9 +254,11 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
   const payment = readPayment(input, errors);
   const notes = readNotes(input, errors);
   const { lines: lineData, stoppedAt } = readLineData(input, scanLimit, errors);
-  // PROFILE: one VAT treatment per invoice. Whether treatments may be combined is an open decision (MDR-18,
-  // oq-mixed-vat-treatments-in-m1); the semantic types allow it, only this profile check refuses it.
-  if (money.ok && new Set(money.value.lines.map((line) => line.vat.treatment)).size > 1) {
+  // PROFILE: the supported treatment compositions are listed, not derived. One treatment alone, or standard combined
+  // with reverse charge (S + AE: an ordinary supply and a recipient-liable one billed together, UStAE 13b.4 (2) example
+  // 1). Kleinunternehmer is never combined, and any combination not listed is refused as outside the profile, not as
+  // legally invalid. Whether a line's supply qualifies for § 13b remains the caller's input, never checked here.
+  if (money.ok && !isSupportedComposition(new Set(money.value.lines.map((line) => line.vat.treatment)))) {
     errors.push({ code: 'unsupported_mixed_vat_treatments', path: 'lines' });
   }
   // EXTERNAL, BR-CO-25 (SeMoX CIUS model; not implemented by the pinned Schematron, so the domain owns it): with a
@@ -430,9 +432,9 @@ function readSellerIdentifiers(parent: Record<string, unknown>, errors: Document
   return identifiers;
 }
 
-// BT-47 and BT-48 are two distinct optional slots. Only the reverse-charge treatment needs one of them (BR-AE-02);
-// standard and kleinunternehmer invoices are never forced to supply either. The treatment is read from the raw input so
-// that this rule is also reported when the monetary calculation fails for another reason.
+// BT-47 and BT-48 are two distinct optional slots. An invoice with at least one reverse-charge line needs one of them
+// (BR-AE-02), also when standard lines are present; other invoices are never forced to supply either. The treatment is
+// read from the raw input so that this rule is also reported when the monetary calculation fails for another reason.
 function readBuyer(parent: Record<string, unknown>, reverseCharge: boolean, errors: DocumentError[]): Invoice['buyer'] | undefined {
   const record = readObject(parent, 'buyer', 'buyer', BUYER_FIELDS, errors);
   if (record === undefined) return undefined;
@@ -464,6 +466,10 @@ function firstUnscannedLine(money: ReturnType<typeof calculateInvoice>): bigint 
   if (money.ok || !money.truncated) return undefined;
   const match = /^lines\[(0|[1-9][0-9]*)\]$/.exec(money.errors.at(-1)?.path ?? '');
   return match ? BigInt(match[1] ?? '0') : 0n;
+}
+
+function isSupportedComposition(treatments: ReadonlySet<InvoiceLineVat['treatment']>): boolean {
+  return treatments.size === 1 || (treatments.size === 2 && treatments.has('standard') && treatments.has('reverse-charge'));
 }
 
 // Reads only the lines the monetary scan reached (see firstUnscannedLine).

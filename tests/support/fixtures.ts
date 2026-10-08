@@ -5,7 +5,7 @@ import { resolve } from 'node:path';
 // (example.com / example.org addresses, the official test-suite dummy IBAN). Expected amounts are worked out by
 // hand, never produced by the code under test.
 
-export const FIXTURE_NAMES = ['a-simple', 'b-ten-lines', 'c-rounded-line-net', 'd-mixed-rates', 'e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms', 'm-payment-means-30', 'n-payment-means-30-account-details', 'o-eas-0204-seller-0088-buyer', 'p-eas-0088-seller-0204-buyer', 'q-seller-bt29-bt32', 'r-numeric-precision-boundary'] as const;
+export const FIXTURE_NAMES = ['a-simple', 'b-ten-lines', 'c-rounded-line-net', 'd-mixed-rates', 'e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms', 'm-payment-means-30', 'n-payment-means-30-account-details', 'o-eas-0204-seller-0088-buyer', 'p-eas-0088-seller-0204-buyer', 'q-seller-bt29-bt32', 'r-numeric-precision-boundary', 's-standard-and-reverse-charge'] as const;
 export type FixtureName = (typeof FIXTURE_NAMES)[number];
 
 export type JsonObject = { [key: string]: unknown };
@@ -58,6 +58,8 @@ export type ExpectedAmounts = {
 // two lines of A, unchanged amounts; only the electronic addresses or the seller identifiers differ.
 // R (numeric precision boundary, 6 effective fractional digits): 1234.567891 x 0.123456 = 152.414813551296 -> 152.41;
 // 2.500000 x 999999.999999 = 2499999.9999975 -> 2500000.00; 2500152.41 x 19% = 475028.9579 -> 475028.96; gross 2975181.37.
+// S (standard + reverse charge in one invoice, after UStAE 13b.4 (2) example 1; the treatment is supplied, never
+// classified): 1000 x 0.10 = 100.00 at S 19% -> 19.00; 2000 x 0.10 = 200.00 under AE, VAT 0.00; 300.00 + 19.00 = 319.00.
 // D: 100.00 at 19% -> 19.00; 3 x 33.33 = 99.99 at 7% -> 6.9993 -> 7.00; 199.99 + 26.00 = 225.99.
 export const EXPECTED: Record<FixtureName, ExpectedAmounts> = {
   'a-simple': {
@@ -188,5 +190,15 @@ export const EXPECTED: Record<FixtureName, ExpectedAmounts> = {
     sumOfLineNets: '2500152.41',
     totalVat: '475028.96',
     gross: '2975181.37',
+  },
+  's-standard-and-reverse-charge': {
+    lineNets: ['100.00', '200.00'],
+    breakdown: [
+      { rate: '19', taxable: '100.00', tax: '19.00' },
+      { rate: '0', taxable: '200.00', tax: '0.00' },
+    ],
+    sumOfLineNets: '300.00',
+    totalVat: '19.00',
+    gross: '319.00',
   },
 };

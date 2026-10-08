@@ -104,9 +104,7 @@ test('category AE cannot be constructed through another treatment, and E and AE 
   assert.deepEqual(rejected(line({ treatment: 'standard', category: 'S', rate: '0' })), ['unsupported_vat_rate@lines[0].vat.rate']); // no generic 0% mode
 });
 
-test('mixed reverse-charge with standard or with Kleinunternehmer lines is refused by the M1 profile', () => {
-  const withStandard = withValue(rc1(), 'lines.1.vat', { treatment: 'standard', category: 'S', rate: '19' });
-  assert.deepEqual(rejected(withStandard), ['unsupported_mixed_vat_treatments@lines']);
+test('reverse charge with Kleinunternehmer lines is refused by the profile (S + AE: xrechnung-mixed-treatment.test.ts)', () => {
   const withKu = withValue(rc1(), 'lines.1.vat', { treatment: 'kleinunternehmer', category: 'E', rate: '0' });
   assert.deepEqual(rejected(withKu), ['unsupported_mixed_vat_treatments@lines']);
 });
