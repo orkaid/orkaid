@@ -121,6 +121,7 @@ test('serializer rules: arithmetic, Decimal internals and money-engine imports a
     ["import { add } from './decimal.ts';", ['serializer-money-import']],
     ["import { multiply, roundHalfUp } from './decimal.ts';", ['serializer-money-import', 'serializer-money-import']],
     ["import { parseDecimal } from './decimal.ts';", ['serializer-money-import']],
+    ["import { subtract, negate, abs } from './decimal.ts';", ['serializer-money-import', 'serializer-money-import', 'serializer-money-import']],
   ];
   for (const [source, expected] of cases) {
     assert.deepEqual(rules(findSerializerArithmeticViolations('ubl.ts', source)), expected, source);

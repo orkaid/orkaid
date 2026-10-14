@@ -138,7 +138,7 @@ const ARITHMETIC_OPERATORS = new Set([
 ]);
 const DECIMAL_INTERNALS = new Set(['units', 'scale']);
 const MONEY_MODULE = /(^|\/)(decimal|number-notation)(\.ts)?$/;
-const MONEY_ENGINE_FUNCTIONS = new Set(['add', 'multiply', 'roundHalfUp', 'parseDecimal', 'parseDecimalInput']);
+const MONEY_ENGINE_FUNCTIONS = new Set(['add', 'multiply', 'subtract', 'negate', 'abs', 'roundHalfUp', 'parseDecimal', 'parseDecimalInput']);
 
 export function findSerializerArithmeticViolations(fileName: string, source: string): Violation[] {
   const violations: Violation[] = [];

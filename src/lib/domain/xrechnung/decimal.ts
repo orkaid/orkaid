@@ -1,5 +1,7 @@
-// Exact non-negative decimal arithmetic on scaled bigint integers (value = units / 10^scale).
+// Exact signed decimal arithmetic on scaled bigint integers (value = units / 10^scale); units carries the sign.
 // Nothing here touches binary floating-point: decimals enter as strings and stay integers.
+// The kernel is signed, the public input boundary is not: parseDecimal still rejects a leading minus, so signed
+// values can only be built inside the domain (negate, subtract), never from invoice input.
 
 export type Decimal = { readonly units: bigint; readonly scale: number };
 
@@ -39,14 +41,31 @@ export function add(a: Decimal, b: Decimal): Decimal {
   return { units: rescaleUp(a, scale) + rescaleUp(b, scale), scale };
 }
 
-// HALF_UP on non-negative values: an exact half is rounded up.
+export function negate(value: Decimal): Decimal {
+  return { units: -value.units, scale: value.scale };
+}
+
+export function subtract(a: Decimal, b: Decimal): Decimal {
+  const scale = Math.max(a.scale, b.scale);
+  return { units: rescaleUp(a, scale) - rescaleUp(b, scale), scale };
+}
+
+/** Absolute magnitude, scale kept. A two-sided bound check is compare(abs(x), limit). */
+export function abs(value: Decimal): Decimal {
+  return value.units < 0n ? negate(value) : value;
+}
+
+// HALF_UP, ties away from zero (accepted Orkaid policy for signed values): an exact half moves to the larger magnitude, so
+// R(-x) = -R(x), and positive values round as before. Not claimed as an EN 16931 or XRechnung rule.
 export function roundHalfUp(value: Decimal, scale: number): Decimal {
   if (value.scale <= scale) return { units: rescaleUp(value, scale), scale };
 
+  const negative = value.units < 0n;
+  const magnitude = negative ? -value.units : value.units;
   const divisor = 10n ** BigInt(value.scale - scale);
-  const quotient = value.units / divisor;
-  const remainder = value.units % divisor;
-  return { units: remainder * 2n >= divisor ? quotient + 1n : quotient, scale };
+  const quotient = magnitude / divisor;
+  const rounded = (magnitude % divisor) * 2n >= divisor ? quotient + 1n : quotient;
+  return { units: negative ? -rounded : rounded, scale };
 }
 
 export function compare(a: Decimal, b: Decimal): -1 | 0 | 1 {
@@ -66,10 +85,13 @@ export function effectiveFractionDigits(value: Decimal): number {
   return scale;
 }
 
+// Zero has no sign (bigint has no -0), so a negative value that rounds to zero formats as "0.00", never "-0.00".
 export function formatDecimal(value: Decimal): string {
-  if (value.scale === 0) return value.units.toString();
-  const digits = value.units.toString().padStart(value.scale + 1, '0');
-  return `${digits.slice(0, -value.scale)}.${digits.slice(-value.scale)}`;
+  const sign = value.units < 0n ? '-' : '';
+  const magnitude = (value.units < 0n ? -value.units : value.units).toString();
+  if (value.scale === 0) return sign + magnitude;
+  const digits = magnitude.padStart(value.scale + 1, '0');
+  return `${sign}${digits.slice(0, -value.scale)}.${digits.slice(-value.scale)}`;
 }
 
 function rescaleUp(value: Decimal, scale: number): bigint {
