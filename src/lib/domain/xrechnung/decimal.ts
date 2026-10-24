@@ -60,12 +60,28 @@ export function abs(value: Decimal): Decimal {
 export function roundHalfUp(value: Decimal, scale: number): Decimal {
   if (value.scale <= scale) return { units: rescaleUp(value, scale), scale };
 
-  const negative = value.units < 0n;
-  const magnitude = negative ? -value.units : value.units;
-  const divisor = 10n ** BigInt(value.scale - scale);
-  const quotient = magnitude / divisor;
-  const rounded = (magnitude % divisor) * 2n >= divisor ? quotient + 1n : quotient;
-  return { units: negative ? -rounded : rounded, scale };
+  return { units: roundedIntegerQuotient(value.units, 10n ** BigInt(value.scale - scale)), scale };
+}
+
+/**
+ * numerator / denominator rounded once to `outputScale` fractional digits, with the same signed HALF_UP rule as
+ * roundHalfUp. The exact quotient is never materialised at any intermediate scale: the operands are brought to a
+ * common integer ratio and rounded in a single step, so the result does not depend on any internal precision.
+ * The denominator must be strictly positive and the output scale a non-negative integer; violating either is a
+ * programming error in the caller and throws.
+ */
+export function roundQuotientHalfUp(numerator: Decimal, denominator: Decimal, outputScale: number): Decimal {
+  if (denominator.units <= 0n) throw new RangeError('quotient denominator must be strictly positive');
+  // `% 1` rejects NaN, Infinity and any fractional scale; it must not be left to BigInt(), because adding a scale that is
+  // a hair below an integer to another scale can round to a whole number first.
+  if (outputScale % 1 !== 0 || outputScale < 0) throw new RangeError('quotient output scale must be a non-negative integer');
+
+  // (n.units / 10^n.scale) / (d.units / 10^d.scale) * 10^outputScale, as one integer ratio.
+  const units = roundedIntegerQuotient(
+    numerator.units * 10n ** BigInt(denominator.scale + outputScale),
+    denominator.units * 10n ** BigInt(numerator.scale),
+  );
+  return { units, scale: outputScale + 0 }; // + 0 turns a negative-zero scale into plain 0
 }
 
 export function compare(a: Decimal, b: Decimal): -1 | 0 | 1 {
@@ -92,6 +108,16 @@ export function formatDecimal(value: Decimal): string {
   if (value.scale === 0) return sign + magnitude;
   const digits = magnitude.padStart(value.scale + 1, '0');
   return `${sign}${digits.slice(0, -value.scale)}.${digits.slice(-value.scale)}`;
+}
+
+// The one signed tie rule: round numerator / divisor (divisor > 0) to a whole number, an exact half moving to the larger
+// magnitude. Zero stays 0n (bigint has no negative zero).
+function roundedIntegerQuotient(numerator: bigint, divisor: bigint): bigint {
+  const negative = numerator < 0n;
+  const magnitude = negative ? -numerator : numerator;
+  const quotient = magnitude / divisor;
+  const rounded = (magnitude % divisor) * 2n >= divisor ? quotient + 1n : quotient;
+  return negative ? -rounded : rounded;
 }
 
 function rescaleUp(value: Decimal, scale: number): bigint {
