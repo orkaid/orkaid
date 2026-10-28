@@ -27,4 +27,5 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npm run build
-      - run: npm audit
+      # Full npm audit with one dated, exact-ID exception (MDR-31); see tools/audit-gate/policy.ts.
+      - run: node tools/audit-gate/run.ts

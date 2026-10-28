@@ -41,6 +41,8 @@ npm audit
 
 The production build is written to `dist/`.
 
+CI runs the dependency audit through `node tools/audit-gate/run.ts` instead of a bare `npm audit`. It evaluates the full `npm audit` result and tolerates exactly one temporarily accepted advisory, GHSA-gcqx-w48m-w2h4 (`deepmerge`, low severity, no compatible fix available), until 2026-11-27; every other finding fails the gate (MDR-31). Plain `npm audit` still reports that advisory.
+
 ## Production integration gate
 
 Deployment configuration is managed separately from this repository. Releasing this Astro build to production requires explicit authorization and a deployment configuration that runs `npm run build`, publishes `dist`, and uses the Node version declared in `.node-version`. Repository changes do not modify deployment infrastructure.
