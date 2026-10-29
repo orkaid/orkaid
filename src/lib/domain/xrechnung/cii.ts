@@ -9,7 +9,7 @@
 // are URIID/@schemeID, and dates are DateTimeString with format 102. The output is deterministic: fixed order,
 // two-space indentation, LF newlines, UTF-8, no timestamps.
 
-import { isValidatedInvoice, type Invoice, type InvoiceLine, type InvoiceParty, type PaymentAccount, type PrecedingInvoiceReference } from './document.ts';
+import { hasOwnField, isValidatedInvoice, type Invoice, type InvoiceLine, type InvoiceParty, type PaymentAccount, type PrecedingInvoiceReference } from './document.ts';
 import type { Decimal } from './decimal.ts';
 import { formatXmlDecimal } from './number-notation.ts';
 
@@ -77,10 +77,10 @@ export function serializeCiiInvoice(invoice: Invoice): CiiResult {
           leaf('ram:BuyerReference', invoice.buyerReference), // BT-10
           party('ram:SellerTradeParty', invoice.seller, invoice.seller), // BG-4
           party('ram:BuyerTradeParty', invoice.buyer), // BG-7
-          ...(invoice.orderReference !== undefined ? [group('ram:BuyerOrderReferencedDocument', leaf('ram:IssuerAssignedID', invoice.orderReference))] : []), // BT-13
-          ...(invoice.contractReference !== undefined ? [group('ram:ContractReferencedDocument', leaf('ram:IssuerAssignedID', invoice.contractReference))] : []), // BT-12
+          ...(hasOwnField(invoice, 'orderReference') ? [group('ram:BuyerOrderReferencedDocument', leaf('ram:IssuerAssignedID', invoice.orderReference))] : []), // BT-13
+          ...(hasOwnField(invoice, 'contractReference') ? [group('ram:ContractReferencedDocument', leaf('ram:IssuerAssignedID', invoice.contractReference))] : []), // BT-12
           // BT-11: the model binds it to a SpecifiedProcuringProject whose Name is the default 'Project reference' (and the XSD requires a Name).
-          ...(invoice.projectReference !== undefined ? [group('ram:SpecifiedProcuringProject', leaf('ram:ID', invoice.projectReference), leaf('ram:Name', PROJECT_REFERENCE_NAME))] : []),
+          ...(hasOwnField(invoice, 'projectReference') ? [group('ram:SpecifiedProcuringProject', leaf('ram:ID', invoice.projectReference), leaf('ram:Name', PROJECT_REFERENCE_NAME))] : []),
         ),
         group('ram:ApplicableHeaderTradeDelivery', group('ram:ActualDeliverySupplyChainEvent', date('ram:OccurrenceDateTime', invoice.deliveryDate))), // BT-72
         settlement(invoice),
@@ -101,8 +101,8 @@ function party(name: string, source: Identified, seller?: Invoice['seller']): El
     name,
     ...(seller?.sellerIdentifiers.map((identifier) => leaf('ram:ID', identifier.value)) ?? []), // BT-29, unscoped: no scheme in M1
     leaf('ram:Name', source.name), // BT-27 / BT-44
-    ...(seller?.additionalLegalInformation !== undefined ? [leaf('ram:Description', seller.additionalLegalInformation)] : []), // BT-33
-    ...(source.legalRegistrationId !== undefined ? [group('ram:SpecifiedLegalOrganization', leaf('ram:ID', source.legalRegistrationId))] : []), // BT-30 / BT-47
+    ...(seller !== undefined && hasOwnField(seller, 'additionalLegalInformation') ? [leaf('ram:Description', seller.additionalLegalInformation)] : []), // BT-33
+    ...(hasOwnField(source, 'legalRegistrationId') ? [group('ram:SpecifiedLegalOrganization', leaf('ram:ID', source.legalRegistrationId))] : []), // BT-30 / BT-47
     ...(seller
       ? [
           group(
@@ -127,8 +127,8 @@ function party(name: string, source: Identified, seller?: Invoice['seller']): El
 
 function taxRegistrations(source: Identified, seller?: Invoice['seller']): readonly Element[] {
   const registrations: Element[] = [];
-  if (source.vatId !== undefined) registrations.push(group('ram:SpecifiedTaxRegistration', leaf('ram:ID', source.vatId, [['schemeID', 'VA']]))); // BT-31 / BT-48
-  if (seller?.taxRegistrationId !== undefined) registrations.push(group('ram:SpecifiedTaxRegistration', leaf('ram:ID', seller.taxRegistrationId, [['schemeID', 'FC']]))); // BT-32
+  if (hasOwnField(source, 'vatId')) registrations.push(group('ram:SpecifiedTaxRegistration', leaf('ram:ID', source.vatId, [['schemeID', 'VA']]))); // BT-31 / BT-48
+  if (seller !== undefined && hasOwnField(seller, 'taxRegistrationId')) registrations.push(group('ram:SpecifiedTaxRegistration', leaf('ram:ID', seller.taxRegistrationId, [['schemeID', 'FC']]))); // BT-32
   return registrations;
 }
 
@@ -179,7 +179,7 @@ function referencedInvoice(reference: PrecedingInvoiceReference): Element {
   return group(
     'ram:InvoiceReferencedDocument',
     leaf('ram:IssuerAssignedID', reference.number), // BT-25
-    ...(reference.issueDate !== undefined
+    ...(hasOwnField(reference, 'issueDate')
       ? [group('ram:FormattedIssueDateTime', leaf('qdt:DateTimeString', reference.issueDate.replaceAll('-', ''), [['format', '102']]))] // BT-26
       : []),
   );
@@ -193,9 +193,9 @@ function creditTransfer(account: PaymentAccount): readonly Element[] {
     group(
       'ram:PayeePartyCreditorFinancialAccount',
       leaf('ram:IBANID', account.id.value), // BT-84
-      ...(account.name !== undefined ? [leaf('ram:AccountName', account.name)] : []), // BT-85
+      ...(hasOwnField(account, 'name') ? [leaf('ram:AccountName', account.name)] : []), // BT-85
     ),
-    ...(account.bic !== undefined ? [group('ram:PayeeSpecifiedCreditorFinancialInstitution', leaf('ram:BICID', account.bic))] : []), // BT-86
+    ...(hasOwnField(account, 'bic') ? [group('ram:PayeeSpecifiedCreditorFinancialInstitution', leaf('ram:BICID', account.bic))] : []), // BT-86
   ];
 }
 
@@ -203,8 +203,8 @@ function creditTransfer(account: PaymentAccount): readonly Element[] {
 // DueDateDateTime. Absent when neither is supplied (BR-CO-25 allows that only for a zero amount due; buildInvoice checks it).
 function paymentTerms(payment: Invoice['payment']): readonly Element[] {
   const children = [
-    ...(payment.termsText !== undefined ? [leaf('ram:Description', payment.termsText)] : []), // BT-20
-    ...(payment.dueDate !== undefined ? [date('ram:DueDateDateTime', payment.dueDate)] : []), // BT-9
+    ...(hasOwnField(payment, 'termsText') ? [leaf('ram:Description', payment.termsText)] : []), // BT-20
+    ...(hasOwnField(payment, 'dueDate') ? [date('ram:DueDateDateTime', payment.dueDate)] : []), // BT-9
   ];
   return children.length > 0 ? [group('ram:SpecifiedTradePaymentTerms', ...children)] : [];
 }

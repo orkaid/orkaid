@@ -8,7 +8,7 @@
 // verification against it is claimed. The output is deterministic: fixed order, two-space indentation, LF newlines,
 // UTF-8, no timestamps.
 
-import { isValidatedInvoice, type Invoice, type InvoiceLine, type InvoiceParty, type PaymentAccount, type PrecedingInvoiceReference } from './document.ts';
+import { hasOwnField, isValidatedInvoice, type Invoice, type InvoiceLine, type InvoiceParty, type PaymentAccount, type PrecedingInvoiceReference } from './document.ts';
 import type { Decimal } from './decimal.ts';
 import { formatXmlDecimal } from './number-notation.ts';
 
@@ -53,20 +53,20 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
       leaf('cbc:ProfileID', BUSINESS_PROCESS_TYPE), // BT-23
       leaf('cbc:ID', invoice.invoiceNumber), // BT-1
       leaf('cbc:IssueDate', invoice.issueDate), // BT-2
-      ...(invoice.documentTypeCode === '380' && invoice.payment.dueDate !== undefined ? [leaf('cbc:DueDate', invoice.payment.dueDate)] : []), // BT-9 (a CreditNote has no DueDate)
+      ...(invoice.documentTypeCode === '380' && hasOwnField(invoice.payment, 'dueDate') ? [leaf('cbc:DueDate', invoice.payment.dueDate)] : []), // BT-9 (a CreditNote has no DueDate)
       leaf(creditNote ? 'cbc:CreditNoteTypeCode' : 'cbc:InvoiceTypeCode', invoice.documentTypeCode), // BT-3
       ...invoice.notes.map((note) => leaf('cbc:Note', note.text)), // BG-1 / BT-22
       leaf('cbc:DocumentCurrencyCode', currency), // BT-5
       leaf('cbc:BuyerReference', invoice.buyerReference), // BT-10
-      ...(invoice.orderReference !== undefined ? [group('cac:OrderReference', leaf('cbc:ID', invoice.orderReference))] : []), // BT-13
+      ...(hasOwnField(invoice, 'orderReference') ? [group('cac:OrderReference', leaf('cbc:ID', invoice.orderReference))] : []), // BT-13
       ...(invoice.documentTypeCode === '381' ? [billingReference(invoice.precedingInvoice)] : []), // BG-3
-      ...(invoice.contractReference !== undefined ? [group('cac:ContractDocumentReference', leaf('cbc:ID', invoice.contractReference))] : []), // BT-12
+      ...(hasOwnField(invoice, 'contractReference') ? [group('cac:ContractDocumentReference', leaf('cbc:ID', invoice.contractReference))] : []), // BT-12
       ...projectReference(invoice), // BT-11
       group('cac:AccountingSupplierParty', party(invoice.seller, invoice.seller)), // BG-4
       group('cac:AccountingCustomerParty', party(invoice.buyer)), // BG-7
       group('cac:Delivery', leaf('cbc:ActualDeliveryDate', invoice.deliveryDate)), // BT-72
       paymentMeans(invoice),
-      ...(invoice.payment.termsText !== undefined ? [group('cac:PaymentTerms', leaf('cbc:Note', invoice.payment.termsText))] : []), // BT-20
+      ...(hasOwnField(invoice.payment, 'termsText') ? [group('cac:PaymentTerms', leaf('cbc:Note', invoice.payment.termsText))] : []), // BT-20
       taxTotal(invoice, currency),
       group(
         'cac:LegalMonetaryTotal', // BG-22
@@ -89,7 +89,7 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
 // documentation, not an XRechnung mandate. Position: after ContractDocumentReference, before the parties.
 const PROJECT_REFERENCE_TYPE_CODE = '50';
 function projectReference(invoice: Invoice): readonly Element[] {
-  if (invoice.projectReference === undefined) return [];
+  if (!hasOwnField(invoice, 'projectReference')) return [];
   return invoice.documentTypeCode === '381'
     ? [group('cac:AdditionalDocumentReference', leaf('cbc:ID', invoice.projectReference), leaf('cbc:DocumentTypeCode', PROJECT_REFERENCE_TYPE_CODE))]
     : [group('cac:ProjectReference', leaf('cbc:ID', invoice.projectReference))];
@@ -102,7 +102,7 @@ function billingReference(reference: PrecedingInvoiceReference): Element {
     group(
       'cac:InvoiceDocumentReference',
       leaf('cbc:ID', reference.number), // BT-25
-      ...(reference.issueDate !== undefined ? [leaf('cbc:IssueDate', reference.issueDate)] : []), // BT-26
+      ...(hasOwnField(reference, 'issueDate') ? [leaf('cbc:IssueDate', reference.issueDate)] : []), // BT-26
     ),
   );
 }
@@ -114,7 +114,7 @@ function paymentMeans(invoice: Invoice): Element {
     return group(
       'cac:PaymentMeans',
       leaf('cbc:PaymentMeansCode', CLEARING_PAYMENT_MEANS_CODE), // BT-81
-      ...(invoice.payment.dueDate !== undefined ? [leaf('cbc:PaymentDueDate', invoice.payment.dueDate)] : []), // BT-9
+      ...(hasOwnField(invoice.payment, 'dueDate') ? [leaf('cbc:PaymentDueDate', invoice.payment.dueDate)] : []), // BT-9
     );
   }
   return group(
@@ -129,8 +129,8 @@ function payeeFinancialAccount(account: PaymentAccount): Element {
   return group(
     'cac:PayeeFinancialAccount',
     leaf('cbc:ID', account.id.value), // BT-84
-    ...(account.name !== undefined ? [leaf('cbc:Name', account.name)] : []), // BT-85
-    ...(account.bic !== undefined ? [group('cac:FinancialInstitutionBranch', leaf('cbc:ID', account.bic))] : []), // BT-86
+    ...(hasOwnField(account, 'name') ? [leaf('cbc:Name', account.name)] : []), // BT-85
+    ...(hasOwnField(account, 'bic') ? [group('cac:FinancialInstitutionBranch', leaf('cbc:ID', account.bic))] : []), // BT-86
   );
 }
 
@@ -161,8 +161,8 @@ function party(source: Identified, seller?: Invoice['seller']): Element {
     group(
       'cac:PartyLegalEntity',
       leaf('cbc:RegistrationName', source.name), // BT-27 / BT-44
-      ...(source.legalRegistrationId !== undefined ? [leaf('cbc:CompanyID', source.legalRegistrationId)] : []), // BT-30 / BT-47
-      ...(seller?.additionalLegalInformation !== undefined ? [leaf('cbc:CompanyLegalForm', seller.additionalLegalInformation)] : []), // BT-33
+      ...(hasOwnField(source, 'legalRegistrationId') ? [leaf('cbc:CompanyID', source.legalRegistrationId)] : []), // BT-30 / BT-47
+      ...(seller !== undefined && hasOwnField(seller, 'additionalLegalInformation') ? [leaf('cbc:CompanyLegalForm', seller.additionalLegalInformation)] : []), // BT-33
     ),
     ...(seller
       ? [
@@ -179,8 +179,8 @@ function party(source: Identified, seller?: Invoice['seller']): Element {
 
 function taxSchemes(source: Identified, seller?: Invoice['seller']): readonly Element[] {
   const schemes: Element[] = [];
-  if (source.vatId !== undefined) schemes.push(group('cac:PartyTaxScheme', leaf('cbc:CompanyID', source.vatId), group('cac:TaxScheme', leaf('cbc:ID', 'VAT')))); // BT-31 / BT-48
-  if (seller?.taxRegistrationId !== undefined) {
+  if (hasOwnField(source, 'vatId')) schemes.push(group('cac:PartyTaxScheme', leaf('cbc:CompanyID', source.vatId), group('cac:TaxScheme', leaf('cbc:ID', 'VAT')))); // BT-31 / BT-48
+  if (seller !== undefined && hasOwnField(seller, 'taxRegistrationId')) {
     schemes.push(group('cac:PartyTaxScheme', leaf('cbc:CompanyID', seller.taxRegistrationId), group('cac:TaxScheme', leaf('cbc:ID', UBL_TAX_REGISTRATION_SCHEME)))); // BT-32
   }
   return schemes;

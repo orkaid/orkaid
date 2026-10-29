@@ -414,13 +414,24 @@ function snapshot(value: unknown, path: string, depth: number, problems: string[
     return copy;
   }
 
-  const copy: Record<string, unknown> = {};
+  // No prototype (IR35-01, IR36-01): a field the caller did not supply as an own property reads as absent, never as a
+  // value inherited from Object.prototype.
+  const copy: Record<string, unknown> = Object.create(null);
   for (const key of Object.keys(value)) {
     const entry = readData(value, key, path === '' ? key : `${path}.${key}`);
     // defineProperty, not assignment: a key named "__proto__" must stay an ordinary own property of the copy.
     if (entry.present) Object.defineProperty(copy, key, { value: entry.value, enumerable: true, writable: true, configurable: true });
   }
   return copy;
+}
+
+/**
+ * Whether a validated document supplies an optional field (IR36-01): an own property that is not undefined. The validated
+ * objects keep the ordinary prototype, so a plain `record.field !== undefined` would also see a value put on
+ * Object.prototype later; serializers test every optional field through this.
+ */
+export function hasOwnField<T extends object, K extends keyof T>(record: T, key: K): record is T & { readonly [P in K]-?: Exclude<T[P], undefined> } {
+  return Object.hasOwn(record, key) && record[key] !== undefined;
 }
 
 function seal(data: Unbranded<Invoice>): Invoice {
@@ -635,7 +646,7 @@ function readClearing(payment: Record<string, unknown>, errors: DocumentError[])
 }
 
 function isCreditNotePayment(payment: Payment | CreditNotePayment | undefined): payment is CreditNotePayment {
-  return payment !== undefined && 'settlement' in payment;
+  return payment !== undefined && Object.hasOwn(payment, 'settlement');
 }
 
 // BT-20 is one text value that may span several lines (the BT-22 multiline policy). PROFILE: no `#` at all. XRechnung
