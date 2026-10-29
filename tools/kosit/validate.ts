@@ -27,7 +27,7 @@ import { basename, join, resolve } from 'node:path';
 import { buildInvoice, UNIT_CODES } from '../../src/lib/domain/xrechnung/document.ts';
 import { serializeCiiInvoice } from '../../src/lib/domain/xrechnung/cii.ts';
 import { serializeUblInvoice } from '../../src/lib/domain/xrechnung/ubl.ts';
-import { CREDIT_NOTE_FIXTURE_NAMES, FIXTURE_NAMES, loadFixtureInput, type CreditNoteFixtureName, type FixtureName } from '../../tests/support/fixtures.ts';
+import { CREDIT_NOTE_FIXTURE_NAMES, FIXTURE_NAMES, REFERENCE_FIXTURE_NAMES, loadFixtureInput, type CreditNoteFixtureName, type FixtureName, type ReferenceFixtureName } from '../../tests/support/fixtures.ts';
 import { parseReport, type ParsedReport } from './report.ts';
 
 export type Manifest = {
@@ -60,7 +60,7 @@ const removeElement = (xml: string, pattern: RegExp): string => {
   if (mutated === xml) fail('a control mutation did not change the document');
   return mutated;
 };
-const KLEINUNTERNEHMER_CONTROLS: Record<string, { syntax: Syntax; base: FixtureName | CreditNoteFixtureName; mutate: (xml: string) => string; codes: string[]; scenario?: string }> = {
+const KLEINUNTERNEHMER_CONTROLS: Record<string, { syntax: Syntax; base: FixtureName | CreditNoteFixtureName | ReferenceFixtureName; mutate: (xml: string) => string; codes: string[]; scenario?: string }> = {
   'control-ku-ubl-missing-bt120': { syntax: 'ubl', base: 'e-kleinunternehmer', mutate: (x) => removeElement(x, /^ *<cbc:TaxExemptionReason>.*<\/cbc:TaxExemptionReason>\n/m), codes: ['BR-E-10'] },
   'control-ku-ubl-nonzero-vat': { syntax: 'ubl', base: 'e-kleinunternehmer', mutate: (x) => x.replace(/(<cbc:TaxAmount currencyID="EUR">)0\.00/g, '$11.00'), codes: ['BR-E-09'] },
   'control-ku-ubl-missing-seller-tax-id': { syntax: 'ubl', base: 'e-kleinunternehmer', mutate: (x) => removeElement(x, /^ *<cac:PartyTaxScheme>\n(?:.*\n){5}/m), codes: ['BR-E-02', 'BR-DE-16'] },
@@ -141,7 +141,18 @@ const CREDIT_NOTE_CONTROLS: typeof KLEINUNTERNEHMER_CONTROLS = {
   'control-cn-ubl-transfer-without-bg17': { syntax: 'ubl', base: 't-credit-note-full-reversal', mutate: (x) => replaceExact(x, '<cbc:PaymentMeansCode>97<', '<cbc:PaymentMeansCode>30<'), codes: ['BR-61', 'BR-DE-23-a'] },
   'control-cn-cii-transfer-without-bg17': { syntax: 'cii', base: 't-credit-note-full-reversal', mutate: (x) => replaceExact(x, '<ram:TypeCode>97<', '<ram:TypeCode>30<'), codes: ['CII-SR-470', 'BR-DE-23-a'] },
 };
-const SPECIAL_CONTROLS = { ...KLEINUNTERNEHMER_CONTROLS, ...REVERSE_CHARGE_CONTROLS, ...PAYMENT_MEANS_CONTROLS, ...EVIDENCE_CONTROLS, ...MIXED_CONTROLS, ...CREDIT_NOTE_CONTROLS };
+// BT-11, BT-12, BT-13 (MDR-36). The validator checks these references by schema only, so each control breaks the structure the
+// serializers must get right: the CII project without its required Name, a UBL order reference without its ID, and a UBL
+// CreditNote that carries the Invoice binding `cac:ProjectReference` (an element the CreditNote schema does not have).
+const REFERENCE_CONTROLS: typeof KLEINUNTERNEHMER_CONTROLS = {
+  'control-ref-cii-project-without-name': { syntax: 'cii', base: 'x-references-all-three', mutate: (x) => removeElement(x, /^ *<ram:Name>Project reference<\/ram:Name>\n/m), codes: ['cvc-complex-type.2.4.b'] },
+  'control-ref-ubl-order-without-id': { syntax: 'ubl', base: 'x-references-all-three', mutate: (x) => removeElement(x, /^ *<cbc:ID>PO-4711<\/cbc:ID>\n/m), codes: ['cvc-complex-type.2.4.b'] },
+  'control-ref-ubl-381-invoice-style-project': {
+    syntax: 'ubl', base: 'y-credit-note-references-all-three', codes: ['cvc-complex-type.2.4.a'],
+    mutate: (x) => x.replace(/ *<cac:AdditionalDocumentReference>\n *<cbc:ID>PRJ-2026-77<\/cbc:ID>\n *<cbc:DocumentTypeCode>50<\/cbc:DocumentTypeCode>\n *<\/cac:AdditionalDocumentReference>\n/, '  <cac:ProjectReference>\n    <cbc:ID>PRJ-2026-77</cbc:ID>\n  </cac:ProjectReference>\n'),
+  },
+};
+const SPECIAL_CONTROLS = { ...KLEINUNTERNEHMER_CONTROLS, ...REVERSE_CHARGE_CONTROLS, ...PAYMENT_MEANS_CONTROLS, ...EVIDENCE_CONTROLS, ...MIXED_CONTROLS, ...CREDIT_NOTE_CONTROLS, ...REFERENCE_CONTROLS };
 const REQUIRED_STEPS = ['val-xsd', 'val-sch.1', 'val-sch.2', 'val-xml'];
 
 const sha256Hex = (data: Buffer | string): string => createHash('sha256').update(data).digest('hex');
@@ -214,7 +225,7 @@ function verifyUnitCodes(configurationDirectory: string): void {
 
 type Target = { name: string; syntax: Syntax; xmlPath: string; xml: string; fixtureInput?: string; expectAccept: boolean; expectCodes?: readonly string[]; scenario?: string };
 
-function generate(name: FixtureName | CreditNoteFixtureName, syntax: Syntax): string {
+function generate(name: FixtureName | CreditNoteFixtureName | ReferenceFixtureName, syntax: Syntax): string {
   const built = buildInvoice(loadFixtureInput(name));
   if (!built.ok) fail(`fixture ${name} does not build: ${JSON.stringify(built.errors)}`);
   const serialized = syntax === 'ubl' ? serializeUblInvoice(built.value) : serializeCiiInvoice(built.value);
@@ -222,7 +233,7 @@ function generate(name: FixtureName | CreditNoteFixtureName, syntax: Syntax): st
   return serialized.xml;
 }
 
-function fixtureTarget(name: FixtureName | CreditNoteFixtureName, syntax: Syntax): Target {
+function fixtureTarget(name: FixtureName | CreditNoteFixtureName | ReferenceFixtureName, syntax: Syntax): Target {
   const goldenPath = join(GOLDEN, `${syntax === 'ubl' ? name : ciiName(name)}.xml`);
   if (!existsSync(goldenPath)) fail(`missing golden file ${goldenPath}`);
   const golden = readFileSync(goldenPath, 'utf8');
@@ -342,7 +353,7 @@ function main(): void {
   const manifest = JSON.parse(readFileSync(join(ROOT, 'tools/kosit/kosit-manifest.json'), 'utf8')) as Manifest;
   const triage = JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/xrechnung/kosit-triage.json'), 'utf8')) as Triage;
   const requested = process.argv.slice(2);
-  const allNames = [...FIXTURE_NAMES, ...CII_FIXTURES.map(ciiName), ...CREDIT_NOTE_FIXTURE_NAMES, ...CREDIT_NOTE_FIXTURE_NAMES.map(ciiName), CONTROL_NAME, ...Object.keys(SPECIAL_CONTROLS)];
+  const allNames = [...FIXTURE_NAMES, ...CII_FIXTURES.map(ciiName), ...CREDIT_NOTE_FIXTURE_NAMES, ...CREDIT_NOTE_FIXTURE_NAMES.map(ciiName), ...REFERENCE_FIXTURE_NAMES, ...REFERENCE_FIXTURE_NAMES.map(ciiName), CONTROL_NAME, ...Object.keys(SPECIAL_CONTROLS)];
   const names = requested.length > 0 ? requested : allNames;
   for (const name of names) if (!allNames.includes(name)) fail(`unknown fixture ${name}`);
 
