@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import { serializeCiiInvoice } from '../../src/lib/domain/xrechnung/cii.ts';
 import { buildInvoice, type Invoice } from '../../src/lib/domain/xrechnung/document.ts';
+import { calculateInvoiceTotals } from '../../src/lib/domain/xrechnung/invoice.ts';
 import { serializeUblInvoice } from '../../src/lib/domain/xrechnung/ubl.ts';
 import { loadFixtureInput, withoutValue, type JsonObject } from '../support/fixtures.ts';
 
@@ -38,8 +39,8 @@ function polluted<T>(keys: readonly string[], value: unknown, body: () => T): T 
   }
 }
 
-function built(input: JsonObject): Invoice {
-  const result = buildInvoice(input);
+function built(input: JsonObject, options?: { notation: 'de' }): Invoice {
+  const result = buildInvoice(input, options);
   assert.equal(result.ok, true, show(result));
   return result.ok ? result.value : assert.fail('unreachable');
 }
@@ -139,4 +140,85 @@ test('an own, validated reference is still emitted unchanged', () => {
     assert.equal(actual, xml(serialize, invoice));
     assert.equal(actual.includes('PRJ-2026-77') && actual.includes('VT-2026/12') && actual.includes('PO-4711'), true);
   }
+});
+
+// ------------------------------------------------------------------------------------------------ inherited options and array indices
+
+// A missing caller option and an absent array element are never supplied by the prototype chain either: neither an
+// inherited Object.prototype.notation nor an inherited Array.prototype[index] may become a caller-provided fact.
+
+function pollutedIndex<T>(index: number, value: unknown, body: () => T): T {
+  const prototype = Array.prototype as unknown as Record<number, unknown>;
+  assert.equal(Object.hasOwn(prototype, index), false, `Array.prototype[${index}] already exists`);
+  try {
+    prototype[index] = value;
+    return body();
+  } finally {
+    delete prototype[index];
+  }
+}
+
+// One line, 2 x 1.500 at 19 %. Canonical (the default): net 3.00, VAT 0.57, due 3.57. German notation reads "1.500"
+// as 1500: net 3000.00, VAT 570.00, due 3570.00.
+function groupedPriceInput(kind: '380' | '381'): JsonObject {
+  const input = KINDS.find((entry) => entry.kind === kind)?.input() ?? assert.fail(kind);
+  const [line] = input.lines as JsonObject[];
+  input.lines = [{ ...line, quantity: '2', unitPrice: '1.500' }];
+  return input;
+}
+
+const amountDue = (input: JsonObject, options?: { notation: 'de' }) => {
+  const invoice = built(input, options);
+  return `${invoice.totals.amountDue.units}/${invoice.totals.amountDue.scale}`;
+};
+
+test('an inherited Object.prototype.notation does not change how amounts are read, on a 380 or a 381', () => {
+  for (const kind of ['380', '381'] as const) {
+    assert.equal(amountDue(groupedPriceInput(kind)), '357/2', `${kind} unpolluted`);
+    assert.equal(polluted(['notation'], 'de', () => amountDue(groupedPriceInput(kind))), '357/2', `${kind}: inherited notation changed the amount`);
+    const line = { quantity: '2', unitPrice: '1.500', vat: { treatment: 'standard', category: 'S', rate: '19' } };
+    const totals = polluted(['notation'], 'de', () => calculateInvoiceTotals({ documentTypeCode: kind, currency: 'EUR', lines: [line] }));
+    assert.equal(totals.ok && `${totals.value.amountDue.units}/${totals.value.amountDue.scale}`, '357/2', `${kind}: calculateInvoiceTotals read an inherited notation`);
+  }
+});
+
+test('an inherited unknown Object.prototype.notation is not read as the caller\'s choice', () => {
+  polluted(['notation'], 'xx', () => {
+    for (const { kind, input } of KINDS) assert.equal(buildInvoice(input()).ok, true, kind);
+  });
+});
+
+test('an own notation option still applies, also while Object.prototype.notation is polluted', () => {
+  for (const kind of ['380', '381'] as const) {
+    assert.equal(amountDue(groupedPriceInput(kind), { notation: 'de' }), '357000/2', kind);
+    assert.equal(polluted(['notation'], 'en', () => amountDue(groupedPriceInput(kind), { notation: 'de' })), '357000/2', `${kind} under pollution`);
+  }
+});
+
+const errorList = (result: ReturnType<typeof buildInvoice>) => (result.ok ? ['accepted'] : result.errors.map((e) => `${e.code}@${e.path}`));
+
+test('a hole in notes, seller identifiers or lines is not filled from Array.prototype', () => {
+  const cases = [
+    { field: 'notes', inherited: { text: 'INHERITED' }, set: (input: JsonObject) => { input.notes = [, { text: 'own' }]; } },
+    { field: 'seller.sellerIdentifiers', inherited: 'INHERITED', set: (input: JsonObject) => { (input.seller as JsonObject).sellerIdentifiers = [, 'OWN']; } },
+    { field: 'lines', inherited: (loadFixtureInput('a-simple').lines as JsonObject[])[0], set: (input: JsonObject) => { input.lines = [, (input.lines as JsonObject[])[1]]; } },
+  ];
+  for (const { kind, input } of KINDS) {
+    for (const { field, inherited, set } of cases) {
+      const sparse = () => { const value = input(); set(value); return value; };
+      const expected = errorList(buildInvoice(sparse()));
+      assert.notDeepEqual(expected, ['accepted'], `${kind} ${field}: a hole must be rejected`);
+      assert.deepEqual(pollutedIndex(0, inherited, () => errorList(buildInvoice(sparse()))), expected, `${kind} ${field}: hole filled from Array.prototype[0]`);
+    }
+  }
+});
+
+test('dense arrays are read unchanged while Array.prototype is polluted', () => {
+  const input = () => ({ ...loadFixtureInput('j-invoice-notes-multiline') });
+  const reference = built(input());
+  pollutedIndex(5, { text: 'INHERITED' }, () => {
+    const invoice = built(input());
+    assert.deepEqual(invoice.notes, reference.notes);
+    for (const { serialize } of SERIALIZERS) assert.equal(xml(serialize, invoice), xml(serialize, reference));
+  });
 });

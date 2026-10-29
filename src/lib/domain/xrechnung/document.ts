@@ -15,6 +15,7 @@
 import {
   calculateInvoice,
   KLEINUNTERNEHMER_EXEMPTION_TEXT,
+  ownElement,
   PROVISIONAL_MAX_REPORTED_ERRORS,
   type InvoiceError,
   type InvoiceErrorCode,
@@ -497,8 +498,8 @@ function readSellerIdentifiers(parent: Record<string, unknown>, errors: Document
     return [];
   }
   const identifiers: SellerIdentifier[] = [];
-  for (const [index, entry] of value.entries()) {
-    const text = readTextValue(entry, `seller.sellerIdentifiers[${index}]`, errors);
+  for (let index = 0; index < value.length; index++) {
+    const text = readTextValue(ownElement(value, index), `seller.sellerIdentifiers[${index}]`, errors);
     if (text !== undefined) identifiers.push({ value: text });
   }
   return identifiers;
@@ -549,7 +550,7 @@ function usesReverseCharge(input: Record<string, unknown>, scanLimit: bigint | u
   const list = input.lines;
   if (!Array.isArray(list)) return false;
   for (let index = 0; index < list.length && (scanLimit === undefined || BigInt(index) < scanLimit); index++) {
-    const line: unknown = list[index];
+    const line = ownElement(list, index);
     if (isRecord(line) && isRecord(line.vat) && line.vat.treatment === 'reverse-charge') return true;
   }
   return false;
@@ -688,7 +689,8 @@ function readNotes(parent: Record<string, unknown>, errors: DocumentError[]): re
     return [];
   }
   const notes: InvoiceNote[] = [];
-  for (const [index, entry] of value.entries()) {
+  for (let index = 0; index < value.length; index++) {
+    const entry = ownElement(value, index);
     const path = `notes[${index}]`;
     if (entry === undefined) {
       errors.push({ code: 'missing_field', path });

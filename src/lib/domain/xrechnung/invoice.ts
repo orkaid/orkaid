@@ -219,7 +219,8 @@ export function calculateInvoiceTotals(input: unknown, options: InvoiceOptions =
 /** The same validation and calculation as `calculateInvoiceTotals`, also returning the parsed line data. */
 export function calculateInvoice(input: unknown, options: InvoiceOptions = {}, callerFields: CallerFields = {}): CalculationResult {
   const errors: InvoiceError[] = [];
-  const validated = validate(input, options.notation ?? 'canonical', errors, callerFields);
+  // Own property only: a notation inherited from Object.prototype is not the caller's choice and must not re-read amounts.
+  const validated = validate(input, (Object.hasOwn(options, 'notation') ? options.notation : undefined) ?? 'canonical', errors, callerFields);
   if (validated === undefined) return { ok: false, errors, truncated: false };
   if (errors.length > 0) return { ok: false, errors, truncated: validated.truncated };
   const totals = calculate(validated.lines);
@@ -270,10 +271,10 @@ function validate(
     errors.push({ code: 'no_lines', path: 'lines' });
   } else {
     // Indexed loop, not forEach: forEach skips holes, which would silently drop lines (new Array(1) -> "valid").
-    // A hole reads as undefined and is reported as an invalid line.
+    // A hole reads as undefined (never as Array.prototype[index]) and is reported as an invalid line.
     let index = 0;
     for (; index < input.lines.length && errors.length < PROVISIONAL_MAX_REPORTED_ERRORS; index++) {
-      const parsed = validateLine(input.lines[index], `lines[${index}]`, notation, errors, callerFields.line ?? []);
+      const parsed = validateLine(ownElement(input.lines, index), `lines[${index}]`, notation, errors, callerFields.line ?? []);
       if (parsed) parsedLines.push(parsed);
     }
     if (index < input.lines.length) firstUnscanned = index;
@@ -422,6 +423,11 @@ function calculate(lines: readonly ParsedLine[]): InvoiceTotals {
     totalWithVat,
     amountDue: totalWithVat,
   };
+}
+
+/** The element at `index` only if the array has it as an own property: a hole is undefined, never an inherited Array.prototype[index]. */
+export function ownElement(list: readonly unknown[], index: number): unknown {
+  return Object.hasOwn(list, index) ? list[index] : undefined;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
