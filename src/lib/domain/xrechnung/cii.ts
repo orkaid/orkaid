@@ -26,6 +26,9 @@ const NAMESPACE_QDT = 'urn:un:unece:uncefact:data:standard:QualifiedDataType:100
 // UNCL4461 code 97, clearing between partners: the only payment of a 381 (MDR-35). It carries no BG-17.
 const CLEARING_PAYMENT_MEANS_CODE = '97';
 
+// BT-11 (MDR-36): XRechnung 3.0.2 CII binding, usage note "Use 'Project reference' as default value for Name".
+const PROJECT_REFERENCE_NAME = 'Project reference';
+
 // BT-24 and BT-23: the same XRechnung 3.0.2 section 11.27 values as in ubl.ts. They are not carried by Invoice, so each
 // serializer holds its own copy (a MODEL-U item of the experiment, reported rather than moved).
 const SPECIFICATION_IDENTIFIER = 'urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0';
@@ -74,6 +77,10 @@ export function serializeCiiInvoice(invoice: Invoice): CiiResult {
           leaf('ram:BuyerReference', invoice.buyerReference), // BT-10
           party('ram:SellerTradeParty', invoice.seller, invoice.seller), // BG-4
           party('ram:BuyerTradeParty', invoice.buyer), // BG-7
+          ...(invoice.orderReference !== undefined ? [group('ram:BuyerOrderReferencedDocument', leaf('ram:IssuerAssignedID', invoice.orderReference))] : []), // BT-13
+          ...(invoice.contractReference !== undefined ? [group('ram:ContractReferencedDocument', leaf('ram:IssuerAssignedID', invoice.contractReference))] : []), // BT-12
+          // BT-11: the model binds it to a SpecifiedProcuringProject whose Name is the default 'Project reference' (and the XSD requires a Name).
+          ...(invoice.projectReference !== undefined ? [group('ram:SpecifiedProcuringProject', leaf('ram:ID', invoice.projectReference), leaf('ram:Name', PROJECT_REFERENCE_NAME))] : []),
         ),
         group('ram:ApplicableHeaderTradeDelivery', group('ram:ActualDeliverySupplyChainEvent', date('ram:OccurrenceDateTime', invoice.deliveryDate))), // BT-72
         settlement(invoice),

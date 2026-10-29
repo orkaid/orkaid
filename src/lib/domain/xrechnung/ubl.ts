@@ -58,7 +58,10 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
       ...invoice.notes.map((note) => leaf('cbc:Note', note.text)), // BG-1 / BT-22
       leaf('cbc:DocumentCurrencyCode', currency), // BT-5
       leaf('cbc:BuyerReference', invoice.buyerReference), // BT-10
+      ...(invoice.orderReference !== undefined ? [group('cac:OrderReference', leaf('cbc:ID', invoice.orderReference))] : []), // BT-13
       ...(invoice.documentTypeCode === '381' ? [billingReference(invoice.precedingInvoice)] : []), // BG-3
+      ...(invoice.contractReference !== undefined ? [group('cac:ContractDocumentReference', leaf('cbc:ID', invoice.contractReference))] : []), // BT-12
+      ...projectReference(invoice), // BT-11
       group('cac:AccountingSupplierParty', party(invoice.seller, invoice.seller)), // BG-4
       group('cac:AccountingCustomerParty', party(invoice.buyer)), // BG-7
       group('cac:Delivery', leaf('cbc:ActualDeliveryDate', invoice.deliveryDate)), // BT-72
@@ -77,6 +80,19 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
   };
 
   return { ok: true, xml: `<?xml version="1.0" encoding="UTF-8"?>\n${render(root, 0).join('\n')}\n` };
+}
+
+// BT-11 (MDR-36). A UBL Invoice has ProjectReference. A UBL CreditNote has no such element: the XRechnung model binds BT-11 to
+// AdditionalDocumentReference/ID without a discriminator, a path it shares with the supporting documents of BG-24. The
+// OpenPeppol BIS Billing documentation separates the two by DocumentTypeCode 50, so the credit note writes exactly that
+// element, with only ID and DocumentTypeCode. Code 50 is an explicit Orkaid binding choice supported by that
+// documentation, not an XRechnung mandate. Position: after ContractDocumentReference, before the parties.
+const PROJECT_REFERENCE_TYPE_CODE = '50';
+function projectReference(invoice: Invoice): readonly Element[] {
+  if (invoice.projectReference === undefined) return [];
+  return invoice.documentTypeCode === '381'
+    ? [group('cac:AdditionalDocumentReference', leaf('cbc:ID', invoice.projectReference), leaf('cbc:DocumentTypeCode', PROJECT_REFERENCE_TYPE_CODE))]
+    : [group('cac:ProjectReference', leaf('cbc:ID', invoice.projectReference))];
 }
 
 // BG-3. PrecedingInvoice reference: BillingReference follows BuyerReference in the CreditNote sequence.

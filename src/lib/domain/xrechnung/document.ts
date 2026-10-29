@@ -64,6 +64,10 @@ export type InvoiceDocumentInput = {
   issueDate: string; // BT-2, YYYY-MM-DD
   deliveryDate: string; // BT-72, YYYY-MM-DD
   buyerReference: string; // BT-10, buyer-provided business information (not a generated Leitweg-ID)
+  /** BT-11, BT-12, BT-13 (MDR-36): independent optional facts, each 0..1, plain text. A list is refused. Never derived from BT-10. */
+  projectReference?: string; // BT-11
+  contractReference?: string; // BT-12
+  orderReference?: string; // BT-13
   seller: PartyInput & {
     sellerIdentifiers?: readonly string[]; // BT-29, 0..n; no scheme in M1 (MDR-21)
     legalRegistrationId?: string; // BT-30; no scheme in M1 (MDR-21)
@@ -170,6 +174,9 @@ type InvoiceBase = {
   readonly issueDate: string; // BT-2
   readonly deliveryDate: string; // BT-72
   readonly buyerReference: string; // BT-10
+  readonly projectReference?: string; // BT-11
+  readonly contractReference?: string; // BT-12
+  readonly orderReference?: string; // BT-13
   readonly seller: InvoiceParty & {
     readonly sellerIdentifiers: readonly SellerIdentifier[]; // BT-29, 0..n
     readonly legalRegistrationId?: string; // BT-30
@@ -238,7 +245,7 @@ export type DocumentResult =
   | { readonly ok: true; readonly value: Invoice }
   | { readonly ok: false; readonly errors: readonly DocumentError[]; readonly truncated: boolean };
 
-const DOCUMENT_FIELDS = ['invoiceNumber', 'issueDate', 'deliveryDate', 'buyerReference', 'precedingInvoice', 'seller', 'buyer', 'payment', 'notes'];
+const DOCUMENT_FIELDS = ['invoiceNumber', 'issueDate', 'deliveryDate', 'buyerReference', 'projectReference', 'contractReference', 'orderReference', 'precedingInvoice', 'seller', 'buyer', 'payment', 'notes'];
 const LINE_FIELDS = ['name', 'unitCode'];
 const PARTY_FIELDS = ['name', 'electronicAddress', 'address'];
 const SELLER_FIELDS = [...PARTY_FIELDS, 'sellerIdentifiers', 'legalRegistrationId', 'vatId', 'taxRegistrationId', 'contact'];
@@ -287,6 +294,10 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
   const issueDate = readDate(input, 'issueDate', 'issueDate', errors);
   const deliveryDate = readDate(input, 'deliveryDate', 'deliveryDate', errors);
   const buyerReference = readText(input, 'buyerReference', 'buyerReference', errors);
+  // BT-11, BT-12, BT-13: each an independent optional fact. No default, no derivation from BT-10, no cross-check.
+  const projectReference = readOptionalText(input, 'projectReference', 'projectReference', errors);
+  const contractReference = readOptionalText(input, 'contractReference', 'contractReference', errors);
+  const orderReference = readOptionalText(input, 'orderReference', 'orderReference', errors);
   const seller = readSeller(input, errors);
   const buyer = readBuyer(input, usesReverseCharge(input, scanLimit), errors);
   // Only an explicit 380 or 381 selects a kind-specific rule; any other BT-3 is reported once by the monetary calculation
@@ -330,6 +341,9 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
     const common = {
       currency: 'EUR' as const,
       invoiceNumber, issueDate, deliveryDate, buyerReference,
+      ...(projectReference !== undefined ? { projectReference } : {}),
+      ...(contractReference !== undefined ? { contractReference } : {}),
+      ...(orderReference !== undefined ? { orderReference } : {}),
       // BT-33: XRechnung 3.0.2 section 13.3 asks for the exemption text here as well as in BT-120.
       seller: money.value.lines.some((line) => line.vat.treatment === 'kleinunternehmer')
         ? { ...seller, additionalLegalInformation: KLEINUNTERNEHMER_EXEMPTION_TEXT }

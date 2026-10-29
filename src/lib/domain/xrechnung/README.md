@@ -64,6 +64,27 @@ correction of an invoice (384), and its change history carries the entry XRG-v1.
 note with reference to cancellation invoices. Orkaid does not claim that every recipient, in particular in the public
 sector, accepts cancellation of an invoice by a 381.
 
+## Project, contract and order references (BT-11, BT-12, BT-13)
+
+Three independent optional business facts on a 380 and on a 381: `projectReference` (BT-11), `contractReference` (BT-12)
+and `orderReference` (BT-13). Each is 0..1 plain text with the same text rules as the other identifiers (non-empty, no
+surrounding whitespace, no control characters, bounded length); a list is refused, so there is never more than one of
+each. They are never derived from, defaulted to or checked against one another or against the buyer reference BT-10,
+which stays a separate, required fact. No identifier scheme and no recipient-specific convention is interpreted.
+
+| Reference | UBL Invoice | UBL CreditNote | CII (380 and 381) |
+| --- | --- | --- | --- |
+| BT-11 project | `ProjectReference/ID` | `AdditionalDocumentReference` with `ID` and `DocumentTypeCode` 50 | `SpecifiedProcuringProject` with `ID` and `Name` "Project reference" |
+| BT-12 contract | `ContractDocumentReference/ID` | same | `ContractReferencedDocument/IssuerAssignedID` |
+| BT-13 order | `OrderReference/ID` | same | `BuyerOrderReferencedDocument/IssuerAssignedID` |
+
+**Code 50 is an explicit Orkaid binding choice, not an XRechnung mandate.** A UBL CreditNote has no `ProjectReference`
+element. The XRechnung model binds BT-11 there to `AdditionalDocumentReference/ID` without a discriminator, a path it
+shares with the supporting documents of BG-24. The OpenPeppol BIS Billing documentation separates the two with
+`DocumentTypeCode` 50 (other additional documents carry no type code), and Orkaid follows that documentation. The pinned
+validator accepts the document but cannot tell which interpretation a recipient applies, so the tests assert the emitted
+structure itself. BG-24, attachments and general Peppol support are not part of this implementation.
+
 ## Runtime protection
 
 `Invoice` is created only by `buildInvoice`, which deep-freezes it and registers it in a module-private set.

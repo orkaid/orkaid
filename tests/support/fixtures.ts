@@ -10,12 +10,17 @@ export type FixtureName = (typeof FIXTURE_NAMES)[number];
 
 // Credit note 381 fixtures (MDR-35). Kept apart from FIXTURE_NAMES: that list is the 380 set whose goldens and
 // shared tests stay byte-identical.
-export const CREDIT_NOTE_FIXTURE_NAMES = ['t-credit-note-full-reversal', 'u-credit-note-partial-standard-and-reverse-charge', 'v-credit-note-kleinunternehmer', 'w-credit-note-reverse-charge'] as const;
+export const CREDIT_NOTE_FIXTURE_NAMES = ['t-credit-note-full-reversal', 'u-credit-note-partial-standard-and-reverse-charge', 'v-credit-note-kleinunternehmer', 'w-credit-note-reverse-charge', 'y-credit-note-references-all-three'] as const;
 export type CreditNoteFixtureName = (typeof CREDIT_NOTE_FIXTURE_NAMES)[number];
 
 export type JsonObject = { [key: string]: unknown };
 
-export function loadFixtureInput(name: FixtureName | CreditNoteFixtureName): JsonObject {
+// Project, contract and purchase order references BT-11, BT-12, BT-13 on a 380 (MDR-36); the 381 counterpart is
+// 'y-credit-note-references-all-three' in CREDIT_NOTE_FIXTURE_NAMES. Both carry the amounts of a-simple / t-credit-note-full-reversal.
+export const REFERENCE_FIXTURE_NAMES = ['x-references-all-three'] as const;
+export type ReferenceFixtureName = (typeof REFERENCE_FIXTURE_NAMES)[number];
+
+export function loadFixtureInput(name: FixtureName | CreditNoteFixtureName | ReferenceFixtureName): JsonObject {
   return JSON.parse(readFileSync(resolve(import.meta.dirname, `../fixtures/xrechnung/${name}.json`), 'utf8')) as JsonObject;
 }
 
@@ -244,5 +249,12 @@ export const EXPECTED_CREDIT_NOTE: Record<CreditNoteFixtureName, ExpectedAmounts
     sumOfLineNets: '219.80',
     totalVat: '0.00',
     gross: '219.80',
+  },
+  'y-credit-note-references-all-three': {
+    lineNets: ['99.80', '120.00'],
+    breakdown: [{ rate: '19', taxable: '219.80', tax: '41.76' }],
+    sumOfLineNets: '219.80',
+    totalVat: '41.76',
+    gross: '261.56',
   },
 };
