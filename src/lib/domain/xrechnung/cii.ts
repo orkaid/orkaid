@@ -9,7 +9,7 @@
 // are URIID/@schemeID, and dates are DateTimeString with format 102. The output is deterministic: fixed order,
 // two-space indentation, LF newlines, UTF-8, no timestamps.
 
-import { isValidatedInvoice, type Invoice, type InvoiceLine, type InvoiceParty } from './document.ts';
+import { isValidatedInvoice, type Invoice, type InvoiceLine, type InvoiceParty, type PaymentAccount, type PrecedingInvoiceReference } from './document.ts';
 import type { Decimal } from './decimal.ts';
 import { formatXmlDecimal } from './number-notation.ts';
 
@@ -20,6 +20,11 @@ export type CiiResult =
 const NAMESPACE_RSM = 'urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100';
 const NAMESPACE_RAM = 'urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100';
 const NAMESPACE_UDT = 'urn:un:unece:uncefact:data:standard:UnqualifiedDataType:100';
+// Only BT-26 (a 381's preceding invoice date) uses the qualified datatype, so the namespace is declared for a 381 alone
+// and the 380 documents stay byte-identical (MDR-35).
+const NAMESPACE_QDT = 'urn:un:unece:uncefact:data:standard:QualifiedDataType:100';
+// UNCL4461 code 97, clearing between partners: the only payment of a 381 (MDR-35). It carries no BG-17.
+const CLEARING_PAYMENT_MEANS_CODE = '97';
 
 // BT-24 and BT-23: the same XRechnung 3.0.2 section 11.27 values as in ubl.ts. They are not carried by Invoice, so each
 // serializer holds its own copy (a MODEL-U item of the experiment, reported rather than moved).
@@ -46,6 +51,7 @@ export function serializeCiiInvoice(invoice: Invoice): CiiResult {
       ['xmlns:rsm', NAMESPACE_RSM],
       ['xmlns:ram', NAMESPACE_RAM],
       ['xmlns:udt', NAMESPACE_UDT],
+      ...(invoice.documentTypeCode === '381' ? ([['xmlns:qdt', NAMESPACE_QDT]] as const) : []),
     ],
     children: [
       group(
@@ -124,11 +130,7 @@ function settlement(invoice: Invoice): Element {
   return group(
     'ram:ApplicableHeaderTradeSettlement',
     leaf('ram:InvoiceCurrencyCode', invoice.currency), // BT-5
-    group(
-      'ram:SpecifiedTradeSettlementPaymentMeans', // BG-16
-      leaf('ram:TypeCode', invoice.payment.means.code), // BT-81
-      ...creditTransfer(invoice.payment.means.account), // BG-17
-    ),
+    paymentMeans(invoice),
     ...totals.vatBreakdown.map((bucket) =>
       group(
         'ram:ApplicableTradeTax', // BG-23
@@ -149,13 +151,37 @@ function settlement(invoice: Invoice): Element {
       amount('ram:GrandTotalAmount', totals.totalWithVat), // BT-112
       amount('ram:DuePayableAmount', totals.amountDue), // BT-115
     ),
+    ...(invoice.documentTypeCode === '381' ? [referencedInvoice(invoice.precedingInvoice)] : []), // BG-3
+  );
+}
+
+// BG-16. A 380 names its credit transfer (BG-17). A 381 is a clearing: code 97 and no account.
+function paymentMeans(invoice: Invoice): Element {
+  if (invoice.documentTypeCode === '381') {
+    return group('ram:SpecifiedTradeSettlementPaymentMeans', leaf('ram:TypeCode', CLEARING_PAYMENT_MEANS_CODE)); // BT-81
+  }
+  return group(
+    'ram:SpecifiedTradeSettlementPaymentMeans', // BG-16
+    leaf('ram:TypeCode', invoice.payment.means.code), // BT-81
+    ...creditTransfer(invoice.payment.means.account), // BG-17
+  );
+}
+
+// BG-3. HeaderTradeSettlement order: the referenced invoice follows the monetary summation.
+function referencedInvoice(reference: PrecedingInvoiceReference): Element {
+  return group(
+    'ram:InvoiceReferencedDocument',
+    leaf('ram:IssuerAssignedID', reference.number), // BT-25
+    ...(reference.issueDate !== undefined
+      ? [group('ram:FormattedIssueDateTime', leaf('qdt:DateTimeString', reference.issueDate.replaceAll('-', ''), [['format', '102']]))] // BT-26
+      : []),
   );
 }
 
 // BG-17 is split over two siblings of TypeCode: the account (IBANID, then AccountName) and, for BT-86, the institution.
 // SeMoX binds BT-84 to IBANID for an IBAN (ProprietaryID otherwise, not in M1) and BT-86 to
 // PayeeSpecifiedCreditorFinancialInstitution/BICID for a credit transfer.
-function creditTransfer(account: Invoice['payment']['means']['account']): readonly Element[] {
+function creditTransfer(account: PaymentAccount): readonly Element[] {
   return [
     group(
       'ram:PayeePartyCreditorFinancialAccount',

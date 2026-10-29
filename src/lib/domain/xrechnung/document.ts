@@ -58,7 +58,7 @@ export type SellerIdentifier = {
 
 /** Shape the boundary expects. Every field is validated at runtime. Amounts are decimal strings, never numbers. */
 export type InvoiceDocumentInput = {
-  documentTypeCode: string; // BT-3, validated by invoice.ts
+  documentTypeCode: string; // BT-3: '380' or '381', validated by invoice.ts
   currency: string; // BT-5, validated by invoice.ts
   invoiceNumber: string; // BT-1
   issueDate: string; // BT-2, YYYY-MM-DD
@@ -75,14 +75,19 @@ export type InvoiceDocumentInput = {
     legalRegistrationId?: string; // BT-47; no scheme in M1
     vatId?: string; // BT-48
   };
+  /** BG-3, exactly one on a 381 (PROFILE: mandatory, MDR-35), never on a 380. */
+  precedingInvoice?: { number: string; issueDate?: string }; // BT-25, BT-26
   payment: {
     dueDate?: string; // BT-9, 0..1, YYYY-MM-DD
     termsText?: string; // BT-20, 0..1, one text that may contain LF; no `#` in M1
-    means: {
+    /** 380 only: required there, refused on a 381. */
+    means?: {
       kind: string;
       code: string; // BT-81
       account: { id: { scheme: string; value: string }; name?: string; bic?: string }; // BG-17: BT-84, BT-85, BT-86
     };
+    /** 381 only: required there, refused on a 380. Nothing defaults to clearing. */
+    settlement?: { kind: string; reciprocalObligationConfirmed?: unknown };
   };
   notes?: readonly { text: string }[]; // BG-1 / BT-22, 0..n, order preserved; text may contain LF (BT-21 is not supported)
   lines: readonly {
@@ -139,11 +144,27 @@ export type Payment = {
   readonly means: PaymentMeans;
 };
 
+/**
+ * A credit note's payment (MDR-35). `clearing` is UNCL4461 code 97, clearing between partners, and is available only
+ * because the caller selected it and confirmed an existing reciprocal obligation. There is no payment means and no
+ * BG-17: the validated type cannot name an account, so the issuer's 380 account cannot be reused by mistake.
+ */
+export type CreditNotePayment = {
+  readonly dueDate?: string; // BT-9
+  readonly termsText?: string; // BT-20
+  readonly settlement: { readonly kind: 'clearing' };
+};
+
+/** BG-3. PROFILE: mandatory on a 381. BT-26 is optional; supply it when BT-25 alone does not identify the invoice. */
+export type PrecedingInvoiceReference = {
+  readonly number: string; // BT-25
+  readonly issueDate?: string; // BT-26
+};
+
 declare const validatedBrand: unique symbol;
 
-export type Invoice = {
+type InvoiceBase = {
   readonly [validatedBrand]: true;
-  readonly documentTypeCode: '380'; // BT-3
   readonly currency: 'EUR'; // BT-5
   readonly invoiceNumber: string; // BT-1
   readonly issueDate: string; // BT-2
@@ -161,11 +182,20 @@ export type Invoice = {
     readonly legalRegistrationId?: string; // BT-47
     readonly vatId?: string; // BT-48
   };
-  readonly payment: Payment;
   readonly notes: readonly InvoiceNote[]; // BG-1 / BT-22, 0..n, in input order
   readonly lines: readonly InvoiceLine[];
   readonly totals: InvoiceTotals;
 };
+
+/** BT-3 is the only carrier of the document kind (Model C): a sign never decides it, and a 381 keeps positive amounts. */
+export type CommercialInvoice = InvoiceBase & { readonly documentTypeCode: '380'; readonly payment: Payment };
+export type CreditNote = InvoiceBase & {
+  readonly documentTypeCode: '381';
+  readonly precedingInvoice: PrecedingInvoiceReference;
+  readonly payment: CreditNotePayment;
+};
+export type Invoice = CommercialInvoice | CreditNote;
+type Unbranded<T> = T extends unknown ? Omit<T, typeof validatedBrand> : never;
 
 export type DocumentErrorCode =
   | InvoiceErrorCode
@@ -184,6 +214,12 @@ export type DocumentErrorCode =
   | 'unsupported_payment_means'
   | 'unsupported_payment_account_scheme'
   | 'unsupported_hash_in_payment_terms' // PROFILE: `#` in BT-20 (structured Skonto, BR-DE-18, is not in M1)
+  | 'unsupported_preceding_invoice_reference' // PROFILE: BG-3 on a 380 (MDR-35)
+  | 'unsupported_settlement_on_invoice' // PROFILE: a credit note settlement on a 380 (MDR-35)
+  | 'unsupported_credit_note_payment_means' // PROFILE: 380-style payment means (BG-17) on a 381 (MDR-35)
+  | 'unsupported_credit_note_refund_transfer' // PROFILE: refund by credit transfer on a 381 is not verified (MDR-35)
+  | 'unsupported_credit_note_settlement' // PROFILE: any settlement other than clearing on a 381 (MDR-35)
+  | 'missing_clearing_confirmation' // clearing needs the caller's explicit confirmation of a reciprocal obligation
   | 'missing_payment_due_information' // BR-CO-25: BT-115 > 0 and neither BT-9 nor BT-20 is present
   | 'unsupported_unit_code'
   | 'missing_seller_identification' // BR-CO-26: none of BT-29, BT-30, BT-31 is present
@@ -202,14 +238,16 @@ export type DocumentResult =
   | { readonly ok: true; readonly value: Invoice }
   | { readonly ok: false; readonly errors: readonly DocumentError[]; readonly truncated: boolean };
 
-const DOCUMENT_FIELDS = ['invoiceNumber', 'issueDate', 'deliveryDate', 'buyerReference', 'seller', 'buyer', 'payment', 'notes'];
+const DOCUMENT_FIELDS = ['invoiceNumber', 'issueDate', 'deliveryDate', 'buyerReference', 'precedingInvoice', 'seller', 'buyer', 'payment', 'notes'];
 const LINE_FIELDS = ['name', 'unitCode'];
 const PARTY_FIELDS = ['name', 'electronicAddress', 'address'];
 const SELLER_FIELDS = [...PARTY_FIELDS, 'sellerIdentifiers', 'legalRegistrationId', 'vatId', 'taxRegistrationId', 'contact'];
 const BUYER_FIELDS = [...PARTY_FIELDS, 'legalRegistrationId', 'vatId'];
 const ADDRESS_FIELDS = ['street', 'city', 'postCode', 'country'];
 const NOTE_FIELDS = ['text'];
-const PAYMENT_FIELDS = ['dueDate', 'termsText', 'means'];
+const PAYMENT_FIELDS = ['dueDate', 'termsText', 'means', 'settlement'];
+const PRECEDING_INVOICE_FIELDS = ['number', 'issueDate'];
+const SETTLEMENT_FIELDS = ['kind', 'reciprocalObligationConfirmed'];
 const PAYMENT_MEANS_FIELDS = ['kind', 'code', 'account'];
 const PAYMENT_ACCOUNT_FIELDS = ['id', 'name', 'bic'];
 const ELECTRONIC_ADDRESS_FIELDS = ['schemeId', 'value'];
@@ -251,7 +289,12 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
   const buyerReference = readText(input, 'buyerReference', 'buyerReference', errors);
   const seller = readSeller(input, errors);
   const buyer = readBuyer(input, usesReverseCharge(input, scanLimit), errors);
-  const payment = readPayment(input, errors);
+  // Only an explicit 380 or 381 selects a kind-specific rule; any other BT-3 is reported once by the monetary calculation
+  // (unsupported_document_type) and does not add noise about references or settlements.
+  const creditNote = input.documentTypeCode === '381';
+  const commercial = input.documentTypeCode === '380';
+  const precedingInvoice = readPrecedingInvoice(input, creditNote, commercial, errors);
+  const payment = creditNote ? readCreditNotePayment(input, errors) : readPayment(input, commercial, errors);
   const notes = readNotes(input, errors);
   const { lines: lineData, stoppedAt } = readLineData(input, scanLimit, errors);
   // PROFILE: the supported treatment compositions are listed, not derived. One treatment alone, or standard combined
@@ -272,7 +315,8 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
   if (money.ok && errors.length === 0 && stoppedAt === undefined) {
     if (
       invoiceNumber === undefined || issueDate === undefined || deliveryDate === undefined ||
-      buyerReference === undefined || seller === undefined || buyer === undefined || payment === undefined
+      buyerReference === undefined || seller === undefined || buyer === undefined || payment === undefined ||
+      (creditNote && precedingInvoice === undefined)
     ) {
       return { ok: false, errors: [{ code: 'internal_inconsistency', path: '' }], truncated: false };
     }
@@ -283,21 +327,24 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
       if (data === undefined || totalsLine === undefined) return { ok: false, errors: [{ code: 'internal_inconsistency', path: `lines[${index}]` }], truncated: false };
       lines.push({ ...data, quantity: calculated.quantity, unitPrice: calculated.unitPrice, vat: calculated.vat, netAmount: totalsLine.netAmount });
     }
-    return {
-      ok: true,
-      value: seal({
-        documentTypeCode: '380',
-        currency: 'EUR',
-        invoiceNumber, issueDate, deliveryDate, buyerReference,
-        // BT-33: XRechnung 3.0.2 section 13.3 asks for the exemption text here as well as in BT-120.
-        seller: money.value.lines.some((line) => line.vat.treatment === 'kleinunternehmer')
-          ? { ...seller, additionalLegalInformation: KLEINUNTERNEHMER_EXEMPTION_TEXT }
-          : seller,
-        buyer, payment, notes,
-        lines,
-        totals: money.value.totals,
-      }),
+    const common = {
+      currency: 'EUR' as const,
+      invoiceNumber, issueDate, deliveryDate, buyerReference,
+      // BT-33: XRechnung 3.0.2 section 13.3 asks for the exemption text here as well as in BT-120.
+      seller: money.value.lines.some((line) => line.vat.treatment === 'kleinunternehmer')
+        ? { ...seller, additionalLegalInformation: KLEINUNTERNEHMER_EXEMPTION_TEXT }
+        : seller,
+      buyer, notes,
+      lines,
+      totals: money.value.totals,
     };
+    // The kind is fixed by BT-3 alone. The two payment shapes are not interchangeable: only a 380 can carry payment means.
+    if (creditNote) {
+      if (precedingInvoice === undefined || !isCreditNotePayment(payment)) return { ok: false, errors: [{ code: 'internal_inconsistency', path: '' }], truncated: false };
+      return { ok: true, value: seal({ ...common, documentTypeCode: '381', precedingInvoice, payment }) };
+    }
+    if (isCreditNotePayment(payment)) return { ok: false, errors: [{ code: 'internal_inconsistency', path: '' }], truncated: false };
+    return { ok: true, value: seal({ ...common, documentTypeCode: '380', payment }) };
   }
   return failure(errors, money, stoppedAt);
 }
@@ -362,7 +409,7 @@ function snapshot(value: unknown, path: string, depth: number, problems: string[
   return copy;
 }
 
-function seal(data: Omit<Invoice, typeof validatedBrand>): Invoice {
+function seal(data: Unbranded<Invoice>): Invoice {
   // The one assertion in this module: the brand has no runtime representation, `validated` is the runtime proof.
   const invoice = deepFreeze(data) as Invoice;
   validated.add(invoice);
@@ -513,16 +560,68 @@ function readContact(record: Record<string, unknown>, errors: DocumentError[]): 
   return name !== undefined && telephone !== undefined && email !== undefined ? { name, telephone, email } : undefined;
 }
 
-function readPayment(parent: Record<string, unknown>, errors: DocumentError[]): Payment | undefined {
+function readPayment(parent: Record<string, unknown>, commercial: boolean, errors: DocumentError[]): Payment | undefined {
   const record = readObject(parent, 'payment', 'payment', PAYMENT_FIELDS, errors);
   if (record === undefined) return undefined;
   const errorsBefore = errors.length;
   // BT-9 and BT-20 are each 0..1. Nothing is derived: no due date from the issue date or the terms, no default terms.
   const dueDate = record.dueDate === undefined ? undefined : readDate(record, 'dueDate', 'payment.dueDate', errors);
   const termsText = record.termsText === undefined ? undefined : readPaymentTerms(record.termsText, errors);
+  if (commercial && record.settlement !== undefined) report(errors, 'unsupported_settlement_on_invoice', 'payment.settlement');
   const means = readPaymentMeans(record, errors);
   if (errors.length > errorsBefore || means === undefined) return undefined;
   return { ...(dueDate !== undefined ? { dueDate } : {}), ...(termsText !== undefined ? { termsText } : {}), means };
+}
+
+// BG-3 (MDR-35). PROFILE: exactly one on a 381, with BT-25; BT-26 is optional. On a 380 it is refused rather than
+// ignored. The domain holds no original invoice, so it cannot check that the reference matches a real invoice or that
+// the credited amounts do not exceed it: that stays the caller's responsibility.
+function readPrecedingInvoice(parent: Record<string, unknown>, creditNote: boolean, commercial: boolean, errors: DocumentError[]): PrecedingInvoiceReference | undefined {
+  if (!creditNote) {
+    if (commercial && parent.precedingInvoice !== undefined) report(errors, 'unsupported_preceding_invoice_reference', 'precedingInvoice');
+    return undefined;
+  }
+  const record = readObject(parent, 'precedingInvoice', 'precedingInvoice', PRECEDING_INVOICE_FIELDS, errors);
+  if (record === undefined) return undefined;
+  const number = readText(record, 'number', 'precedingInvoice.number', errors);
+  const issueDate = record.issueDate === undefined ? undefined : readDate(record, 'issueDate', 'precedingInvoice.issueDate', errors);
+  if (number === undefined || (record.issueDate !== undefined && issueDate === undefined)) return undefined;
+  return { number, ...(issueDate !== undefined ? { issueDate } : {}) };
+}
+
+// Payment on a 381 (MDR-35). The only supported arrangement is a clearing the caller selected and confirmed (UNCL4461 code
+// 97, clearing between partners): nothing defaults to it, a refund by transfer is refused explicitly (no source says whose
+// account BG-17 would name on a credit note), and 380-style payment means are refused so the issuer's account is never reused.
+function readCreditNotePayment(parent: Record<string, unknown>, errors: DocumentError[]): CreditNotePayment | undefined {
+  const record = readObject(parent, 'payment', 'payment', PAYMENT_FIELDS, errors);
+  if (record === undefined) return undefined;
+  const errorsBefore = errors.length;
+  const dueDate = record.dueDate === undefined ? undefined : readDate(record, 'dueDate', 'payment.dueDate', errors);
+  const termsText = record.termsText === undefined ? undefined : readPaymentTerms(record.termsText, errors);
+  if (record.means !== undefined) report(errors, 'unsupported_credit_note_payment_means', 'payment.means');
+  const settled = readClearing(record, errors);
+  if (errors.length > errorsBefore || !settled) return undefined;
+  return { ...(dueDate !== undefined ? { dueDate } : {}), ...(termsText !== undefined ? { termsText } : {}), settlement: { kind: 'clearing' } };
+}
+
+function readClearing(payment: Record<string, unknown>, errors: DocumentError[]): boolean {
+  const path = 'payment.settlement';
+  const settlement = payment.settlement;
+  if (settlement === undefined) return report(errors, 'missing_field', path) ?? false;
+  if (!isRecord(settlement)) return report(errors, 'invalid_type', path) ?? false;
+  const kind = settlement.kind;
+  if (kind === undefined) return report(errors, 'missing_field', `${path}.kind`) ?? false;
+  if (typeof kind !== 'string') return report(errors, 'invalid_type', `${path}.kind`) ?? false;
+  if (kind === 'refund-transfer') return report(errors, 'unsupported_credit_note_refund_transfer', `${path}.kind`) ?? false;
+  if (kind !== 'clearing') return report(errors, 'unsupported_credit_note_settlement', `${path}.kind`) ?? false;
+  for (const name of Object.keys(settlement)) if (!SETTLEMENT_FIELDS.includes(name)) errors.push({ code: 'unknown_field', path: `${path}.${name}` });
+  // Exactly the boolean true: "true", 1 or an omitted field is not a confirmation.
+  if (settlement.reciprocalObligationConfirmed !== true) return report(errors, 'missing_clearing_confirmation', `${path}.reciprocalObligationConfirmed`) ?? false;
+  return true;
+}
+
+function isCreditNotePayment(payment: Payment | CreditNotePayment | undefined): payment is CreditNotePayment {
+  return payment !== undefined && 'settlement' in payment;
 }
 
 // BT-20 is one text value that may span several lines (the BT-22 multiline policy). PROFILE: no `#` at all. XRechnung

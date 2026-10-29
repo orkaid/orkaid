@@ -1,5 +1,6 @@
 // V1 XRechnung semantic invoice model and monetary calculation.
-// Scope: domestic German B2B invoice, EUR, BT-3 = 380, VAT category S at 19% or 7%, the Kleinunternehmer treatment
+// Scope: domestic German B2B invoice, EUR, BT-3 = 380 or 381 (a credit note keeps positive amounts and is calculated exactly like
+// an invoice, MDR-35; the document kind lives in document.ts), VAT category S at 19% or 7%, the Kleinunternehmer treatment
 // (category E, rate 0) or the reverse-charge treatment (category AE, rate 0), non-negative amounts. Which treatments
 // may share one invoice is a document rule (document.ts); this module computes one bucket per treatment and rate.
 // Syntax-independent: no UBL/CII structures. Anything outside the scope is an explicit failure, never a fallback (MDR-12).
@@ -85,7 +86,7 @@ export type InvoiceLineVat =
 
 /** Shape the boundary expects. Every field is validated at runtime; amounts are decimal strings, never numbers. */
 export type InvoiceInput = {
-  documentTypeCode: string; // BT-3, must be '380'
+  documentTypeCode: string; // BT-3, must be '380' or '381'
   currency: string; // BT-5, must be 'EUR'
   lines: readonly InvoiceLineInput[];
 };
@@ -258,7 +259,7 @@ function validate(
     return undefined;
   }
 
-  if (input.documentTypeCode !== '380') errors.push({ code: 'unsupported_document_type', path: 'documentTypeCode' });
+  if (input.documentTypeCode !== '380' && input.documentTypeCode !== '381') errors.push({ code: 'unsupported_document_type', path: 'documentTypeCode' });
   if (input.currency !== 'EUR') errors.push({ code: 'unsupported_currency', path: 'currency' });
 
   const parsedLines: ParsedLine[] = [];

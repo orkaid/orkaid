@@ -1,4 +1,4 @@
-# XRechnung domain: semantic invoice, monetary calculation, UBL 2.1 and CII serializers
+# XRechnung domain: semantic invoice and credit note, monetary calculation, UBL 2.1 and CII serializers
 
 Deterministic, framework-independent domain code for the XRechnung tool. This is an early version. It is **not a
 production-ready or fully compliant XRechnung generator**, and an accepted validation result is **not legal
@@ -28,7 +28,7 @@ syntax-independent. Both serializers consume the same validated `Invoice`; neith
 
 Scenario: ordinary German domestic commercial B2B invoice, invoice type 380, EUR, VAT category S at 19% and/or 7%, or
 the Kleinunternehmer treatment (§ 19 UStG: category E, rate 0, fixed XRechnung 3.0.2 section 13.3 wording in BT-120 and
-BT-33, no BT-121) or the reverse-charge treatment (§ 13b UStG: category AE, rate 0, the § 14a Abs. 5 UStG phrase in BT-120, no BT-121, buyer BT-47 or BT-48; an invoice is all-standard, all-Kleinunternehmer, all-reverse-charge, or standard combined with reverse charge; Kleinunternehmer is never combined), nonnegative amounts, no document-level allowances or charges, no corrections or credit notes.
+BT-33, no BT-121) or the reverse-charge treatment (§ 13b UStG: category AE, rate 0, the § 14a Abs. 5 UStG phrase in BT-120, no BT-121, buyer BT-47 or BT-48; an invoice is all-standard, all-Kleinunternehmer, all-reverse-charge, or standard combined with reverse charge; Kleinunternehmer is never combined), nonnegative amounts, no document-level allowances or charges, no corrections (384) and no self-billing (389). Credit note 381 is supported in a bounded form, described in the next section.
 
 Three kinds of rule are kept apart, in the code comments as well:
 
@@ -41,6 +41,28 @@ Three kinds of rule are kept apart, in the code comments as well:
 Input outside the profile fails with an explicit `unsupported_*` (or field-specific) error. Such an error means "not
 supported by this profile", not "legally invalid". BT-10 is buyer-provided business information: it is required and
 is never generated or defaulted (it is not necessarily a Leitweg-ID).
+
+## Credit note 381 (first bounded slice)
+
+A credit note reverses part or all of an earlier ordinary invoice. The document kind is the explicit BT-3 value (`380` or
+`381`); it is never inferred from the sign of an amount, and a credit note is not an invoice with every value negated.
+
+| Aspect | Behaviour |
+| --- | --- |
+| Amounts | positive, calculated exactly like a 380 (same rounding, same VAT buckets); a full and a partial reversal are the same calculation with different quantities or lines |
+| Preceding invoice (BG-3) | **PROFILE restriction.** Exactly one reference with BT-25 is required on a 381; BT-26 is optional and should be given when BT-25 alone does not identify the invoice. XRechnung 3.0.2 section 13.1 does not require a reference for a 381. A 380 with a reference is refused. The domain holds no original invoice, so it cannot check that the reference exists or that the credited amounts stay within the original: that is the caller's responsibility |
+| Payment | only an explicit **clearing** (`payment.settlement` with `kind: 'clearing'` and `reciprocalObligationConfirmed: true`): UNCL4461 code 97, clearing between partners, written without BG-17. Nothing defaults to it. The caller confirms that the credit is offset against an existing reciprocal obligation |
+| Refused | a refund by credit transfer (`unsupported_credit_note_refund_transfer`), any other settlement (`unsupported_credit_note_settlement`), 380-style payment means on a 381 (`unsupported_credit_note_payment_means`), a clearing that is not confirmed (`missing_clearing_confirmation`) and a clearing on a 380. Code 97 is never substituted automatically |
+| BR-CO-25 | applied to a 381 as to a 380: a positive amount due needs BT-9 or BT-20 (the pinned validator does not implement the rule). Its applicability to credit notes is read from the SeMoX rule context and is not confirmed against the licensed EN 16931 text |
+| UBL | a `CreditNote` document (`CreditNoteTypeCode`, `CreditNoteLine`, `CreditedQuantity`); BT-9 is `PaymentMeans/PaymentDueDate`; BG-3 is `BillingReference`. A 381 under an `Invoice` root is rejected by BR-CL-01 |
+| CII | the same root with `TypeCode` 381; BG-3 is `InvoiceReferencedDocument`; the `qdt` namespace is declared only on a 381 |
+
+Not supported in this slice, and not abandoned: refund scenarios (the sources consulted do not say whose account BG-17
+designates on a credit note), correction 384, self-billing 389, negative amounts and lines, allowances and charges.
+**Recipient compatibility is limited.** XRechnung section 13.1 distinguishes a commercial credit note (381) from a
+correction of an invoice (384), and its change history carries the entry XRG-v1.2.0-23, titled not to use a credit
+note with reference to cancellation invoices. Orkaid does not claim that every recipient, in particular in the public
+sector, accepts cancellation of an invoice by a 381.
 
 ## Runtime protection
 
@@ -62,7 +84,7 @@ correctness or acceptance by a recipient.
 ## Not part of the current implementation
 
 A user interface, PDF, any KoSIT service (browser or server), authentication, persistence, further VAT
-categories or regimes (other than the three above; Orkaid never decides whether a caller may use § 19 UStG or § 13b UStG), corrections and credit notes, deployment. None of these is abandoned; they are simply not
+categories or regimes (other than the three above; Orkaid never decides whether a caller may use § 19 UStG or § 13b UStG), corrections (384, 389), credit-note refunds, deployment. None of these is abandoned; they are simply not
 built here.
 
 ## Checking it

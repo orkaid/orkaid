@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { serializeCiiInvoice } from '../../src/lib/domain/xrechnung/cii.ts';
-import { buildInvoice, PROVISIONAL_MAX_MULTILINE_TEXT_LENGTH, type Invoice } from '../../src/lib/domain/xrechnung/document.ts';
+import { buildInvoice, PROVISIONAL_MAX_MULTILINE_TEXT_LENGTH, type CommercialInvoice, type Invoice } from '../../src/lib/domain/xrechnung/document.ts';
 import { serializeUblInvoice } from '../../src/lib/domain/xrechnung/ubl.ts';
 import { loadFixtureInput, withoutValue, withValue, type JsonObject } from '../support/fixtures.ts';
 import { childNames, one, parseXml, select } from '../support/xml.ts';
@@ -28,9 +28,11 @@ const termsOnly = (termsText: unknown) => withPayment((p) => { delete p.dueDate;
 const both = (termsText: unknown) => withPayment((p) => { p.termsText = termsText; });
 const neither = () => withoutValue(base(), 'payment.dueDate');
 
-function built(input: JsonObject): Invoice {
+function built(input: JsonObject): CommercialInvoice {
   const result = buildInvoice(input);
-  return result.ok ? result.value : assert.fail(`expected success: ${JSON.stringify(result, (_k, v) => (typeof v === 'bigint' ? String(v) : v))}`);
+  const invoice = result.ok ? result.value : assert.fail(`expected success: ${JSON.stringify(result, (_k, v) => (typeof v === 'bigint' ? String(v) : v))}`);
+  assert.ok(invoice.documentTypeCode === '380');
+  return invoice;
 }
 
 function rejected(input: JsonObject): readonly string[] {

@@ -251,8 +251,8 @@ test('failure never returns partial totals', () => {
 
 // ---------------------------------------------------------------- rejection: unsupported scenarios
 
-test('BT-3 other than 380 is unsupported, never treated as 380', () => {
-  for (const code of ['381', '384', '', '0380', 380]) {
+test('BT-3 other than 380 and 381 is unsupported, never treated as 380 (381 is covered by xrechnung-credit-note.test.ts)', () => {
+  for (const code of ['384', '389', '326', '', '0380', '0381', 380, 381]) {
     assert.deepEqual(errors(invoice([line('1', '1')], { documentTypeCode: code })), [
       { code: 'unsupported_document_type', path: 'documentTypeCode' },
     ]);
@@ -315,7 +315,7 @@ test('structurally invalid input is rejected with invalid_type', () => {
 test('all independent problems are reported together', () => {
   const found = errors(
     invoice([{ quantity: '-1', unitPrice: 'x', vat: { treatment: 'standard', category: 'Z', rate: '16' } }], {
-      documentTypeCode: '381',
+      documentTypeCode: '384',
       currency: 'USD',
     }),
   );

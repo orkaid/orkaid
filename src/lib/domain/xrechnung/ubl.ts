@@ -1,4 +1,5 @@
-// UBL 2.1 Invoice serializer for the XRechnung CIUS. A pure function from a validated Invoice to an XML string.
+// UBL 2.1 Invoice and CreditNote serializer for the XRechnung CIUS. A pure function from a validated Invoice to an XML string.
+// A 381 is a CreditNote document, not an Invoice with another code (BR-CL-01, UBL-CR); MDR-35.
 //
 // This is the only file that knows UBL element names and namespaces. It performs no arithmetic: every amount is a
 // Decimal produced by the monetary calculation and is only formatted, by formatXmlDecimal (MDR-15). Element order
@@ -7,7 +8,7 @@
 // verification against it is claimed. The output is deterministic: fixed order, two-space indentation, LF newlines,
 // UTF-8, no timestamps.
 
-import { isValidatedInvoice, type Invoice, type InvoiceLine, type InvoiceParty } from './document.ts';
+import { isValidatedInvoice, type Invoice, type InvoiceLine, type InvoiceParty, type PaymentAccount, type PrecedingInvoiceReference } from './document.ts';
 import type { Decimal } from './decimal.ts';
 import { formatXmlDecimal } from './number-notation.ts';
 
@@ -16,6 +17,9 @@ export type UblResult =
   | { readonly ok: false; readonly errors: readonly { readonly code: 'unvalidated_invoice'; readonly path: '' }[] };
 
 const NAMESPACE_INVOICE = 'urn:oasis:names:specification:ubl:schema:xsd:Invoice-2';
+const NAMESPACE_CREDIT_NOTE = 'urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2';
+// UNCL4461 code 97, clearing between partners: the only payment of a 381 (MDR-35). It carries no BG-17.
+const CLEARING_PAYMENT_MEANS_CODE = '97';
 const NAMESPACE_CAC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2';
 const NAMESPACE_CBC = 'urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2';
 
@@ -36,10 +40,11 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
   if (!isValidatedInvoice(invoice)) return { ok: false, errors: [{ code: 'unvalidated_invoice', path: '' }] };
 
   const currency = invoice.currency;
+  const creditNote = invoice.documentTypeCode === '381';
   const root: Element = {
-    name: 'Invoice',
+    name: creditNote ? 'CreditNote' : 'Invoice',
     attributes: [
-      ['xmlns', NAMESPACE_INVOICE],
+      ['xmlns', creditNote ? NAMESPACE_CREDIT_NOTE : NAMESPACE_INVOICE],
       ['xmlns:cac', NAMESPACE_CAC],
       ['xmlns:cbc', NAMESPACE_CBC],
     ],
@@ -48,19 +53,16 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
       leaf('cbc:ProfileID', BUSINESS_PROCESS_TYPE), // BT-23
       leaf('cbc:ID', invoice.invoiceNumber), // BT-1
       leaf('cbc:IssueDate', invoice.issueDate), // BT-2
-      ...(invoice.payment.dueDate !== undefined ? [leaf('cbc:DueDate', invoice.payment.dueDate)] : []), // BT-9
-      leaf('cbc:InvoiceTypeCode', invoice.documentTypeCode), // BT-3
+      ...(invoice.documentTypeCode === '380' && invoice.payment.dueDate !== undefined ? [leaf('cbc:DueDate', invoice.payment.dueDate)] : []), // BT-9 (a CreditNote has no DueDate)
+      leaf(creditNote ? 'cbc:CreditNoteTypeCode' : 'cbc:InvoiceTypeCode', invoice.documentTypeCode), // BT-3
       ...invoice.notes.map((note) => leaf('cbc:Note', note.text)), // BG-1 / BT-22
       leaf('cbc:DocumentCurrencyCode', currency), // BT-5
       leaf('cbc:BuyerReference', invoice.buyerReference), // BT-10
+      ...(invoice.documentTypeCode === '381' ? [billingReference(invoice.precedingInvoice)] : []), // BG-3
       group('cac:AccountingSupplierParty', party(invoice.seller, invoice.seller)), // BG-4
       group('cac:AccountingCustomerParty', party(invoice.buyer)), // BG-7
       group('cac:Delivery', leaf('cbc:ActualDeliveryDate', invoice.deliveryDate)), // BT-72
-      group(
-        'cac:PaymentMeans', // BG-16
-        leaf('cbc:PaymentMeansCode', invoice.payment.means.code), // BT-81
-        payeeFinancialAccount(invoice.payment.means.account), // BG-17
-      ),
+      paymentMeans(invoice),
       ...(invoice.payment.termsText !== undefined ? [group('cac:PaymentTerms', leaf('cbc:Note', invoice.payment.termsText))] : []), // BT-20
       taxTotal(invoice, currency),
       group(
@@ -70,15 +72,44 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
         amount('cbc:TaxInclusiveAmount', invoice.totals.totalWithVat, currency), // BT-112
         amount('cbc:PayableAmount', invoice.totals.amountDue, currency), // BT-115
       ),
-      ...invoice.lines.map((line, index) => invoiceLine(line, index, currency)),
+      ...invoice.lines.map((line, index) => invoiceLine(line, index, currency, creditNote)),
     ],
   };
 
   return { ok: true, xml: `<?xml version="1.0" encoding="UTF-8"?>\n${render(root, 0).join('\n')}\n` };
 }
 
+// BG-3. PrecedingInvoice reference: BillingReference follows BuyerReference in the CreditNote sequence.
+function billingReference(reference: PrecedingInvoiceReference): Element {
+  return group(
+    'cac:BillingReference',
+    group(
+      'cac:InvoiceDocumentReference',
+      leaf('cbc:ID', reference.number), // BT-25
+      ...(reference.issueDate !== undefined ? [leaf('cbc:IssueDate', reference.issueDate)] : []), // BT-26
+    ),
+  );
+}
+
+// BG-16. A 380 names its credit transfer (BG-17). A 381 is a clearing: code 97, no account, and BT-9 sits here as
+// PaymentDueDate because a CreditNote has no root DueDate (PaymentMeansType order: code, PaymentDueDate, accounts).
+function paymentMeans(invoice: Invoice): Element {
+  if (invoice.documentTypeCode === '381') {
+    return group(
+      'cac:PaymentMeans',
+      leaf('cbc:PaymentMeansCode', CLEARING_PAYMENT_MEANS_CODE), // BT-81
+      ...(invoice.payment.dueDate !== undefined ? [leaf('cbc:PaymentDueDate', invoice.payment.dueDate)] : []), // BT-9
+    );
+  }
+  return group(
+    'cac:PaymentMeans', // BG-16
+    leaf('cbc:PaymentMeansCode', invoice.payment.means.code), // BT-81
+    payeeFinancialAccount(invoice.payment.means.account), // BG-17
+  );
+}
+
 // FinancialAccountType order: ID, Name, then FinancialInstitutionBranch. No schemeID on either ID (UBL-CR-654, UBL-CR-655).
-function payeeFinancialAccount(account: Invoice['payment']['means']['account']): Element {
+function payeeFinancialAccount(account: PaymentAccount): Element {
   return group(
     'cac:PayeeFinancialAccount',
     leaf('cbc:ID', account.id.value), // BT-84
@@ -160,11 +191,11 @@ function taxTotal(invoice: Invoice, currency: string): Element {
   );
 }
 
-function invoiceLine(line: InvoiceLine, index: number, currency: string): Element {
+function invoiceLine(line: InvoiceLine, index: number, currency: string, creditNote: boolean): Element {
   return group(
-    'cac:InvoiceLine', // BG-25
+    creditNote ? 'cac:CreditNoteLine' : 'cac:InvoiceLine', // BG-25
     leaf('cbc:ID', String(index + 1)), // BT-126
-    leaf('cbc:InvoicedQuantity', formatXmlDecimal(line.quantity), [['unitCode', line.unitCode]]), // BT-129, BT-130
+    leaf(creditNote ? 'cbc:CreditedQuantity' : 'cbc:InvoicedQuantity', formatXmlDecimal(line.quantity), [['unitCode', line.unitCode]]), // BT-129, BT-130
     amount('cbc:LineExtensionAmount', line.netAmount, currency), // BT-131
     group(
       'cac:Item',

@@ -45,6 +45,7 @@ test('the validated invoice carries the business data and the typed line quantit
   const result = buildInvoice(loadFixtureInput('c-rounded-line-net'));
   const invoice = result.ok ? result.value : assert.fail('expected success');
   assert.equal(invoice.invoiceNumber, 'RE-2026-0003');
+  assert.ok(invoice.documentTypeCode === '380');
   assert.equal(invoice.seller.vatId, 'DE123456789');
   assert.equal(invoice.buyer.address.city, 'Hamburg');
   assert.deepEqual(invoice.payment.means, { kind: 'credit-transfer', code: '58', account: { id: { scheme: 'IBAN', value: 'DE79000000001234567890' } } });

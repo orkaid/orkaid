@@ -8,9 +8,14 @@ import { resolve } from 'node:path';
 export const FIXTURE_NAMES = ['a-simple', 'b-ten-lines', 'c-rounded-line-net', 'd-mixed-rates', 'e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms', 'm-payment-means-30', 'n-payment-means-30-account-details', 'o-eas-0204-seller-0088-buyer', 'p-eas-0088-seller-0204-buyer', 'q-seller-bt29-bt32', 'r-numeric-precision-boundary', 's-standard-and-reverse-charge'] as const;
 export type FixtureName = (typeof FIXTURE_NAMES)[number];
 
+// Credit note 381 fixtures (MDR-35). Kept apart from FIXTURE_NAMES: that list is the 380 set whose goldens and
+// shared tests stay byte-identical.
+export const CREDIT_NOTE_FIXTURE_NAMES = ['t-credit-note-full-reversal', 'u-credit-note-partial-standard-and-reverse-charge', 'v-credit-note-kleinunternehmer', 'w-credit-note-reverse-charge'] as const;
+export type CreditNoteFixtureName = (typeof CREDIT_NOTE_FIXTURE_NAMES)[number];
+
 export type JsonObject = { [key: string]: unknown };
 
-export function loadFixtureInput(name: FixtureName): JsonObject {
+export function loadFixtureInput(name: FixtureName | CreditNoteFixtureName): JsonObject {
   return JSON.parse(readFileSync(resolve(import.meta.dirname, `../fixtures/xrechnung/${name}.json`), 'utf8')) as JsonObject;
 }
 
@@ -200,5 +205,44 @@ export const EXPECTED: Record<FixtureName, ExpectedAmounts> = {
     sumOfLineNets: '300.00',
     totalVat: '19.00',
     gross: '319.00',
+  },
+};
+
+// Credit notes keep positive amounts (MDR-35); worked by hand, never from the code under test.
+// T (full reversal of A, S 19%): 2 x 49.90 = 99.80; 1.5 x 80.00 = 120.00; 219.80 x 19% = 41.762 -> 41.76; 261.56.
+// U (partial reversal of S: 500 of the 1000 S units and 1000 of the 2000 AE units): 500 x 0.10 = 50.00 at S 19% -> 9.50;
+// 1000 x 0.10 = 100.00 under AE, VAT 0.00; 150.00 + 9.50 = 159.50.
+// V (full reversal of E, Kleinunternehmer) and W (full reversal of H, reverse charge): the amounts of E and H.
+export const EXPECTED_CREDIT_NOTE: Record<CreditNoteFixtureName, ExpectedAmounts> = {
+  't-credit-note-full-reversal': {
+    lineNets: ['99.80', '120.00'],
+    breakdown: [{ rate: '19', taxable: '219.80', tax: '41.76' }],
+    sumOfLineNets: '219.80',
+    totalVat: '41.76',
+    gross: '261.56',
+  },
+  'u-credit-note-partial-standard-and-reverse-charge': {
+    lineNets: ['50.00', '100.00'],
+    breakdown: [
+      { rate: '19', taxable: '50.00', tax: '9.50' },
+      { rate: '0', taxable: '100.00', tax: '0.00' },
+    ],
+    sumOfLineNets: '150.00',
+    totalVat: '9.50',
+    gross: '159.50',
+  },
+  'v-credit-note-kleinunternehmer': {
+    lineNets: ['99.80', '120.00'],
+    breakdown: [{ rate: '0', taxable: '219.80', tax: '0.00' }],
+    sumOfLineNets: '219.80',
+    totalVat: '0.00',
+    gross: '219.80',
+  },
+  'w-credit-note-reverse-charge': {
+    lineNets: ['99.80', '120.00'],
+    breakdown: [{ rate: '0', taxable: '219.80', tax: '0.00' }],
+    sumOfLineNets: '219.80',
+    totalVat: '0.00',
+    gross: '219.80',
   },
 };

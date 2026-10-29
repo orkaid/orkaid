@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { serializeCiiInvoice } from '../../src/lib/domain/xrechnung/cii.ts';
-import { buildInvoice, PROVISIONAL_MAX_TEXT_LENGTH, type Invoice } from '../../src/lib/domain/xrechnung/document.ts';
+import { buildInvoice, PROVISIONAL_MAX_TEXT_LENGTH, type CommercialInvoice, type Invoice } from '../../src/lib/domain/xrechnung/document.ts';
 import { serializeUblInvoice } from '../../src/lib/domain/xrechnung/ubl.ts';
 import { loadFixtureInput, withoutValue, withValue, type JsonObject } from '../support/fixtures.ts';
 import { childNames, one, parseXml, select } from '../support/xml.ts';
@@ -18,9 +18,11 @@ const IBAN = 'DE79000000001234567890';
 const minimal = () => loadFixtureInput('m-payment-means-30');
 const full = () => loadFixtureInput('n-payment-means-30-account-details');
 
-function built(input: JsonObject): Invoice {
+function built(input: JsonObject): CommercialInvoice {
   const result = buildInvoice(input);
-  return result.ok ? result.value : assert.fail(`expected success: ${JSON.stringify(result.errors)}`);
+  const invoice = result.ok ? result.value : assert.fail(`expected success: ${JSON.stringify(result.errors)}`);
+  assert.ok(invoice.documentTypeCode === '380');
+  return invoice;
 }
 
 function rejected(input: JsonObject): readonly string[] {
