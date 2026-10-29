@@ -27,7 +27,7 @@ import { basename, join, resolve } from 'node:path';
 import { buildInvoice, UNIT_CODES } from '../../src/lib/domain/xrechnung/document.ts';
 import { serializeCiiInvoice } from '../../src/lib/domain/xrechnung/cii.ts';
 import { serializeUblInvoice } from '../../src/lib/domain/xrechnung/ubl.ts';
-import { FIXTURE_NAMES, loadFixtureInput, type FixtureName } from '../../tests/support/fixtures.ts';
+import { CREDIT_NOTE_FIXTURE_NAMES, FIXTURE_NAMES, loadFixtureInput, type CreditNoteFixtureName, type FixtureName } from '../../tests/support/fixtures.ts';
 import { parseReport, type ParsedReport } from './report.ts';
 
 export type Manifest = {
@@ -45,6 +45,10 @@ const GOLDEN = join(ROOT, 'tests/fixtures/xrechnung/golden');
 const CONTROL_NAME = 'control-missing-buyer-reference';
 type Syntax = 'ubl' | 'cii';
 const SCENARIOS: Record<Syntax, string> = { ubl: 'EN16931 XRechnung (UBL Invoice)', cii: 'EN16931 XRechnung (CII)' };
+// A credit note 381 is a UBL CreditNote document and matches the validator's own CreditNote scenario (MDR-35); in CII it is
+// the same CrossIndustryInvoice scenario as any invoice.
+const UBL_CREDIT_NOTE_SCENARIO = 'EN16931 XRechnung (UBL CreditNote)';
+const isCreditNoteFixture = (name: string): name is CreditNoteFixtureName => (CREDIT_NOTE_FIXTURE_NAMES as readonly string[]).includes(name);
 // M1 current evidence: these fixtures are also validated in CII (their goldens are `<name>.cii.xml`).
 const CII_FIXTURES: readonly FixtureName[] = ['e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms', 'm-payment-means-30', 'n-payment-means-30-account-details', 'o-eas-0204-seller-0088-buyer', 'p-eas-0088-seller-0204-buyer', 'q-seller-bt29-bt32', 'r-numeric-precision-boundary', 's-standard-and-reverse-charge'];
 const ciiName = (name: string): string => `${name}.cii`;
@@ -56,7 +60,7 @@ const removeElement = (xml: string, pattern: RegExp): string => {
   if (mutated === xml) fail('a control mutation did not change the document');
   return mutated;
 };
-const KLEINUNTERNEHMER_CONTROLS: Record<string, { syntax: Syntax; base: FixtureName; mutate: (xml: string) => string; codes: string[] }> = {
+const KLEINUNTERNEHMER_CONTROLS: Record<string, { syntax: Syntax; base: FixtureName | CreditNoteFixtureName; mutate: (xml: string) => string; codes: string[]; scenario?: string }> = {
   'control-ku-ubl-missing-bt120': { syntax: 'ubl', base: 'e-kleinunternehmer', mutate: (x) => removeElement(x, /^ *<cbc:TaxExemptionReason>.*<\/cbc:TaxExemptionReason>\n/m), codes: ['BR-E-10'] },
   'control-ku-ubl-nonzero-vat': { syntax: 'ubl', base: 'e-kleinunternehmer', mutate: (x) => x.replace(/(<cbc:TaxAmount currencyID="EUR">)0\.00/g, '$11.00'), codes: ['BR-E-09'] },
   'control-ku-ubl-missing-seller-tax-id': { syntax: 'ubl', base: 'e-kleinunternehmer', mutate: (x) => removeElement(x, /^ *<cac:PartyTaxScheme>\n(?:.*\n){5}/m), codes: ['BR-E-02', 'BR-DE-16'] },
@@ -121,7 +125,23 @@ const MIXED_CONTROLS: typeof KLEINUNTERNEHMER_CONTROLS = {
   'control-mixed-cii-ae-line-rate-19': { syntax: 'cii', base: 's-standard-and-reverse-charge', mutate: (x) => x.replace(/(<ram:CategoryCode>AE<\/ram:CategoryCode>\n *<ram:RateApplicablePercent>)0</g, '$119<'), codes: ['BR-AE-05'] },
   'control-mixed-cii-missing-bt120': { syntax: 'cii', base: 's-standard-and-reverse-charge', mutate: (x) => removeElement(x, /^ *<ram:ExemptionReason>.*<\/ram:ExemptionReason>\n/m), codes: ['BR-AE-10'] },
 };
-const SPECIAL_CONTROLS = { ...KLEINUNTERNEHMER_CONTROLS, ...REVERSE_CHARGE_CONTROLS, ...PAYMENT_MEANS_CONTROLS, ...EVIDENCE_CONTROLS, ...MIXED_CONTROLS };
+// Credit note 381 (MDR-35). Each control breaks one rule the 381 slice newly exercises while the rest of the credit note stays
+// intact. The domain refuses to generate all of these documents, so they are derived from the golden text:
+// a 381 under an Invoice root (BR-CL-01: the document type code must match the root), a CreditNote with a root DueDate
+// (XSD: BT-9 belongs in PaymentMeans), a BG-3 without BT-25 (BR-55 in CII, XSD in UBL), and a transfer code 30 without
+// BG-17 (the account the domain never writes for a 381; BR-61 and CII-SR-470 with BR-DE-23-a).
+const CREDIT_NOTE_CONTROLS: typeof KLEINUNTERNEHMER_CONTROLS = {
+  'control-cn-ubl-381-under-invoice-root': {
+    syntax: 'ubl', base: 't-credit-note-full-reversal', scenario: SCENARIOS.ubl, codes: ['BR-CL-01'],
+    mutate: (x) => x.replace(/<CreditNote xmlns="[^"]*CreditNote-2"/, '<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"').replace('</CreditNote>', '</Invoice>').replaceAll('CreditNoteTypeCode', 'InvoiceTypeCode').replaceAll('CreditNoteLine', 'InvoiceLine').replaceAll('CreditedQuantity', 'InvoicedQuantity'),
+  },
+  'control-cn-ubl-root-duedate': { syntax: 'ubl', base: 't-credit-note-full-reversal', mutate: (x) => replaceExact(x, '  <cbc:CreditNoteTypeCode>', '  <cbc:DueDate>2026-10-24</cbc:DueDate>\n  <cbc:CreditNoteTypeCode>'), codes: ['cvc-complex-type.2.4.a'] },
+  'control-cn-ubl-bg3-without-bt25': { syntax: 'ubl', base: 't-credit-note-full-reversal', mutate: (x) => removeElement(x, /^ *<cbc:ID>RE-2026-0001<\/cbc:ID>\n/m), codes: ['cvc-complex-type.2.4.a'] },
+  'control-cn-cii-bg3-without-bt25': { syntax: 'cii', base: 't-credit-note-full-reversal', mutate: (x) => removeElement(x, /^ *<ram:IssuerAssignedID>.*<\/ram:IssuerAssignedID>\n/m), codes: ['BR-55'] },
+  'control-cn-ubl-transfer-without-bg17': { syntax: 'ubl', base: 't-credit-note-full-reversal', mutate: (x) => replaceExact(x, '<cbc:PaymentMeansCode>97<', '<cbc:PaymentMeansCode>30<'), codes: ['BR-61', 'BR-DE-23-a'] },
+  'control-cn-cii-transfer-without-bg17': { syntax: 'cii', base: 't-credit-note-full-reversal', mutate: (x) => replaceExact(x, '<ram:TypeCode>97<', '<ram:TypeCode>30<'), codes: ['CII-SR-470', 'BR-DE-23-a'] },
+};
+const SPECIAL_CONTROLS = { ...KLEINUNTERNEHMER_CONTROLS, ...REVERSE_CHARGE_CONTROLS, ...PAYMENT_MEANS_CONTROLS, ...EVIDENCE_CONTROLS, ...MIXED_CONTROLS, ...CREDIT_NOTE_CONTROLS };
 const REQUIRED_STEPS = ['val-xsd', 'val-sch.1', 'val-sch.2', 'val-xml'];
 
 const sha256Hex = (data: Buffer | string): string => createHash('sha256').update(data).digest('hex');
@@ -192,9 +212,9 @@ function verifyUnitCodes(configurationDirectory: string): void {
 
 // ---------------------------------------------------------------------------------------------- documents
 
-type Target = { name: string; syntax: Syntax; xmlPath: string; xml: string; fixtureInput?: string; expectAccept: boolean; expectCodes?: readonly string[] };
+type Target = { name: string; syntax: Syntax; xmlPath: string; xml: string; fixtureInput?: string; expectAccept: boolean; expectCodes?: readonly string[]; scenario?: string };
 
-function generate(name: FixtureName, syntax: Syntax): string {
+function generate(name: FixtureName | CreditNoteFixtureName, syntax: Syntax): string {
   const built = buildInvoice(loadFixtureInput(name));
   if (!built.ok) fail(`fixture ${name} does not build: ${JSON.stringify(built.errors)}`);
   const serialized = syntax === 'ubl' ? serializeUblInvoice(built.value) : serializeCiiInvoice(built.value);
@@ -202,7 +222,7 @@ function generate(name: FixtureName, syntax: Syntax): string {
   return serialized.xml;
 }
 
-function fixtureTarget(name: FixtureName, syntax: Syntax): Target {
+function fixtureTarget(name: FixtureName | CreditNoteFixtureName, syntax: Syntax): Target {
   const goldenPath = join(GOLDEN, `${syntax === 'ubl' ? name : ciiName(name)}.xml`);
   if (!existsSync(goldenPath)) fail(`missing golden file ${goldenPath}`);
   const golden = readFileSync(goldenPath, 'utf8');
@@ -210,22 +230,24 @@ function fixtureTarget(name: FixtureName, syntax: Syntax): Target {
   // The XML that is validated must be the XML the serializer generates from the fixture, byte for byte.
   if (generate(name, syntax) !== golden) fail(`fixture ${name}: the generated ${syntax} XML differs from ${goldenPath}`);
 
-  return { name: syntax === 'ubl' ? name : ciiName(name), syntax, xmlPath: goldenPath, xml: golden, fixtureInput: readFileSync(join(ROOT, `tests/fixtures/xrechnung/${name}.json`), 'utf8'), expectAccept: true };
+  return { name: syntax === 'ubl' ? name : ciiName(name), syntax, xmlPath: goldenPath, xml: golden, fixtureInput: readFileSync(join(ROOT, `tests/fixtures/xrechnung/${name}.json`), 'utf8'), expectAccept: true, ...(isCreditNoteFixture(name) && syntax === 'ubl' ? { scenario: UBL_CREDIT_NOTE_SCENARIO } : {}) };
 }
 
-function writeControl(name: string, syntax: Syntax, xml: string, expectCodes: readonly string[]): Target {
+function writeControl(name: string, syntax: Syntax, xml: string, expectCodes: readonly string[], scenario?: string): Target {
   const directory = join(CACHE, 'work');
   mkdirSync(directory, { recursive: true });
   const xmlPath = join(directory, `${name}.xml`);
   writeFileSync(xmlPath, xml);
-  return { name, syntax, xmlPath, xml, expectAccept: false, expectCodes };
+  return { name, syntax, xmlPath, xml, expectAccept: false, expectCodes, ...(scenario !== undefined ? { scenario } : {}) };
 }
 
 function specialControlTarget(name: string): Target {
   const control = SPECIAL_CONTROLS[name];
   if (control === undefined) fail(`unknown control ${name}`);
   // The base is the committed golden, after it has been proven equal to the generated document.
-  return writeControl(name, control.syntax, control.mutate(fixtureTarget(control.base, control.syntax).xml), control.codes);
+  // A control that is meant to match another scenario says so; otherwise it must still match its base's scenario.
+  const scenario = control.scenario ?? (isCreditNoteFixture(control.base) && control.syntax === 'ubl' ? UBL_CREDIT_NOTE_SCENARIO : undefined);
+  return writeControl(name, control.syntax, control.mutate(fixtureTarget(control.base, control.syntax).xml), control.codes, scenario);
 }
 
 function controlTarget(): Target {
@@ -267,7 +289,8 @@ function validate(target: Target, tooling: Tooling, manifest: Manifest, triage: 
   if (report === undefined) {
     if (reportText === undefined) problems.push('the validator wrote no report');
   } else {
-    if (report.scenario !== SCENARIOS[target.syntax]) problems.push(`matched scenario is "${report.scenario}", expected "${SCENARIOS[target.syntax]}"`);
+    const expectedScenario = target.scenario ?? SCENARIOS[target.syntax];
+    if (report.scenario !== expectedScenario) problems.push(`matched scenario is "${report.scenario}", expected "${expectedScenario}"`);
     if (report.documentHashSha256Base64 !== sha256Base64(target.xml)) problems.push('the validator hashed different bytes than the ones that were generated');
     if (report.engine !== `KoSIT Validator ${manifest.validator.version}`) problems.push(`engine is "${report.engine}"`);
 
@@ -319,7 +342,7 @@ function main(): void {
   const manifest = JSON.parse(readFileSync(join(ROOT, 'tools/kosit/kosit-manifest.json'), 'utf8')) as Manifest;
   const triage = JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/xrechnung/kosit-triage.json'), 'utf8')) as Triage;
   const requested = process.argv.slice(2);
-  const allNames = [...FIXTURE_NAMES, ...CII_FIXTURES.map(ciiName), CONTROL_NAME, ...Object.keys(SPECIAL_CONTROLS)];
+  const allNames = [...FIXTURE_NAMES, ...CII_FIXTURES.map(ciiName), ...CREDIT_NOTE_FIXTURE_NAMES, ...CREDIT_NOTE_FIXTURE_NAMES.map(ciiName), CONTROL_NAME, ...Object.keys(SPECIAL_CONTROLS)];
   const names = requested.length > 0 ? requested : allNames;
   for (const name of names) if (!allNames.includes(name)) fail(`unknown fixture ${name}`);
 
