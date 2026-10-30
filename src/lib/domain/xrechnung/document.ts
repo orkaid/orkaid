@@ -861,7 +861,8 @@ function isIsoDate(text: string): boolean {
   const match = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(text);
   if (!match) return false;
   const [, year = '', month = '', day = ''] = match;
-  if (year === '0000') return false;
+  // The range guard keeps the table lookup on its own entries: '00' or '13' would otherwise read Object.prototype.
+  if (year === '0000' || month < '01' || month > '12') return false;
   const y = BigInt(year);
   const leap = (y % 4n === 0n && y % 100n !== 0n) || y % 400n === 0n;
   const last = month === '02' && leap ? 29 : DAYS_IN_MONTH[month];

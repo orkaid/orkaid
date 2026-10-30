@@ -199,6 +199,54 @@ test('an inherited invoicingPeriod, deliveryDate, startDate or endDate is never 
   }
 });
 
+test('an inherited month-table entry never makes month 00 or 13 a calendar month, for BG-14 and BT-72 (IR37-01)', () => {
+  const prototype = Object.prototype as Record<string, unknown>;
+  let reads = 0;
+  const plants: [string, PropertyDescriptor][] = [
+    ['13', { value: 31, writable: true }],
+    ['00', { value: 31, writable: true }],
+    ['0', { value: 31, writable: true }],
+    ['13', { get: () => (reads++, assert.fail('inherited getter executed')) }],
+    ['00', { get: () => (reads++, assert.fail('inherited getter executed')) }],
+  ];
+  for (const [key, descriptor] of plants) {
+    assert.equal(Object.hasOwn(prototype, key), false, `Object.prototype.${key} already exists`);
+    try {
+      Object.defineProperty(prototype, key, { ...descriptor, configurable: true });
+      for (const { kind, withDelivery, withPeriod } of KINDS) {
+        const label = `${kind} Object.prototype.${key} ${'get' in descriptor ? 'getter' : 'value'}`;
+        for (const month of ['13', '00']) {
+          const [start, end] = [`2026-${month}-01`, `2026-${month}-31`];
+          assert.deepEqual(pairs(period(withPeriod(), { startDate: start, endDate: end })), ['invalid_date@invoicingPeriod.startDate', 'invalid_date@invoicingPeriod.endDate'], `${label} ${month}`);
+          assert.deepEqual(pairs(period(withPeriod(), { startDate: start, endDate: '9999-12-31' })), ['invalid_date@invoicingPeriod.startDate'], `${label} ${month}`);
+          assert.deepEqual(pairs(period(withPeriod(), { startDate: '0001-01-01', endDate: end })), ['invalid_date@invoicingPeriod.endDate'], `${label} ${month}`);
+          assert.deepEqual(pairs(withValue(withDelivery(), 'deliveryDate', start)), ['invalid_date@deliveryDate'], `${label} ${month}`);
+        }
+        // Real months are unaffected by the planted entry.
+        built(period(withPeriod(), { startDate: '2024-02-29', endDate: '2026-12-31' }));
+        built(withValue(withDelivery(), 'deliveryDate', '2026-01-31'));
+      }
+    } finally {
+      delete prototype[key];
+    }
+  }
+  assert.equal(reads, 0);
+});
+
+test('every month accepts its last day and refuses the day after, in a period and as BT-72', () => {
+  const last = ['31', '28', '31', '30', '31', '30', '31', '31', '30', '31', '30', '31'];
+  for (const { kind, withDelivery, withPeriod } of KINDS) {
+    last.forEach((day, index) => {
+      const month = String(index + 1).padStart(2, '0');
+      const [valid, invalid] = [`2026-${month}-${day}`, `2026-${month}-${String(Number(day) + 1)}`];
+      assert.deepEqual(built(period(withPeriod(), { startDate: `2026-${month}-01`, endDate: valid })).invoicingPeriod, { startDate: `2026-${month}-01`, endDate: valid }, `${kind} ${valid}`);
+      assert.equal(built(withValue(withDelivery(), 'deliveryDate', valid)).deliveryDate, valid, `${kind} ${valid}`);
+      assert.deepEqual(pairs(period(withPeriod(), { startDate: `2026-${month}-01`, endDate: invalid })), ['invalid_date@invoicingPeriod.endDate'], `${kind} ${invalid}`);
+      assert.deepEqual(pairs(withValue(withDelivery(), 'deliveryDate', invalid)), ['invalid_date@deliveryDate'], `${kind} ${invalid}`);
+    });
+  }
+});
+
 test('Object.prototype pollution after validation does not change which date the serializers write', () => {
   const prototype = Object.prototype as Record<string, unknown>;
   const keys = ['invoicingPeriod', 'deliveryDate', 'startDate', 'endDate'];
