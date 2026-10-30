@@ -260,24 +260,26 @@ function validate(
     return undefined;
   }
 
-  if (input.documentTypeCode !== '380' && input.documentTypeCode !== '381') errors.push({ code: 'unsupported_document_type', path: 'documentTypeCode' });
-  if (input.currency !== 'EUR') errors.push({ code: 'unsupported_currency', path: 'currency' });
+  const documentTypeCode = ownField(input, 'documentTypeCode');
+  if (documentTypeCode !== '380' && documentTypeCode !== '381') errors.push({ code: 'unsupported_document_type', path: 'documentTypeCode' });
+  if (ownField(input, 'currency') !== 'EUR') errors.push({ code: 'unsupported_currency', path: 'currency' });
 
   const parsedLines: ParsedLine[] = [];
   let firstUnscanned: number | undefined;
-  if (!Array.isArray(input.lines)) {
+  const inputLines = ownField(input, 'lines');
+  if (!Array.isArray(inputLines)) {
     errors.push({ code: 'invalid_type', path: 'lines' });
-  } else if (input.lines.length === 0) {
+  } else if (inputLines.length === 0) {
     errors.push({ code: 'no_lines', path: 'lines' });
   } else {
     // Indexed loop, not forEach: forEach skips holes, which would silently drop lines (new Array(1) -> "valid").
     // A hole reads as undefined (never as Array.prototype[index]) and is reported as an invalid line.
     let index = 0;
-    for (; index < input.lines.length && errors.length < PROVISIONAL_MAX_REPORTED_ERRORS; index++) {
-      const parsed = validateLine(ownElement(input.lines, index), `lines[${index}]`, notation, errors, callerFields.line ?? []);
+    for (; index < inputLines.length && errors.length < PROVISIONAL_MAX_REPORTED_ERRORS; index++) {
+      const parsed = validateLine(ownElement(inputLines, index), `lines[${index}]`, notation, errors, callerFields.line ?? []);
       if (parsed) parsedLines.push(parsed);
     }
-    if (index < input.lines.length) firstUnscanned = index;
+    if (index < inputLines.length) firstUnscanned = index;
   }
 
   reportUnknownFields(input, [...INVOICE_FIELDS, ...(callerFields.invoice ?? [])], '', errors);
@@ -299,9 +301,9 @@ function validateLine(
   }
 
   const errorsBefore = errors.length;
-  const quantity = parseLineValue(line.quantity, `${path}.quantity`, notation, MAX_QUANTITY_EFFECTIVE_FRACTION_DIGITS, MAX_QUANTITY_EXCLUSIVE, errors);
-  const unitPrice = parseLineValue(line.unitPrice, `${path}.unitPrice`, notation, MAX_UNIT_PRICE_EFFECTIVE_FRACTION_DIGITS, MAX_UNIT_PRICE_EXCLUSIVE, errors);
-  const vat = validateVat(line.vat, `${path}.vat`, notation, errors);
+  const quantity = parseLineValue(ownField(line, 'quantity'), `${path}.quantity`, notation, MAX_QUANTITY_EFFECTIVE_FRACTION_DIGITS, MAX_QUANTITY_EXCLUSIVE, errors);
+  const unitPrice = parseLineValue(ownField(line, 'unitPrice'), `${path}.unitPrice`, notation, MAX_UNIT_PRICE_EFFECTIVE_FRACTION_DIGITS, MAX_UNIT_PRICE_EXCLUSIVE, errors);
+  const vat = validateVat(ownField(line, 'vat'), `${path}.vat`, notation, errors);
   reportUnknownFields(line, [...LINE_FIELDS, ...callerLineFields], path, errors);
 
   if (errors.length > errorsBefore || !quantity || !unitPrice || !vat) return undefined;
@@ -315,13 +317,16 @@ const ZERO_RATE_CATEGORY = { kleinunternehmer: 'E', 'reverse-charge': 'AE' } as 
 
 function validateVat(input: unknown, path: string, notation: NumberNotation, errors: InvoiceError[]): InvoiceLineVat | undefined {
   const record = isRecord(input) ? input : undefined;
-  const special = record?.treatment === 'kleinunternehmer' || record?.treatment === 'reverse-charge' ? record.treatment : undefined;
-  const treatmentOk = special !== undefined || record?.treatment === 'standard';
+  const treatment = record && ownField(record, 'treatment');
+  const category = record && ownField(record, 'category');
+  const rate = record && ownField(record, 'rate');
+  const special = treatment === 'kleinunternehmer' || treatment === 'reverse-charge' ? treatment : undefined;
+  const treatmentOk = special !== undefined || treatment === 'standard';
   if (!treatmentOk) errors.push({ code: 'unsupported_vat_treatment', path: `${path}.treatment` });
-  const categoryOk = record?.category === (special === undefined ? 'S' : ZERO_RATE_CATEGORY[special]);
+  const categoryOk = category === (special === undefined ? 'S' : ZERO_RATE_CATEGORY[special]);
   if (!categoryOk) errors.push({ code: 'unsupported_vat_category', path: `${path}.category` });
-  const standardRate = special === undefined ? normalizeVatRate(record?.rate, notation) : undefined;
-  const rateOk = special === undefined ? standardRate !== undefined : isZeroRate(record?.rate, notation);
+  const standardRate = special === undefined ? normalizeVatRate(rate, notation) : undefined;
+  const rateOk = special === undefined ? standardRate !== undefined : isZeroRate(rate, notation);
   if (!rateOk) errors.push({ code: 'unsupported_vat_rate', path: `${path}.rate` });
   if (record !== undefined) reportUnknownFields(record, VAT_FIELDS, path, errors);
   if (!treatmentOk || !categoryOk || !rateOk) return undefined;
@@ -428,6 +433,11 @@ function calculate(lines: readonly ParsedLine[]): InvoiceTotals {
 /** The element at `index` only if the array has it as an own property: a hole is undefined, never an inherited Array.prototype[index]. */
 export function ownElement(list: readonly unknown[], index: number): unknown {
   return Object.hasOwn(list, index) ? list[index] : undefined;
+}
+
+/** The field only if the record owns it: a missing field is undefined, never an inherited Object.prototype value. */
+function ownField(record: Record<string, unknown>, key: string): unknown {
+  return Object.hasOwn(record, key) ? record[key] : undefined;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
