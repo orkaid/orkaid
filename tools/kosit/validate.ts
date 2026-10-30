@@ -17,6 +17,8 @@
 // BR-DE-23-a, BR-CL-16); the electronic-address schemes 0204 and 0088 in both party roles (control: an unknown scheme,
 // BR-CL-25) and seller BT-29 with BT-32 (control: BT-29 removed, so BT-32 alone is left, BR-CO-26) likewise; standard
 // and reverse charge in one invoice likewise (controls for BR-AE-02, -05 and -10 with the standard bucket present).
+// The invoicing period BG-14 instead of BT-72 (MDR-37) on a 380 and a 381 likewise (controls for BR-29, BR-CO-19 and the
+// XSD element positions).
 // A pass here is not legal certification and says nothing about tax correctness.
 
 import { spawnSync } from 'node:child_process';
@@ -27,7 +29,7 @@ import { basename, join, resolve } from 'node:path';
 import { buildInvoice, UNIT_CODES } from '../../src/lib/domain/xrechnung/document.ts';
 import { serializeCiiInvoice } from '../../src/lib/domain/xrechnung/cii.ts';
 import { serializeUblInvoice } from '../../src/lib/domain/xrechnung/ubl.ts';
-import { CREDIT_NOTE_FIXTURE_NAMES, FIXTURE_NAMES, REFERENCE_FIXTURE_NAMES, loadFixtureInput, type CreditNoteFixtureName, type FixtureName, type ReferenceFixtureName } from '../../tests/support/fixtures.ts';
+import { CREDIT_NOTE_FIXTURE_NAMES, CREDIT_NOTE_PERIOD_FIXTURE_NAMES, FIXTURE_NAMES, PERIOD_FIXTURE_NAMES, REFERENCE_FIXTURE_NAMES, loadFixtureInput, type CreditNoteFixtureName, type FixtureName, type PeriodFixtureName, type ReferenceFixtureName } from '../../tests/support/fixtures.ts';
 import { parseReport, type ParsedReport } from './report.ts';
 
 export type Manifest = {
@@ -48,10 +50,11 @@ const SCENARIOS: Record<Syntax, string> = { ubl: 'EN16931 XRechnung (UBL Invoice
 // A credit note 381 is a UBL CreditNote document and matches the validator's own CreditNote scenario (MDR-35); in CII it is
 // the same CrossIndustryInvoice scenario as any invoice.
 const UBL_CREDIT_NOTE_SCENARIO = 'EN16931 XRechnung (UBL CreditNote)';
-const isCreditNoteFixture = (name: string): name is CreditNoteFixtureName => (CREDIT_NOTE_FIXTURE_NAMES as readonly string[]).includes(name);
+const isCreditNoteFixture = (name: string): boolean => ([...CREDIT_NOTE_FIXTURE_NAMES, ...CREDIT_NOTE_PERIOD_FIXTURE_NAMES] as readonly string[]).includes(name);
 // M1 current evidence: these fixtures are also validated in CII (their goldens are `<name>.cii.xml`).
 const CII_FIXTURES: readonly FixtureName[] = ['e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms', 'm-payment-means-30', 'n-payment-means-30-account-details', 'o-eas-0204-seller-0088-buyer', 'p-eas-0088-seller-0204-buyer', 'q-seller-bt29-bt32', 'r-numeric-precision-boundary', 's-standard-and-reverse-charge'];
 const ciiName = (name: string): string => `${name}.cii`;
+type AnyFixtureName = FixtureName | CreditNoteFixtureName | ReferenceFixtureName | PeriodFixtureName;
 
 // Mutated copies of a Kleinunternehmer golden that the official validator must reject, each by the named rules.
 // The domain refuses to generate these documents, so they are derived from the golden text.
@@ -60,7 +63,7 @@ const removeElement = (xml: string, pattern: RegExp): string => {
   if (mutated === xml) fail('a control mutation did not change the document');
   return mutated;
 };
-const KLEINUNTERNEHMER_CONTROLS: Record<string, { syntax: Syntax; base: FixtureName | CreditNoteFixtureName | ReferenceFixtureName; mutate: (xml: string) => string; codes: string[]; scenario?: string }> = {
+const KLEINUNTERNEHMER_CONTROLS: Record<string, { syntax: Syntax; base: AnyFixtureName; mutate: (xml: string) => string; codes: string[]; scenario?: string }> = {
   'control-ku-ubl-missing-bt120': { syntax: 'ubl', base: 'e-kleinunternehmer', mutate: (x) => removeElement(x, /^ *<cbc:TaxExemptionReason>.*<\/cbc:TaxExemptionReason>\n/m), codes: ['BR-E-10'] },
   'control-ku-ubl-nonzero-vat': { syntax: 'ubl', base: 'e-kleinunternehmer', mutate: (x) => x.replace(/(<cbc:TaxAmount currencyID="EUR">)0\.00/g, '$11.00'), codes: ['BR-E-09'] },
   'control-ku-ubl-missing-seller-tax-id': { syntax: 'ubl', base: 'e-kleinunternehmer', mutate: (x) => removeElement(x, /^ *<cac:PartyTaxScheme>\n(?:.*\n){5}/m), codes: ['BR-E-02', 'BR-DE-16'] },
@@ -152,7 +155,31 @@ const REFERENCE_CONTROLS: typeof KLEINUNTERNEHMER_CONTROLS = {
     mutate: (x) => x.replace(/ *<cac:AdditionalDocumentReference>\n *<cbc:ID>PRJ-2026-77<\/cbc:ID>\n *<cbc:DocumentTypeCode>50<\/cbc:DocumentTypeCode>\n *<\/cac:AdditionalDocumentReference>\n/, '  <cac:ProjectReference>\n    <cbc:ID>PRJ-2026-77</cbc:ID>\n  </cac:ProjectReference>\n'),
   },
 };
-const SPECIAL_CONTROLS = { ...KLEINUNTERNEHMER_CONTROLS, ...REVERSE_CHARGE_CONTROLS, ...PAYMENT_MEANS_CONTROLS, ...EVIDENCE_CONTROLS, ...MIXED_CONTROLS, ...CREDIT_NOTE_CONTROLS, ...REFERENCE_CONTROLS };
+// Invoicing period BG-14 (MDR-37). The domain refuses to build any of these, so each is a controlled mutation of a period
+// golden: a reversed period (BR-29) across a leap day on the 380 (zb: 2024-02-29) and within a month on the 381 (zc), in
+// both syntaxes; an empty period element (BR-CO-19); the period moved out of its XSD position (UBL after OrderReference,
+// CII after the payment terms); and a CII document without the required ApplicableHeaderTradeDelivery.
+const UBL_LEAP_DAY = '    <cbc:StartDate>2024-02-29</cbc:StartDate>\n    <cbc:EndDate>2024-02-29</cbc:EndDate>\n';
+const CII_LEAP_END = '<ram:EndDateTime>\n          <udt:DateTimeString format="102">20240229<';
+const UBL_PERIOD = /^ *<cac:InvoicePeriod>\n(?:.*\n){2} *<\/cac:InvoicePeriod>\n/m;
+const CII_PERIOD = /^ *<ram:BillingSpecifiedPeriod>\n(?:.*\n){6} *<\/ram:BillingSpecifiedPeriod>\n/m;
+const movedAfter = (xml: string, element: RegExp, anchor: string): string => {
+  const moved = element.exec(xml)?.[0];
+  if (moved === undefined) fail('a control mutation found no element to move');
+  return replaceExact(removeElement(xml, element), anchor, `${anchor}${moved}`);
+};
+const PERIOD_CONTROLS: typeof KLEINUNTERNEHMER_CONTROLS = {
+  'control-period-ubl-reversed-leap-day': { syntax: 'ubl', base: 'zb-period-single-day-leap', mutate: (x) => replaceExact(x, UBL_LEAP_DAY, '    <cbc:StartDate>2024-02-29</cbc:StartDate>\n    <cbc:EndDate>2024-02-28</cbc:EndDate>\n'), codes: ['BR-29'] },
+  'control-period-cii-reversed-leap-day': { syntax: 'cii', base: 'zb-period-single-day-leap', mutate: (x) => replaceExact(x, CII_LEAP_END, CII_LEAP_END.replace('20240229', '20240228')), codes: ['BR-29'] },
+  'control-period-ubl-381-reversed': { syntax: 'ubl', base: 'zc-credit-note-period-month-references', mutate: (x) => replaceExact(x, '<cbc:EndDate>2026-09-30<', '<cbc:EndDate>2026-08-31<'), codes: ['BR-29'] },
+  'control-period-cii-381-reversed': { syntax: 'cii', base: 'zc-credit-note-period-month-references', mutate: (x) => replaceExact(x, 'format="102">20260930<', 'format="102">20260831<'), codes: ['BR-29'] },
+  'control-period-ubl-empty': { syntax: 'ubl', base: 'za-period-month-references', mutate: (x) => x.replace(UBL_PERIOD, '  <cac:InvoicePeriod></cac:InvoicePeriod>\n'), codes: ['BR-CO-19'] },
+  'control-period-cii-empty': { syntax: 'cii', base: 'za-period-month-references', mutate: (x) => x.replace(CII_PERIOD, '      <ram:BillingSpecifiedPeriod></ram:BillingSpecifiedPeriod>\n'), codes: ['BR-CO-19'] },
+  'control-period-ubl-after-order-reference': { syntax: 'ubl', base: 'za-period-month-references', mutate: (x) => movedAfter(x, UBL_PERIOD, '  </cac:OrderReference>\n'), codes: ['cvc-complex-type.2.4.a'] },
+  'control-period-cii-after-payment-terms': { syntax: 'cii', base: 'za-period-month-references', mutate: (x) => movedAfter(x, CII_PERIOD, '      </ram:SpecifiedTradePaymentTerms>\n'), codes: ['cvc-complex-type.2.4.a'] },
+  'control-period-cii-without-delivery': { syntax: 'cii', base: 'za-period-month-references', mutate: (x) => removeElement(x, /^ *<ram:ApplicableHeaderTradeDelivery><\/ram:ApplicableHeaderTradeDelivery>\n/m), codes: ['cvc-complex-type.2.4.a'] },
+};
+const SPECIAL_CONTROLS = { ...KLEINUNTERNEHMER_CONTROLS, ...REVERSE_CHARGE_CONTROLS, ...PAYMENT_MEANS_CONTROLS, ...EVIDENCE_CONTROLS, ...MIXED_CONTROLS, ...CREDIT_NOTE_CONTROLS, ...REFERENCE_CONTROLS, ...PERIOD_CONTROLS };
 const REQUIRED_STEPS = ['val-xsd', 'val-sch.1', 'val-sch.2', 'val-xml'];
 
 const sha256Hex = (data: Buffer | string): string => createHash('sha256').update(data).digest('hex');
@@ -225,7 +252,7 @@ function verifyUnitCodes(configurationDirectory: string): void {
 
 type Target = { name: string; syntax: Syntax; xmlPath: string; xml: string; fixtureInput?: string; expectAccept: boolean; expectCodes?: readonly string[]; scenario?: string };
 
-function generate(name: FixtureName | CreditNoteFixtureName | ReferenceFixtureName, syntax: Syntax): string {
+function generate(name: AnyFixtureName, syntax: Syntax): string {
   const built = buildInvoice(loadFixtureInput(name));
   if (!built.ok) fail(`fixture ${name} does not build: ${JSON.stringify(built.errors)}`);
   const serialized = syntax === 'ubl' ? serializeUblInvoice(built.value) : serializeCiiInvoice(built.value);
@@ -233,7 +260,7 @@ function generate(name: FixtureName | CreditNoteFixtureName | ReferenceFixtureNa
   return serialized.xml;
 }
 
-function fixtureTarget(name: FixtureName | CreditNoteFixtureName | ReferenceFixtureName, syntax: Syntax): Target {
+function fixtureTarget(name: AnyFixtureName, syntax: Syntax): Target {
   const goldenPath = join(GOLDEN, `${syntax === 'ubl' ? name : ciiName(name)}.xml`);
   if (!existsSync(goldenPath)) fail(`missing golden file ${goldenPath}`);
   const golden = readFileSync(goldenPath, 'utf8');
@@ -353,7 +380,7 @@ function main(): void {
   const manifest = JSON.parse(readFileSync(join(ROOT, 'tools/kosit/kosit-manifest.json'), 'utf8')) as Manifest;
   const triage = JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/xrechnung/kosit-triage.json'), 'utf8')) as Triage;
   const requested = process.argv.slice(2);
-  const allNames = [...FIXTURE_NAMES, ...CII_FIXTURES.map(ciiName), ...CREDIT_NOTE_FIXTURE_NAMES, ...CREDIT_NOTE_FIXTURE_NAMES.map(ciiName), ...REFERENCE_FIXTURE_NAMES, ...REFERENCE_FIXTURE_NAMES.map(ciiName), CONTROL_NAME, ...Object.keys(SPECIAL_CONTROLS)];
+  const allNames = [...FIXTURE_NAMES, ...CII_FIXTURES.map(ciiName), ...CREDIT_NOTE_FIXTURE_NAMES, ...CREDIT_NOTE_FIXTURE_NAMES.map(ciiName), ...REFERENCE_FIXTURE_NAMES, ...REFERENCE_FIXTURE_NAMES.map(ciiName), ...PERIOD_FIXTURE_NAMES, ...PERIOD_FIXTURE_NAMES.map(ciiName), ...CREDIT_NOTE_PERIOD_FIXTURE_NAMES, ...CREDIT_NOTE_PERIOD_FIXTURE_NAMES.map(ciiName), CONTROL_NAME, ...Object.keys(SPECIAL_CONTROLS)];
   const names = requested.length > 0 ? requested : allNames;
   for (const name of names) if (!allNames.includes(name)) fail(`unknown fixture ${name}`);
 
