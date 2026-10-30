@@ -20,7 +20,14 @@ export type JsonObject = { [key: string]: unknown };
 export const REFERENCE_FIXTURE_NAMES = ['x-references-all-three'] as const;
 export type ReferenceFixtureName = (typeof REFERENCE_FIXTURE_NAMES)[number];
 
-export function loadFixtureInput(name: FixtureName | CreditNoteFixtureName | ReferenceFixtureName): JsonObject {
+// Invoicing period BG-14 instead of BT-72 (MDR-37), with the amounts of their base fixtures: za = x-references-all-three
+// (380, a calendar month, BT-11/12/13), zb = a-simple (380, a single leap day), zc = y-credit-note-references-all-three (381,
+// a calendar month, BT-11/12/13), zd = t-credit-note-full-reversal (381, a single day). Only BT-72 was replaced by BG-14.
+export const PERIOD_FIXTURE_NAMES = ['za-period-month-references', 'zb-period-single-day-leap'] as const;
+export const CREDIT_NOTE_PERIOD_FIXTURE_NAMES = ['zc-credit-note-period-month-references', 'zd-credit-note-period-single-day'] as const;
+export type PeriodFixtureName = (typeof PERIOD_FIXTURE_NAMES)[number] | (typeof CREDIT_NOTE_PERIOD_FIXTURE_NAMES)[number];
+
+export function loadFixtureInput(name: FixtureName | CreditNoteFixtureName | ReferenceFixtureName | PeriodFixtureName): JsonObject {
   return JSON.parse(readFileSync(resolve(import.meta.dirname, `../fixtures/xrechnung/${name}.json`), 'utf8')) as JsonObject;
 }
 

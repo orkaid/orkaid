@@ -58,13 +58,18 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
       ...invoice.notes.map((note) => leaf('cbc:Note', note.text)), // BG-1 / BT-22
       leaf('cbc:DocumentCurrencyCode', currency), // BT-5
       leaf('cbc:BuyerReference', invoice.buyerReference), // BT-10
+      // BG-14 (MDR-37): InvoicePeriod follows BuyerReference in both sequences (a CreditNote's DiscrepancyResponse, never
+      // written, would come next). It replaces Delivery: a validated document carries exactly one of BG-14 and BT-72.
+      ...(hasOwnField(invoice, 'invoicingPeriod')
+        ? [group('cac:InvoicePeriod', leaf('cbc:StartDate', invoice.invoicingPeriod.startDate), leaf('cbc:EndDate', invoice.invoicingPeriod.endDate))] // BT-73, BT-74
+        : []),
       ...(hasOwnField(invoice, 'orderReference') ? [group('cac:OrderReference', leaf('cbc:ID', invoice.orderReference))] : []), // BT-13
       ...(invoice.documentTypeCode === '381' ? [billingReference(invoice.precedingInvoice)] : []), // BG-3
       ...(hasOwnField(invoice, 'contractReference') ? [group('cac:ContractDocumentReference', leaf('cbc:ID', invoice.contractReference))] : []), // BT-12
       ...projectReference(invoice), // BT-11
       group('cac:AccountingSupplierParty', party(invoice.seller, invoice.seller)), // BG-4
       group('cac:AccountingCustomerParty', party(invoice.buyer)), // BG-7
-      group('cac:Delivery', leaf('cbc:ActualDeliveryDate', invoice.deliveryDate)), // BT-72
+      ...(hasOwnField(invoice, 'deliveryDate') ? [group('cac:Delivery', leaf('cbc:ActualDeliveryDate', invoice.deliveryDate))] : []), // BT-72
       paymentMeans(invoice),
       ...(hasOwnField(invoice.payment, 'termsText') ? [group('cac:PaymentTerms', leaf('cbc:Note', invoice.payment.termsText))] : []), // BT-20
       taxTotal(invoice, currency),

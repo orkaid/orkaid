@@ -63,7 +63,9 @@ export type InvoiceDocumentInput = {
   currency: string; // BT-5, validated by invoice.ts
   invoiceNumber: string; // BT-1
   issueDate: string; // BT-2, YYYY-MM-DD
-  deliveryDate: string; // BT-72, YYYY-MM-DD
+  /** BT-72 or BG-14, exactly one (PROFILE, MDR-37): a runtime rule, so the input type does not encode it. */
+  deliveryDate?: string; // BT-72, YYYY-MM-DD
+  invoicingPeriod?: { startDate: string; endDate: string }; // BG-14: BT-73, BT-74, each YYYY-MM-DD
   buyerReference: string; // BT-10, buyer-provided business information (not a generated Leitweg-ID)
   /** BT-11, BT-12, BT-13 (MDR-36): independent optional facts, each 0..1, plain text. A list is refused. Never derived from BT-10. */
   projectReference?: string; // BT-11
@@ -166,6 +168,12 @@ export type PrecedingInvoiceReference = {
   readonly issueDate?: string; // BT-26
 };
 
+/** BG-14. PROFILE (MDR-37): both boundaries, although BR-CO-19 needs only one; EXTERNAL BR-29: end not before start. */
+export type InvoicingPeriod = {
+  readonly startDate: string; // BT-73
+  readonly endDate: string; // BT-74
+};
+
 declare const validatedBrand: unique symbol;
 
 type InvoiceBase = {
@@ -173,7 +181,10 @@ type InvoiceBase = {
   readonly currency: 'EUR'; // BT-5
   readonly invoiceNumber: string; // BT-1
   readonly issueDate: string; // BT-2
-  readonly deliveryDate: string; // BT-72
+  // Exactly one of BT-72 and BG-14 is present. A runtime invariant of buildInvoice, deliberately not a type-level union,
+  // so a later contract can relax it without changing the validated type (MDR-37). Serializers branch by hasOwnField.
+  readonly deliveryDate?: string; // BT-72
+  readonly invoicingPeriod?: InvoicingPeriod; // BG-14
   readonly buyerReference: string; // BT-10
   readonly projectReference?: string; // BT-11
   readonly contractReference?: string; // BT-12
@@ -222,6 +233,8 @@ export type DocumentErrorCode =
   | 'unsupported_payment_means'
   | 'unsupported_payment_account_scheme'
   | 'unsupported_hash_in_payment_terms' // PROFILE: `#` in BT-20 (structured Skonto, BR-DE-18, is not in M1)
+  | 'invalid_invoicing_period' // BR-29: the end date (BT-74) is before the start date (BT-73)
+  | 'unsupported_delivery_date_with_invoicing_period' // PROFILE: BT-72 and BG-14 together (MDR-37)
   | 'unsupported_preceding_invoice_reference' // PROFILE: BG-3 on a 380 (MDR-35)
   | 'unsupported_settlement_on_invoice' // PROFILE: a credit note settlement on a 380 (MDR-35)
   | 'unsupported_credit_note_payment_means' // PROFILE: 380-style payment means (BG-17) on a 381 (MDR-35)
@@ -246,7 +259,7 @@ export type DocumentResult =
   | { readonly ok: true; readonly value: Invoice }
   | { readonly ok: false; readonly errors: readonly DocumentError[]; readonly truncated: boolean };
 
-const DOCUMENT_FIELDS = ['invoiceNumber', 'issueDate', 'deliveryDate', 'buyerReference', 'projectReference', 'contractReference', 'orderReference', 'precedingInvoice', 'seller', 'buyer', 'payment', 'notes'];
+const DOCUMENT_FIELDS = ['invoiceNumber', 'issueDate', 'deliveryDate', 'invoicingPeriod', 'buyerReference', 'projectReference', 'contractReference', 'orderReference', 'precedingInvoice', 'seller', 'buyer', 'payment', 'notes'];
 const LINE_FIELDS = ['name', 'unitCode'];
 const PARTY_FIELDS = ['name', 'electronicAddress', 'address'];
 const SELLER_FIELDS = [...PARTY_FIELDS, 'sellerIdentifiers', 'legalRegistrationId', 'vatId', 'taxRegistrationId', 'contact'];
@@ -254,6 +267,7 @@ const BUYER_FIELDS = [...PARTY_FIELDS, 'legalRegistrationId', 'vatId'];
 const ADDRESS_FIELDS = ['street', 'city', 'postCode', 'country'];
 const NOTE_FIELDS = ['text'];
 const PAYMENT_FIELDS = ['dueDate', 'termsText', 'means', 'settlement'];
+const INVOICING_PERIOD_FIELDS = ['startDate', 'endDate'];
 const PRECEDING_INVOICE_FIELDS = ['number', 'issueDate'];
 const SETTLEMENT_FIELDS = ['kind', 'reciprocalObligationConfirmed'];
 const PAYMENT_MEANS_FIELDS = ['kind', 'code', 'account'];
@@ -293,7 +307,7 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
   const errors: DocumentError[] = [];
   const invoiceNumber = readText(input, 'invoiceNumber', 'invoiceNumber', errors);
   const issueDate = readDate(input, 'issueDate', 'issueDate', errors);
-  const deliveryDate = readDate(input, 'deliveryDate', 'deliveryDate', errors);
+  const { deliveryDate, invoicingPeriod } = readSupplyDate(input, errors);
   const buyerReference = readText(input, 'buyerReference', 'buyerReference', errors);
   // BT-11, BT-12, BT-13: each an independent optional fact. No default, no derivation from BT-10, no cross-check.
   const projectReference = readOptionalText(input, 'projectReference', 'projectReference', errors);
@@ -326,7 +340,7 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
 
   if (money.ok && errors.length === 0 && stoppedAt === undefined) {
     if (
-      invoiceNumber === undefined || issueDate === undefined || deliveryDate === undefined ||
+      invoiceNumber === undefined || issueDate === undefined || (deliveryDate === undefined) === (invoicingPeriod === undefined) ||
       buyerReference === undefined || seller === undefined || buyer === undefined || payment === undefined ||
       (creditNote && precedingInvoice === undefined)
     ) {
@@ -341,7 +355,10 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
     }
     const common = {
       currency: 'EUR' as const,
-      invoiceNumber, issueDate, deliveryDate, buyerReference,
+      invoiceNumber, issueDate,
+      ...(deliveryDate !== undefined ? { deliveryDate } : {}),
+      ...(invoicingPeriod !== undefined ? { invoicingPeriod } : {}),
+      buyerReference,
       ...(projectReference !== undefined ? { projectReference } : {}),
       ...(contractReference !== undefined ? { contractReference } : {}),
       ...(orderReference !== undefined ? { orderReference } : {}),
@@ -448,6 +465,34 @@ function deepFreeze<T>(value: T): T {
     for (const child of Object.values(value)) deepFreeze(child);
   }
   return value;
+}
+
+// ------------------------------------------------------------------------------------------------ supply date
+
+// BT-72 or BG-14 (MDR-37), identically on a 380 and a 381; on a 381 either one states the credited delivery or service.
+// PROFILE: exactly one of them. Neither keeps the existing missing_field on deliveryDate; both is refused as outside the
+// profile, while each value is still validated on its own. Presence is read from the snapshot, which holds own properties
+// only, so an inherited value is never a supplied one. Nothing is derived, defaulted or compared with another date.
+function readSupplyDate(input: Record<string, unknown>, errors: DocumentError[]): { deliveryDate: string | undefined; invoicingPeriod: InvoicingPeriod | undefined } {
+  const periodSupplied = input.invoicingPeriod !== undefined;
+  const deliveryDate = periodSupplied && input.deliveryDate === undefined ? undefined : readDate(input, 'deliveryDate', 'deliveryDate', errors);
+  const invoicingPeriod = periodSupplied ? readInvoicingPeriod(input, errors) : undefined;
+  if (periodSupplied && input.deliveryDate !== undefined) report(errors, 'unsupported_delivery_date_with_invoicing_period', 'invoicingPeriod');
+  // Both keys always own, also when undefined: the caller destructures them, and an absent key would read Object.prototype.
+  return { deliveryDate, invoicingPeriod };
+}
+
+// BG-14. PROFILE: both boundaries are required (a one-sided period is conformant to BR-CO-19 but not supported); an empty
+// object reports both. Each is a real calendar date by the BT-72 check; the order (BR-29) is checked only between two valid
+// dates. YYYY-MM-DD compares in calendar order as text, and equal dates are a valid single-day period.
+function readInvoicingPeriod(parent: Record<string, unknown>, errors: DocumentError[]): InvoicingPeriod | undefined {
+  const record = readObject(parent, 'invoicingPeriod', 'invoicingPeriod', INVOICING_PERIOD_FIELDS, errors);
+  if (record === undefined) return undefined;
+  const startDate = readDate(record, 'startDate', 'invoicingPeriod.startDate', errors);
+  const endDate = readDate(record, 'endDate', 'invoicingPeriod.endDate', errors);
+  if (startDate === undefined || endDate === undefined) return undefined;
+  if (endDate < startDate) return report(errors, 'invalid_invoicing_period', 'invoicingPeriod.endDate');
+  return { startDate, endDate };
 }
 
 // ------------------------------------------------------------------------------------------------ parties

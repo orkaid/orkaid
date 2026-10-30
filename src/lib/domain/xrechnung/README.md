@@ -36,7 +36,7 @@ Three kinds of rule are kept apart, in the code comments as well:
 | --- | --- | --- |
 | **External** | imposed by EN 16931, the XRechnung CIUS, the UBL binding or law | BT-10 present (BR-DE-15); seller contact BT-41/42/43 (BR-DE-2, -5, -6, -7); city and post code (BR-DE-3, -4, -8, -9); seller identification by BT-29, BT-30 or BT-31 (BR-CO-26); seller VAT or tax identifier BT-31 or BT-32 (BR-S-02, BR-E-02, BR-AE-02, BR-DE-16); electronic addresses with scheme (BR-62, BR-63); payment instructions (BR-DE-1); document totals and VAT breakdown (BR-CO-10 to BR-CO-17); at most two decimals on BT-131 and the totals (BR-DEC-*); the date of supply is a required invoice particular under § 14 Abs. 4 Satz 1 Nr. 6 UStG (statute text: https://www.gesetze-im-internet.de/ustg_1980/__14.html; § 31 Abs. 4 UStDV also allows stating a calendar month, which this profile does not support), while the validator only reports its absence at information level (BR-DE-TMP-32) |
 | **Conditional** | applies only in stated circumstances | valid IBAN when payment means is 58 (BR-DE-19); credit-transfer group with an account identifier when payment means is 30 or 58 (BR-DE-23, BR-50, BR-61); payment due date (BT-9) or payment terms (BT-20) when the amount due (BT-115) is positive (BR-CO-25; the pinned validator artefacts do not implement it, so `buildInvoice` enforces it after the monetary calculation; BT-9 and BT-20 are otherwise both optional) |
-| **Profile** | chosen for the current implementation only; not a claim that law or XRechnung requires exactly this, and not a permanent limit | a seller or buyer USt-IdNr, when given, is `DE` + 9 digits; a complete delivery date (BT-72) required; street addresses of both parties required; both parties in Germany; electronic address schemes `EM`, `0204` and `0088` only (a scheme identifier, with no routing or Leitweg-ID meaning); payment means 30 or 58 (credit transfer) only, with one account (BG-17) identified by an IBAN (no non-IBAN BT-84) and BT-86, when given, a BIC; no `#` in payment terms (BT-20), because structured Skonto (BR-DE-18) is not supported; a small list of unit codes (`UNIT_CODES`); quantity (BT-129) and unit price (BT-146) with at most 6 effective fractional digits (trailing zeros not counted, the written scale kept) and below 10^9; every calculated amount (BT-131, BT-116, BT-117, BT-106, BT-109, BT-110, BT-112, BT-115) below 10^10 EUR, an interoperability guard for the pinned validator, not an EN 16931, XRechnung or XSD maximum |
+| **Profile** | chosen for the current implementation only; not a claim that law or XRechnung requires exactly this, and not a permanent limit | a seller or buyer USt-IdNr, when given, is `DE` + 9 digits; exactly one of a complete delivery date (BT-72) and a complete invoicing period (BG-14), see below; street addresses of both parties required; both parties in Germany; electronic address schemes `EM`, `0204` and `0088` only (a scheme identifier, with no routing or Leitweg-ID meaning); payment means 30 or 58 (credit transfer) only, with one account (BG-17) identified by an IBAN (no non-IBAN BT-84) and BT-86, when given, a BIC; no `#` in payment terms (BT-20), because structured Skonto (BR-DE-18) is not supported; a small list of unit codes (`UNIT_CODES`); quantity (BT-129) and unit price (BT-146) with at most 6 effective fractional digits (trailing zeros not counted, the written scale kept) and below 10^9; every calculated amount (BT-131, BT-116, BT-117, BT-106, BT-109, BT-110, BT-112, BT-115) below 10^10 EUR, an interoperability guard for the pinned validator, not an EN 16931, XRechnung or XSD maximum |
 
 Input outside the profile fails with an explicit `unsupported_*` (or field-specific) error. Such an error means "not
 supported by this profile", not "legally invalid". BT-10 is buyer-provided business information: it is required and
@@ -84,6 +84,27 @@ shares with the supporting documents of BG-24. The OpenPeppol BIS Billing docume
 `DocumentTypeCode` 50 (other additional documents carry no type code), and Orkaid follows that documentation. The pinned
 validator accepts the document but cannot tell which interpretation a recipient applies, so the tests assert the emitted
 structure itself. BG-24, attachments and general Peppol support are not part of this implementation.
+
+## Delivery date or invoicing period (BT-72 or BG-14)
+
+The time of the supply is stated either as one actual delivery date `deliveryDate` (BT-72) or as an invoicing period
+`invoicingPeriod: { startDate, endDate }` (BG-14: BT-73, BT-74), identically on a 380 and on a 381. On a 381 either one
+states the credited delivery or service as the caller supplies it; it is not derived from BG-3, BT-26 or an original
+invoice and is not checked against them.
+
+| Aspect | Behaviour |
+| --- | --- |
+| Exactly one | **PROFILE restriction**, not an EN 16931, XRechnung or UStG rule (each of BT-72 and BG-14 is 0..1 there, and no rule links them). Neither supplied: `missing_field` on `deliveryDate`, as before. Both supplied: `unsupported_delivery_date_with_invoicing_period` on `invoicingPeriod`; each value is still validated. A runtime rule, not a type-level union, so a later contract can relax it |
+| Both boundaries | **PROFILE restriction.** BR-CO-19 needs only one of BT-73 and BT-74; Orkaid requires both. A missing boundary is `missing_field` at its own path, an empty object reports both, a one-sided period is not supported |
+| Dates | each boundary a real `YYYY-MM-DD` calendar date by the BT-72 check (leap years, no year 0000); no time, time zone or duration. Equal dates are a single-day period. **BR-29**: an end before the start is `invalid_invoicing_period` on `invoicingPeriod.endDate`, checked only when both dates are valid. Nothing is derived, defaulted or compared with another date |
+| Other input | a non-object period is `invalid_type`, an unknown field `unknown_field`, an inherited property is never caller input |
+| UBL | `cac:InvoicePeriod` with `cbc:StartDate` and `cbc:EndDate` directly after `cbc:BuyerReference` (Invoice and CreditNote); `cac:Delivery` is not written |
+| CII | `ApplicableHeaderTradeSettlement/BillingSpecifiedPeriod` with `StartDateTime` and `EndDateTime` (`udt:DateTimeString` format 102) after the VAT breakdown and before the payment terms; the XSD-required `ApplicableHeaderTradeDelivery` is written empty |
+
+Not supported: line periods (BG-26), several periods, the tax point date and code (BT-7, BT-8), the calendar-month
+shorthand and installment billing. A complete period is not presented as satisfying every tax-law requirement on the
+time of supply; the UStAE was not consulted. The pinned validator accepts an impossible CII date such as `20260230`
+(the CII date is a string), so calendar validity is enforced by the domain.
 
 ## Runtime protection
 

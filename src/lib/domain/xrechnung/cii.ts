@@ -82,7 +82,11 @@ export function serializeCiiInvoice(invoice: Invoice): CiiResult {
           // BT-11: the model binds it to a SpecifiedProcuringProject whose Name is the default 'Project reference' (and the XSD requires a Name).
           ...(hasOwnField(invoice, 'projectReference') ? [group('ram:SpecifiedProcuringProject', leaf('ram:ID', invoice.projectReference), leaf('ram:Name', PROJECT_REFERENCE_NAME))] : []),
         ),
-        group('ram:ApplicableHeaderTradeDelivery', group('ram:ActualDeliverySupplyChainEvent', date('ram:OccurrenceDateTime', invoice.deliveryDate))), // BT-72
+        // The XSD requires ApplicableHeaderTradeDelivery. With BG-14 instead of BT-72 (MDR-37) it has no content; the
+        // XRechnung rule against empty elements exempts it.
+        hasOwnField(invoice, 'deliveryDate')
+          ? group('ram:ApplicableHeaderTradeDelivery', group('ram:ActualDeliverySupplyChainEvent', date('ram:OccurrenceDateTime', invoice.deliveryDate))) // BT-72
+          : leaf('ram:ApplicableHeaderTradeDelivery', ''),
         settlement(invoice),
       ),
     ],
@@ -149,6 +153,10 @@ function settlement(invoice: Invoice): Element {
         leaf('ram:RateApplicablePercent', bucket.rate), // BT-119
       ),
     ),
+    // BG-14 (MDR-37). HeaderTradeSettlementType order: ApplicableTradeTax, BillingSpecifiedPeriod, ..., SpecifiedTradePaymentTerms.
+    ...(hasOwnField(invoice, 'invoicingPeriod')
+      ? [group('ram:BillingSpecifiedPeriod', date('ram:StartDateTime', invoice.invoicingPeriod.startDate), date('ram:EndDateTime', invoice.invoicingPeriod.endDate))] // BT-73, BT-74
+      : []),
     ...paymentTerms(invoice.payment),
     group(
       'ram:SpecifiedTradeSettlementHeaderMonetarySummation', // BG-22
