@@ -119,10 +119,14 @@ Four layers, kept apart (full wording in `leitweg-id.ts`):
 
 | Layer | Content |
 | --- | --- |
-| Official | Leitweg-ID Format-Spezifikation v2.0.2 (28.07.2021, checked 2026-10-30): Grob and check digits mandatory, optional Fein of up to 30 characters A-Z and 0-9, `-` (U+002D) as the separator, total length 5-46, hyphens excluded from the checksum, first two Grob digits 01-16 or 99, letters "nicht case-sensitiv" |
+| Official | Leitweg-ID Format-Spezifikation v2.0.2 (28.07.2021): Grob and check digits mandatory, optional Fein of up to 30 characters A-Z and 0-9, `-` (U+002D) as the separator, total length 5-46, hyphens excluded from the checksum, first two Grob digits 01-16 or 99, letters "nicht case-sensitiv" |
 | Derived reading | Grob of 2, 3, 5, 8, 9 or 12 digits; no empty Fein (a reading of Table 1 and section 2.2.4, not a sentence of the specification) |
 | Orkaid profile | the check digits must equal the canonical pair, 98 minus the remainder modulo 97 of Grob and Fein without hyphens, letters A=10 ... Z=35 (ASCII uppercase, for the calculation only), two zeros appended, computed on a BigInt (up to 74 digits). The specification's remainder-1 verification would also admit 00, 01 and 99; this profile rejects them. Fein may be upper, lower or mixed case; the caller's text is never trimmed, corrected or normalized |
 | Unverified | whether any recipient platform assigns, routes or accepts a value that passes, and how it treats the case of the Fein |
+
+Provenance: the official and derived rules come from the research recorded with MDR-38 (source check of 2026-10-30); an
+independent review reported re-verifying the same sources on 2026-10-31 and found no normative mismatch. The session that
+implemented the mode did not repeat the primary-source research.
 
 After the ordinary BT-10 text rules, a structure violation is `invalid_leitweg_id_format` at `buyerReference`; only a
 well-formed value reaches the checksum, whose failure is `invalid_leitweg_id_checksum`. A hyphen moved between Grob and Fein

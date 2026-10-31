@@ -409,7 +409,8 @@ export function buildInvoice(rawInput: unknown, options: DocumentOptions = {}): 
 function readBuyerReferencePolicy(options: DocumentOptions): 'leitweg-id' | undefined {
   const descriptor = Object.getOwnPropertyDescriptor(options, 'buyerReferencePolicy');
   if (descriptor === undefined) return undefined;
-  if (!('value' in descriptor)) throw new RangeError('buyerReferencePolicy must be a data property, not an accessor');
+  // Own check: a descriptor is an ordinary object, so `'value' in descriptor` would also see Object.prototype.value (IR38-01).
+  if (!Object.hasOwn(descriptor, 'value')) throw new RangeError('buyerReferencePolicy must be a data property, not an accessor');
   const policy: unknown = descriptor.value;
   if (policy === undefined) return undefined;
   if (policy === 'leitweg-id') return policy;

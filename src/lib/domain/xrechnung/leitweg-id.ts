@@ -1,7 +1,7 @@
 // Leitweg-ID validation for the buyer reference BT-10, an opt-in policy of buildInvoice (MDR-38). Pure: no I/O, no lookup.
 //
 // Four layers are kept apart, because only the first is a sentence of the specification:
-//   OFFICIAL    Leitweg-ID Format-Spezifikation v2.0.2 (28.07.2021), checked 2026-10-30: Grob (2-12 digits) and check digits
+//   OFFICIAL    Leitweg-ID Format-Spezifikation v2.0.2 (28.07.2021): Grob (2-12 digits) and check digits
 //               are mandatory, Fein (up to 30 characters A-Z, 0-9, "nicht case-sensitiv") is optional, "-" (U+002D)
 //               separates the parts, the total length is 5-46, the hyphens are excluded from the checksum, and the Grob
 //               starts with a code 01-16 or 99 (sections 2.1 Table 1, 2.2.1, 2.3, 2.4).
@@ -11,6 +11,9 @@
 //               specification's separate remainder-1 verification statement would also admit 00, 01 and 99); letters are
 //               read as their ASCII uppercase for the calculation only, and the caller's text is never changed.
 //   UNVERIFIED  whether any recipient platform assigns, routes or accepts a value that passes, and how it treats case.
+// Provenance: the OFFICIAL and DERIVED rules come from the research recorded with MDR-38, whose source check was made on
+// 2026-10-30. An independent review reported re-verifying the same sources on 2026-10-31 and found no normative mismatch.
+// The session that wrote this code did not repeat the primary-source research.
 // Passing proves local structure and check digits only. Known limit: the checksum ignores hyphens, so a hyphen moved
 // between Grob and Fein that still forms a valid Grob composition is not detectable.
 
