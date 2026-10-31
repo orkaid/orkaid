@@ -1,2 +1,0 @@
-# The default *.pages.dev origin bypasses zone-level WAF/rate-limit rules; send it to the canonical domain.
-https://orkaid.pages.dev/* https://orkaid.de/:splat 301

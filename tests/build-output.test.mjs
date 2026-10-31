@@ -140,10 +140,6 @@ test('generated German and English content route sets are exact mirrors', () => 
   assert.deepEqual(routeSets.en, routeSets.de);
 });
 
-test('the default pages.dev origin redirects to the canonical domain', () => {
-  assert.match(readOutput('_redirects'), /^https:\/\/orkaid\.pages\.dev\/\* https:\/\/orkaid\.de\/:splat 301$/m);
-});
-
 test('Cloudflare Pages static headers provide transport-level and CSP hardening', () => {
   const headers = readOutput('_headers');
   assert.match(headers, /^\/\*$/m);

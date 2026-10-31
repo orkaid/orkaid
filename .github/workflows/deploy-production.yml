@@ -36,7 +36,8 @@ jobs:
       - run: npm run check
       - run: npm test
       - run: npm run build
-      - run: npm audit
+      # Same audit policy as CI: full npm audit with one dated, exact-ID exception (MDR-31).
+      - run: node tools/audit-gate/run.ts
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
