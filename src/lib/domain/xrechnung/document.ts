@@ -451,7 +451,8 @@ function snapshot(value: unknown, path: string, depth: number, problems: string[
   const readData = (source: object, key: string, childPath: string): { present: boolean; value?: unknown } => {
     const descriptor = Object.getOwnPropertyDescriptor(source, key);
     if (descriptor === undefined) return { present: false };
-    if (!('value' in descriptor)) {
+    // Own check: a descriptor is an ordinary object, so `'value' in descriptor` would also see Object.prototype.value (IR38-03).
+    if (!Object.hasOwn(descriptor, 'value')) {
       problems.push(childPath);
       return { present: false };
     }
