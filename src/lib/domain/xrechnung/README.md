@@ -40,7 +40,7 @@ Three kinds of rule are kept apart, in the code comments as well:
 
 Input outside the profile fails with an explicit `unsupported_*` (or field-specific) error. Such an error means "not
 supported by this profile", not "legally invalid". BT-10 is buyer-provided business information: it is required and
-is never generated or defaulted (it is not necessarily a Leitweg-ID).
+is never generated or defaulted (it is not necessarily a Leitweg-ID; see the opt-in Leitweg-ID validation below).
 
 ## Credit note 381 (first bounded slice)
 
@@ -105,6 +105,30 @@ Not supported: line periods (BG-26), several periods, the tax point date and cod
 shorthand and installment billing. A complete period is not presented as satisfying every tax-law requirement on the
 time of supply; the UStAE was not consulted. The pinned validator accepts an impossible CII date such as `20260230`
 (the CII date is a string), so calendar validity is enforced by the domain.
+
+## Leitweg-ID validation of BT-10 (opt-in, MDR-38)
+
+`buildInvoice(input, { buyerReferencePolicy: 'leitweg-id' })` additionally checks the buyer reference as a Leitweg-ID,
+identically on a 380 and on a 381. It is an option of the call, not a document field (a `buyerReferencePolicy` inside
+the input is an `unknown_field`), it is never stored in the validated invoice, and it changes no XML. Without it BT-10 is
+ordinary buyer-provided text, exactly as before. The option is read as an own property only: a value inherited from a
+prototype does not activate it, an accessor is never executed, and an own value other than `'leitweg-id'` (or
+`undefined`, meaning off) throws a `RangeError`, like an unknown `notation`.
+
+Four layers, kept apart (full wording in `leitweg-id.ts`):
+
+| Layer | Content |
+| --- | --- |
+| Official | Leitweg-ID Format-Spezifikation v2.0.2 (28.07.2021, checked 2026-10-30): Grob and check digits mandatory, optional Fein of up to 30 characters A-Z and 0-9, `-` (U+002D) as the separator, total length 5-46, hyphens excluded from the checksum, first two Grob digits 01-16 or 99, letters "nicht case-sensitiv" |
+| Derived reading | Grob of 2, 3, 5, 8, 9 or 12 digits; no empty Fein (a reading of Table 1 and section 2.2.4, not a sentence of the specification) |
+| Orkaid profile | the check digits must equal the canonical pair, 98 minus the remainder modulo 97 of Grob and Fein without hyphens, letters A=10 ... Z=35 (ASCII uppercase, for the calculation only), two zeros appended, computed on a BigInt (up to 74 digits). The specification's remainder-1 verification would also admit 00, 01 and 99; this profile rejects them. Fein may be upper, lower or mixed case; the caller's text is never trimmed, corrected or normalized |
+| Unverified | whether any recipient platform assigns, routes or accepts a value that passes, and how it treats the case of the Fein |
+
+After the ordinary BT-10 text rules, a structure violation is `invalid_leitweg_id_format` at `buyerReference`; only a
+well-formed value reaches the checksum, whose failure is `invalid_leitweg_id_checksum`. A hyphen moved between Grob and Fein
+that still forms a valid Grob composition cannot be detected, because the checksum ignores hyphens. Passing means local
+structure and check digits only: no lookup, no routing, Peppol or electronic-address cross-check, and no recipient acceptance.
+The pinned KoSIT baseline only requires BT-10 to be present (BR-DE-15), so format and check digits are enforced by the domain alone.
 
 ## Runtime protection
 

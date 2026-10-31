@@ -25,6 +25,7 @@ import {
   type VatInput,
 } from './invoice.ts';
 import type { Decimal } from './decimal.ts';
+import { checkLeitwegId } from './leitweg-id.ts';
 
 // PROFILE: unit codes (UN/ECE Recommendation 20/21). Each is present in the KoSIT configuration 2026-08-31 code list
 // (rule BR-CL-23); tools/kosit/validate.ts re-verifies that against the validator configuration on every run.
@@ -233,6 +234,8 @@ export type DocumentErrorCode =
   | 'unsupported_payment_means'
   | 'unsupported_payment_account_scheme'
   | 'unsupported_hash_in_payment_terms' // PROFILE: `#` in BT-20 (structured Skonto, BR-DE-18, is not in M1)
+  | 'invalid_leitweg_id_format' // PROFILE (MDR-38), only with buyerReferencePolicy 'leitweg-id': BT-10 is not the Leitweg-ID structure
+  | 'invalid_leitweg_id_checksum' // PROFILE (MDR-38), same policy: the check digits are not the canonical pair
   | 'invalid_invoicing_period' // BR-29: the end date (BT-74) is before the start date (BT-73)
   | 'unsupported_delivery_date_with_invoicing_period' // PROFILE: BT-72 and BG-14 together (MDR-37)
   | 'unsupported_preceding_invoice_reference' // PROFILE: BG-3 on a 380 (MDR-35)
@@ -250,6 +253,19 @@ export type DocumentErrorCode =
   | 'internal_inconsistency';
 
 export type DocumentError = { readonly code: DocumentErrorCode; readonly path: string };
+
+/**
+ * The options of `buildInvoice`: the monetary options plus the document policies. Kept apart from `InvoiceOptions`
+ * so the monetary API (`calculateInvoice*`) is unchanged. A policy is a caller choice, never a document field and never
+ * stored in the validated invoice.
+ */
+export type DocumentOptions = InvoiceOptions & {
+  /**
+   * Opt-in validation of BT-10 as a Leitweg-ID (MDR-38): local structure and check digits only, never proof that the
+   * identifier is assigned, routable or accepted. Absent or undefined: BT-10 is validated as ordinary text, as before.
+   */
+  readonly buyerReferencePolicy?: 'leitweg-id';
+};
 
 /**
  * On failure, `truncated` says whether `errors` is incomplete. When true, the last entry is an
@@ -281,7 +297,8 @@ export function isValidatedInvoice(value: unknown): value is Invoice {
   return typeof value === 'object' && value !== null && validated.has(value);
 }
 
-export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): DocumentResult {
+export function buildInvoice(rawInput: unknown, options: DocumentOptions = {}): DocumentResult {
+  const buyerReferencePolicy = readBuyerReferencePolicy(options);
   // One snapshot of the caller's data, taken once. Both the business validation below and the monetary calculation
   // read only this snapshot, so an object that answers differently on a second read (a getter, a Proxy) cannot make
   // the two halves of one invoice disagree, and hostile input cannot make this function throw.
@@ -309,6 +326,11 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
   const issueDate = readDate(input, 'issueDate', 'issueDate', errors);
   const { deliveryDate, invoicingPeriod } = readSupplyDate(input, errors);
   const buyerReference = readText(input, 'buyerReference', 'buyerReference', errors);
+  // MDR-38: only after the ordinary BT-10 text rules succeeded, and the text is checked, never repaired.
+  if (buyerReference !== undefined && buyerReferencePolicy === 'leitweg-id') {
+    const violation = checkLeitwegId(buyerReference);
+    if (violation !== undefined) report(errors, violation, 'buyerReference');
+  }
   // BT-11, BT-12, BT-13: each an independent optional fact. No default, no derivation from BT-10, no cross-check.
   const projectReference = readOptionalText(input, 'projectReference', 'projectReference', errors);
   const contractReference = readOptionalText(input, 'contractReference', 'contractReference', errors);
@@ -379,6 +401,19 @@ export function buildInvoice(rawInput: unknown, options: InvoiceOptions = {}): D
     return { ok: true, value: seal({ ...common, documentTypeCode: '380', payment }) };
   }
   return failure(errors, money, stoppedAt);
+}
+
+// The policy is the caller's explicit choice, so it is read like `notation` (invoice.ts): an own property only, never
+// one inherited from a prototype, and never through an accessor. A value that is present but not a known policy is a
+// programming error, not input: it throws instead of silently turning the check off. Undefined means "not chosen".
+function readBuyerReferencePolicy(options: DocumentOptions): 'leitweg-id' | undefined {
+  const descriptor = Object.getOwnPropertyDescriptor(options, 'buyerReferencePolicy');
+  if (descriptor === undefined) return undefined;
+  if (!('value' in descriptor)) throw new RangeError('buyerReferencePolicy must be a data property, not an accessor');
+  const policy: unknown = descriptor.value;
+  if (policy === undefined) return undefined;
+  if (policy === 'leitweg-id') return policy;
+  throw new RangeError(`unknown buyer reference policy: ${typeof policy === 'string' ? JSON.stringify(policy) : typeof policy}`);
 }
 
 // Business errors come first, then the monetary errors, then the marker of each scan that was cut short, so a

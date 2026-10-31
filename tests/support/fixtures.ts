@@ -27,7 +27,12 @@ export const PERIOD_FIXTURE_NAMES = ['za-period-month-references', 'zb-period-si
 export const CREDIT_NOTE_PERIOD_FIXTURE_NAMES = ['zc-credit-note-period-month-references', 'zd-credit-note-period-single-day'] as const;
 export type PeriodFixtureName = (typeof PERIOD_FIXTURE_NAMES)[number] | (typeof CREDIT_NOTE_PERIOD_FIXTURE_NAMES)[number];
 
-export function loadFixtureInput(name: FixtureName | CreditNoteFixtureName | ReferenceFixtureName | PeriodFixtureName): JsonObject {
+// Leitweg-ID as BT-10 (MDR-38), built with `buyerReferencePolicy: 'leitweg-id'`; the amounts of their base fixtures, only BT-10
+// replaced: ze = a-simple (380, the official example, uppercase Fein), zf = t-credit-note-full-reversal (381, lowercase Fein).
+export const LEITWEG_FIXTURE_NAMES = ['ze-leitweg-id-invoice', 'zf-leitweg-id-credit-note'] as const;
+export type LeitwegFixtureName = (typeof LEITWEG_FIXTURE_NAMES)[number];
+
+export function loadFixtureInput(name: FixtureName | CreditNoteFixtureName | ReferenceFixtureName | PeriodFixtureName | LeitwegFixtureName): JsonObject {
   return JSON.parse(readFileSync(resolve(import.meta.dirname, `../fixtures/xrechnung/${name}.json`), 'utf8')) as JsonObject;
 }
 
