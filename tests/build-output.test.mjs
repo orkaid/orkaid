@@ -155,7 +155,12 @@ test('Cloudflare Pages static headers provide transport-level and CSP hardening'
   assert.match(headers, /^  Content-Security-Policy: .*default-src 'self'/m);
   assert.match(headers, /^  Content-Security-Policy: .*frame-ancestors 'none'/m);
   assert.match(headers, /^  Content-Security-Policy: .*object-src 'none'/m);
-  assert.match(headers, /^  Content-Security-Policy: .*script-src 'self' 'unsafe-inline' https:\/\/static\.cloudflareinsights\.com https:\/\/challenges\.cloudflare\.com/m);
+  // The built pages carry no inline script or style and load nothing from another origin (no analytics), so the policy allows only 'self'.
+  const csp = headers.match(/^  Content-Security-Policy: (.*)$/m)?.[1] ?? '';
+  for (const directive of ['script-src', 'style-src', 'img-src', 'font-src', 'connect-src']) {
+    assert.match(csp, new RegExp(`(^|; )${directive} 'self'(;|$)`), directive);
+  }
+  assert.doesNotMatch(csp, /unsafe-inline|unsafe-eval|https?:|data:/);
   assert.match(headers, /^  Content-Security-Policy: .*upgrade-insecure-requests/m);
 });
 
