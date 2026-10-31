@@ -7,9 +7,10 @@ interface Props {
   title: string;
   description: string;
   pathname: string;
+  noindex?: boolean;
 }
 
-const { locale, title, description, pathname } = Astro.props;
+const { locale, title, description, pathname, noindex = false } = Astro.props;
 const origin = Astro.site ?? new URL('https://orkaid.de');
 const deUrl = new URL(localePath('de', pathname), origin);
 const enUrl = new URL(localePath('en', pathname), origin);
@@ -25,6 +26,7 @@ const copy = ui[locale];
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, follow" />}
     <link rel="canonical" href={canonical} />
     <link rel="alternate" hreflang="de-DE" href={deUrl} />
     <link rel="alternate" hreflang="en" href={enUrl} />

@@ -66,7 +66,7 @@ test('link metadata checks reject regex-like URL lookalikes', () => {
   assert.doesNotMatch(lookalike, linkPattern('canonical', 'https://orkaid.de/tools/'));
 });
 
-test('build emits all mirrored routes with locale metadata and CSP', () => {
+test('build emits all mirrored routes with locale metadata and no inline CSP meta tag', () => {
   for (const route of routes) {
     const html = readOutput(route.file);
     const deUrl = `https://orkaid.de${route.path}`;
@@ -79,13 +79,7 @@ test('build emits all mirrored routes with locale metadata and CSP', () => {
     assert.match(html, linkPattern('alternate', enUrl, 'en'), route.file);
     assert.match(html, linkPattern('alternate', deUrl, 'x-default'), route.file);
     assert.doesNotMatch(html, /hreflang="de"/, route.file);
-
-    const csp = html.match(/<meta(?=[^>]*http-equiv="content-security-policy")[^>]*>/i)?.[0];
-    assert.ok(csp, `${route.file} has a CSP meta tag`);
-    assert.match(csp, /default-src 'self'/, route.file);
-    assert.match(csp, /object-src 'none'/, route.file);
-    assert.doesNotMatch(csp, /'unsafe-inline'/, route.file);
-    assert.doesNotMatch(csp, /'unsafe-eval'/, route.file);
+    assert.doesNotMatch(html, /<meta(?=[^>]*http-equiv="content-security-policy")[^>]*>/i, route.file);
   }
 });
 
@@ -146,14 +140,23 @@ test('generated German and English content route sets are exact mirrors', () => 
   assert.deepEqual(routeSets.en, routeSets.de);
 });
 
-test('Cloudflare Pages static headers provide narrow transport-level hardening', () => {
+test('Cloudflare Pages static headers provide transport-level and CSP hardening', () => {
   const headers = readOutput('_headers');
   assert.match(headers, /^\/\*$/m);
-  assert.match(headers, /^  Content-Security-Policy: frame-ancestors 'none'$/m);
+  assert.match(headers, /^  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload$/m);
   assert.match(headers, /^  X-Content-Type-Options: nosniff$/m);
+  assert.match(headers, /^  X-Frame-Options: DENY$/m);
   assert.match(headers, /^  Referrer-Policy: strict-origin-when-cross-origin$/m);
-  assert.match(headers, /^  Permissions-Policy: camera=\(\), geolocation=\(\), microphone=\(\)$/m);
-  assert.doesNotMatch(headers, /default-src|script-src|style-src|Strict-Transport-Security/i);
+  assert.match(headers, /^  Cross-Origin-Opener-Policy: same-origin$/m);
+  assert.match(
+    headers,
+    /^  Permissions-Policy: accelerometer=\(\), camera=\(\), geolocation=\(\), gyroscope=\(\), magnetometer=\(\), microphone=\(\), payment=\(\), usb=\(\), interest-cohort=\(\)$/m,
+  );
+  assert.match(headers, /^  Content-Security-Policy: .*default-src 'self'/m);
+  assert.match(headers, /^  Content-Security-Policy: .*frame-ancestors 'none'/m);
+  assert.match(headers, /^  Content-Security-Policy: .*object-src 'none'/m);
+  assert.match(headers, /^  Content-Security-Policy: .*script-src 'self' 'unsafe-inline' https:\/\/static\.cloudflareinsights\.com https:\/\/challenges\.cloudflare\.com/m);
+  assert.match(headers, /^  Content-Security-Policy: .*upgrade-insecure-requests/m);
 });
 
 test('build references and copies local fonts and logo', () => {

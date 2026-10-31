@@ -22,17 +22,4 @@ export default defineConfig({
       },
     }),
   ],
-  security: {
-    csp: {
-      directives: [
-        "default-src 'self'",
-        "base-uri 'self'",
-        "connect-src 'self'",
-        "font-src 'self'",
-        "form-action 'self'",
-        "img-src 'self'",
-        "object-src 'none'",
-      ],
-    },
-  },
 });
