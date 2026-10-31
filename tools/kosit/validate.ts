@@ -18,7 +18,9 @@
 // BR-CL-25) and seller BT-29 with BT-32 (control: BT-29 removed, so BT-32 alone is left, BR-CO-26) likewise; standard
 // and reverse charge in one invoice likewise (controls for BR-AE-02, -05 and -10 with the standard bucket present).
 // The invoicing period BG-14 instead of BT-72 (MDR-37) on a 380 and a 381 likewise (controls for BR-29, BR-CO-19 and the
-// XSD element positions).
+// XSD element positions). A Leitweg-ID as BT-10 (MDR-38) on a 380 and a 381, in UBL and CII, is built with the opt-in
+// policy; the pinned configuration only requires BT-10 to be present (BR-DE-15), so the existing missing-BT-10 control is the
+// only negative control and no rejection of a malformed Leitweg-ID is claimed or derived from a hand-edited probe.
 // A pass here is not legal certification and says nothing about tax correctness.
 
 import { spawnSync } from 'node:child_process';
@@ -29,7 +31,7 @@ import { basename, join, resolve } from 'node:path';
 import { buildInvoice, UNIT_CODES } from '../../src/lib/domain/xrechnung/document.ts';
 import { serializeCiiInvoice } from '../../src/lib/domain/xrechnung/cii.ts';
 import { serializeUblInvoice } from '../../src/lib/domain/xrechnung/ubl.ts';
-import { CREDIT_NOTE_FIXTURE_NAMES, CREDIT_NOTE_PERIOD_FIXTURE_NAMES, FIXTURE_NAMES, PERIOD_FIXTURE_NAMES, REFERENCE_FIXTURE_NAMES, loadFixtureInput, type CreditNoteFixtureName, type FixtureName, type PeriodFixtureName, type ReferenceFixtureName } from '../../tests/support/fixtures.ts';
+import { CREDIT_NOTE_FIXTURE_NAMES, CREDIT_NOTE_PERIOD_FIXTURE_NAMES, FIXTURE_NAMES, LEITWEG_FIXTURE_NAMES, PERIOD_FIXTURE_NAMES, REFERENCE_FIXTURE_NAMES, loadFixtureInput, type CreditNoteFixtureName, type FixtureName, type LeitwegFixtureName, type PeriodFixtureName, type ReferenceFixtureName } from '../../tests/support/fixtures.ts';
 import { parseReport, type ParsedReport } from './report.ts';
 
 export type Manifest = {
@@ -50,11 +52,12 @@ const SCENARIOS: Record<Syntax, string> = { ubl: 'EN16931 XRechnung (UBL Invoice
 // A credit note 381 is a UBL CreditNote document and matches the validator's own CreditNote scenario (MDR-35); in CII it is
 // the same CrossIndustryInvoice scenario as any invoice.
 const UBL_CREDIT_NOTE_SCENARIO = 'EN16931 XRechnung (UBL CreditNote)';
-const isCreditNoteFixture = (name: string): boolean => ([...CREDIT_NOTE_FIXTURE_NAMES, ...CREDIT_NOTE_PERIOD_FIXTURE_NAMES] as readonly string[]).includes(name);
+const isCreditNoteFixture = (name: string): boolean => ([...CREDIT_NOTE_FIXTURE_NAMES, ...CREDIT_NOTE_PERIOD_FIXTURE_NAMES, 'zf-leitweg-id-credit-note'] as readonly string[]).includes(name);
 // M1 current evidence: these fixtures are also validated in CII (their goldens are `<name>.cii.xml`).
 const CII_FIXTURES: readonly FixtureName[] = ['e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms', 'm-payment-means-30', 'n-payment-means-30-account-details', 'o-eas-0204-seller-0088-buyer', 'p-eas-0088-seller-0204-buyer', 'q-seller-bt29-bt32', 'r-numeric-precision-boundary', 's-standard-and-reverse-charge'];
 const ciiName = (name: string): string => `${name}.cii`;
-type AnyFixtureName = FixtureName | CreditNoteFixtureName | ReferenceFixtureName | PeriodFixtureName;
+type AnyFixtureName = FixtureName | CreditNoteFixtureName | ReferenceFixtureName | PeriodFixtureName | LeitwegFixtureName;
+const isLeitwegFixture = (name: string): boolean => (LEITWEG_FIXTURE_NAMES as readonly string[]).includes(name);
 
 // Mutated copies of a Kleinunternehmer golden that the official validator must reject, each by the named rules.
 // The domain refuses to generate these documents, so they are derived from the golden text.
@@ -253,7 +256,7 @@ function verifyUnitCodes(configurationDirectory: string): void {
 type Target = { name: string; syntax: Syntax; xmlPath: string; xml: string; fixtureInput?: string; expectAccept: boolean; expectCodes?: readonly string[]; scenario?: string };
 
 function generate(name: AnyFixtureName, syntax: Syntax): string {
-  const built = buildInvoice(loadFixtureInput(name));
+  const built = buildInvoice(loadFixtureInput(name), isLeitwegFixture(name) ? { buyerReferencePolicy: 'leitweg-id' } : {});
   if (!built.ok) fail(`fixture ${name} does not build: ${JSON.stringify(built.errors)}`);
   const serialized = syntax === 'ubl' ? serializeUblInvoice(built.value) : serializeCiiInvoice(built.value);
   if (!serialized.ok) fail(`fixture ${name} does not serialize`);
@@ -380,7 +383,7 @@ function main(): void {
   const manifest = JSON.parse(readFileSync(join(ROOT, 'tools/kosit/kosit-manifest.json'), 'utf8')) as Manifest;
   const triage = JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/xrechnung/kosit-triage.json'), 'utf8')) as Triage;
   const requested = process.argv.slice(2);
-  const allNames = [...FIXTURE_NAMES, ...CII_FIXTURES.map(ciiName), ...CREDIT_NOTE_FIXTURE_NAMES, ...CREDIT_NOTE_FIXTURE_NAMES.map(ciiName), ...REFERENCE_FIXTURE_NAMES, ...REFERENCE_FIXTURE_NAMES.map(ciiName), ...PERIOD_FIXTURE_NAMES, ...PERIOD_FIXTURE_NAMES.map(ciiName), ...CREDIT_NOTE_PERIOD_FIXTURE_NAMES, ...CREDIT_NOTE_PERIOD_FIXTURE_NAMES.map(ciiName), CONTROL_NAME, ...Object.keys(SPECIAL_CONTROLS)];
+  const allNames = [...FIXTURE_NAMES, ...CII_FIXTURES.map(ciiName), ...CREDIT_NOTE_FIXTURE_NAMES, ...CREDIT_NOTE_FIXTURE_NAMES.map(ciiName), ...REFERENCE_FIXTURE_NAMES, ...REFERENCE_FIXTURE_NAMES.map(ciiName), ...PERIOD_FIXTURE_NAMES, ...PERIOD_FIXTURE_NAMES.map(ciiName), ...CREDIT_NOTE_PERIOD_FIXTURE_NAMES, ...CREDIT_NOTE_PERIOD_FIXTURE_NAMES.map(ciiName), ...LEITWEG_FIXTURE_NAMES, ...LEITWEG_FIXTURE_NAMES.map(ciiName), CONTROL_NAME, ...Object.keys(SPECIAL_CONTROLS)];
   const names = requested.length > 0 ? requested : allNames;
   for (const name of names) if (!allNames.includes(name)) fail(`unknown fixture ${name}`);
 
