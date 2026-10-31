@@ -140,10 +140,14 @@ test('generated German and English content route sets are exact mirrors', () => 
   assert.deepEqual(routeSets.en, routeSets.de);
 });
 
+test('the default pages.dev origin redirects to the canonical domain', () => {
+  assert.match(readOutput('_redirects'), /^https:\/\/orkaid\.pages\.dev\/\* https:\/\/orkaid\.de\/:splat 301$/m);
+});
+
 test('Cloudflare Pages static headers provide transport-level and CSP hardening', () => {
   const headers = readOutput('_headers');
   assert.match(headers, /^\/\*$/m);
-  assert.match(headers, /^  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload$/m);
+  assert.match(headers, /^  Strict-Transport-Security: max-age=63072000$/m); // no includeSubDomains/preload: not every subdomain is known to serve HTTPS, and preload is hard to undo
   assert.match(headers, /^  X-Content-Type-Options: nosniff$/m);
   assert.match(headers, /^  X-Frame-Options: DENY$/m);
   assert.match(headers, /^  Referrer-Policy: strict-origin-when-cross-origin$/m);
