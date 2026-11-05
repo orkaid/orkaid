@@ -18,6 +18,7 @@
 
 import { add, compare, effectiveFractionDigits, multiply, roundHalfUp, type Decimal, type DecimalErrorCode } from './decimal.ts';
 import { parseDecimalInput, type NumberNotation } from './number-notation.ts';
+import { appendOwn } from './own-data.ts';
 
 export const SUPPORTED_VAT_RATES = ['19', '7'] as const;
 export type VatRate = (typeof SUPPORTED_VAT_RATES)[number];
@@ -256,35 +257,35 @@ function validate(
   callerFields: CallerFields,
 ): { lines: ParsedLine[]; truncated: boolean } | undefined {
   if (!isRecord(input)) {
-    errors.push({ code: 'invalid_type', path: '' });
+    appendOwn(errors, { code: 'invalid_type', path: '' });
     return undefined;
   }
 
   const documentTypeCode = ownField(input, 'documentTypeCode');
-  if (documentTypeCode !== '380' && documentTypeCode !== '381') errors.push({ code: 'unsupported_document_type', path: 'documentTypeCode' });
-  if (ownField(input, 'currency') !== 'EUR') errors.push({ code: 'unsupported_currency', path: 'currency' });
+  if (documentTypeCode !== '380' && documentTypeCode !== '381') appendOwn(errors, { code: 'unsupported_document_type', path: 'documentTypeCode' });
+  if (ownField(input, 'currency') !== 'EUR') appendOwn(errors, { code: 'unsupported_currency', path: 'currency' });
 
   const parsedLines: ParsedLine[] = [];
   let firstUnscanned: number | undefined;
   const inputLines = ownField(input, 'lines');
   if (!Array.isArray(inputLines)) {
-    errors.push({ code: 'invalid_type', path: 'lines' });
+    appendOwn(errors, { code: 'invalid_type', path: 'lines' });
   } else if (inputLines.length === 0) {
-    errors.push({ code: 'no_lines', path: 'lines' });
+    appendOwn(errors, { code: 'no_lines', path: 'lines' });
   } else {
     // Indexed loop, not forEach: forEach skips holes, which would silently drop lines (new Array(1) -> "valid").
     // A hole reads as undefined (never as Array.prototype[index]) and is reported as an invalid line.
     let index = 0;
     for (; index < inputLines.length && errors.length < PROVISIONAL_MAX_REPORTED_ERRORS; index++) {
       const parsed = validateLine(ownElement(inputLines, index), `lines[${index}]`, notation, errors, callerFields.line ?? []);
-      if (parsed) parsedLines.push(parsed);
+      if (parsed) appendOwn(parsedLines, parsed);
     }
     if (index < inputLines.length) firstUnscanned = index;
   }
 
   reportUnknownFields(input, [...INVOICE_FIELDS, ...(callerFields.invoice ?? [])], '', errors);
   // Last on purpose: a caller that only reads `errors` still sees that the list is incomplete.
-  if (firstUnscanned !== undefined) errors.push({ code: 'error_list_truncated', path: `lines[${firstUnscanned}]` });
+  if (firstUnscanned !== undefined) appendOwn(errors, { code: 'error_list_truncated', path: `lines[${firstUnscanned}]` });
   return { lines: parsedLines, truncated: firstUnscanned !== undefined };
 }
 
@@ -296,7 +297,7 @@ function validateLine(
   callerLineFields: readonly string[],
 ): ParsedLine | undefined {
   if (!isRecord(line)) {
-    errors.push({ code: 'invalid_type', path });
+    appendOwn(errors, { code: 'invalid_type', path });
     return undefined;
   }
 
@@ -322,12 +323,12 @@ function validateVat(input: unknown, path: string, notation: NumberNotation, err
   const rate = record && ownField(record, 'rate');
   const special = treatment === 'kleinunternehmer' || treatment === 'reverse-charge' ? treatment : undefined;
   const treatmentOk = special !== undefined || treatment === 'standard';
-  if (!treatmentOk) errors.push({ code: 'unsupported_vat_treatment', path: `${path}.treatment` });
+  if (!treatmentOk) appendOwn(errors, { code: 'unsupported_vat_treatment', path: `${path}.treatment` });
   const categoryOk = category === (special === undefined ? 'S' : ZERO_RATE_CATEGORY[special]);
-  if (!categoryOk) errors.push({ code: 'unsupported_vat_category', path: `${path}.category` });
+  if (!categoryOk) appendOwn(errors, { code: 'unsupported_vat_category', path: `${path}.category` });
   const standardRate = special === undefined ? normalizeVatRate(rate, notation) : undefined;
   const rateOk = special === undefined ? standardRate !== undefined : isZeroRate(rate, notation);
-  if (!rateOk) errors.push({ code: 'unsupported_vat_rate', path: `${path}.rate` });
+  if (!rateOk) appendOwn(errors, { code: 'unsupported_vat_rate', path: `${path}.rate` });
   if (record !== undefined) reportUnknownFields(record, VAT_FIELDS, path, errors);
   if (!treatmentOk || !categoryOk || !rateOk) return undefined;
   if (special === 'kleinunternehmer') return { treatment: 'kleinunternehmer', category: 'E', rate: '0' };
@@ -351,7 +352,7 @@ function parseLineValue(
   else if (effectiveFractionDigits(result.value) > maxFractionDigits) code = 'fraction_digits_limit';
   else if (compare(result.value, maxExclusive) >= 0) code = 'magnitude_limit';
   else return result.value;
-  errors.push({ code, path });
+  appendOwn(errors, { code, path });
   return undefined;
 }
 
@@ -372,7 +373,7 @@ function isZeroRate(input: unknown, notation: NumberNotation): boolean {
 
 function reportUnknownFields(record: Record<string, unknown>, allowed: readonly string[], path: string, errors: InvoiceError[]): void {
   for (const key of Object.keys(record)) {
-    if (!allowed.includes(key)) errors.push({ code: 'unknown_field', path: path ? `${path}.${key}` : key });
+    if (!allowed.includes(key)) appendOwn(errors, { code: 'unknown_field', path: path ? `${path}.${key}` : key });
   }
 }
 
@@ -389,12 +390,12 @@ function calculate(lines: readonly ParsedLine[]): InvoiceTotals {
     const taxableAmount = bucket.reduce(add, ZERO);
     // rate / 100 is the integer rate at scale 2; VAT is rounded once per bucket.
     const taxAmount = roundHalfUp(multiply(taxableAmount, { units: BigInt(rate), scale: 2 }), CENT_SCALE);
-    vatBreakdown.push({ treatment: 'standard', category: 'S', rate, taxableAmount, taxAmount });
+    appendOwn(vatBreakdown, { treatment: 'standard', category: 'S', rate, taxableAmount, taxAmount });
   }
   const kleinunternehmerNets = lines.flatMap((line, index) => (line.vat.treatment === 'kleinunternehmer' ? [netAmounts[index] as Decimal] : []));
   if (kleinunternehmerNets.length > 0) {
     // No VAT is computed: BR-E-09 requires exactly zero. BT-116 is the real sum of the lines, not forced to zero (BR-E-08).
-    vatBreakdown.push({
+    appendOwn(vatBreakdown, {
       treatment: 'kleinunternehmer',
       category: 'E',
       rate: '0',
@@ -406,7 +407,7 @@ function calculate(lines: readonly ParsedLine[]): InvoiceTotals {
   const reverseChargeNets = lines.flatMap((line, index) => (line.vat.treatment === 'reverse-charge' ? [netAmounts[index] as Decimal] : []));
   if (reverseChargeNets.length > 0) {
     // No VAT is computed: BR-AE-09 requires exactly zero. BT-116 is the real sum of the lines (BR-AE-08).
-    vatBreakdown.push({
+    appendOwn(vatBreakdown, {
       treatment: 'reverse-charge',
       category: 'AE',
       rate: '0',

@@ -11,6 +11,7 @@
 import { hasOwnField, isValidatedInvoice, paymentTermsText, type Invoice, type InvoiceLine, type InvoiceParty, type PaymentAccount, type PrecedingInvoiceReference } from './document.ts';
 import type { Decimal } from './decimal.ts';
 import { formatXmlDecimal } from './number-notation.ts';
+import { appendOwn } from './own-data.ts';
 
 export type UblResult =
   | { readonly ok: true; readonly xml: string }
@@ -190,9 +191,9 @@ function party(source: Identified, seller?: Invoice['seller']): Element {
 
 function taxSchemes(source: Identified, seller?: Invoice['seller']): readonly Element[] {
   const schemes: Element[] = [];
-  if (hasOwnField(source, 'vatId')) schemes.push(group('cac:PartyTaxScheme', leaf('cbc:CompanyID', source.vatId), group('cac:TaxScheme', leaf('cbc:ID', 'VAT')))); // BT-31 / BT-48
+  if (hasOwnField(source, 'vatId')) appendOwn(schemes, group('cac:PartyTaxScheme', leaf('cbc:CompanyID', source.vatId), group('cac:TaxScheme', leaf('cbc:ID', 'VAT')))); // BT-31 / BT-48
   if (seller !== undefined && hasOwnField(seller, 'taxRegistrationId')) {
-    schemes.push(group('cac:PartyTaxScheme', leaf('cbc:CompanyID', seller.taxRegistrationId), group('cac:TaxScheme', leaf('cbc:ID', UBL_TAX_REGISTRATION_SCHEME)))); // BT-32
+    appendOwn(schemes, group('cac:PartyTaxScheme', leaf('cbc:CompanyID', seller.taxRegistrationId), group('cac:TaxScheme', leaf('cbc:ID', UBL_TAX_REGISTRATION_SCHEME)))); // BT-32
   }
   return schemes;
 }

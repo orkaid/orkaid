@@ -12,6 +12,7 @@
 import { hasOwnField, isValidatedInvoice, paymentTermsText, type Invoice, type InvoiceLine, type InvoiceParty, type PaymentAccount, type PrecedingInvoiceReference } from './document.ts';
 import type { Decimal } from './decimal.ts';
 import { formatXmlDecimal } from './number-notation.ts';
+import { appendOwn } from './own-data.ts';
 
 export type CiiResult =
   | { readonly ok: true; readonly xml: string }
@@ -131,8 +132,8 @@ function party(name: string, source: Identified, seller?: Invoice['seller']): El
 
 function taxRegistrations(source: Identified, seller?: Invoice['seller']): readonly Element[] {
   const registrations: Element[] = [];
-  if (hasOwnField(source, 'vatId')) registrations.push(group('ram:SpecifiedTaxRegistration', leaf('ram:ID', source.vatId, [['schemeID', 'VA']]))); // BT-31 / BT-48
-  if (seller !== undefined && hasOwnField(seller, 'taxRegistrationId')) registrations.push(group('ram:SpecifiedTaxRegistration', leaf('ram:ID', seller.taxRegistrationId, [['schemeID', 'FC']]))); // BT-32
+  if (hasOwnField(source, 'vatId')) appendOwn(registrations, group('ram:SpecifiedTaxRegistration', leaf('ram:ID', source.vatId, [['schemeID', 'VA']]))); // BT-31 / BT-48
+  if (seller !== undefined && hasOwnField(seller, 'taxRegistrationId')) appendOwn(registrations, group('ram:SpecifiedTaxRegistration', leaf('ram:ID', seller.taxRegistrationId, [['schemeID', 'FC']]))); // BT-32
   return registrations;
 }
 

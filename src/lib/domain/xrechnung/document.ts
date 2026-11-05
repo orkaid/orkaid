@@ -27,6 +27,7 @@ import {
 import { compare, effectiveFractionDigits, formatDecimal, roundHalfUp, type Decimal } from './decimal.ts';
 import { checkLeitwegId } from './leitweg-id.ts';
 import { parseDecimalInput, type NumberNotation } from './number-notation.ts';
+import { appendOwn, defineOwn } from './own-data.ts';
 
 // PROFILE: unit codes (UN/ECE Recommendation 20/21). Each is present in the KoSIT configuration 2026-08-31 code list
 // (rule BR-CL-23); tools/kosit/validate.ts re-verifies that against the validator configuration on every run.
@@ -329,8 +330,9 @@ export function buildInvoice(rawInput: unknown, options: DocumentOptions = {}): 
   if (problems.length > 0) {
     // While any property is an accessor the rest of the input is not validated: the caller has to fix these first.
     const reported: DocumentError[] = problems.slice(0, PROVISIONAL_MAX_REPORTED_ERRORS).map((path) => ({ code: 'invalid_type', path }));
-    const stoppedAt = problems[PROVISIONAL_MAX_REPORTED_ERRORS];
-    if (stoppedAt !== undefined) reported.push({ code: 'error_list_truncated', path: stoppedAt });
+    // Length check: an index past the end would read a value inherited at that index (IR39-01).
+    const stoppedAt = problems.length > PROVISIONAL_MAX_REPORTED_ERRORS ? problems[PROVISIONAL_MAX_REPORTED_ERRORS] : undefined;
+    if (stoppedAt !== undefined) appendOwn(reported, { code: 'error_list_truncated', path: stoppedAt });
     return { ok: false, errors: reported, truncated: stoppedAt !== undefined };
   }
 
@@ -369,14 +371,14 @@ export function buildInvoice(rawInput: unknown, options: DocumentOptions = {}): 
   // 1). Kleinunternehmer is never combined, and any combination not listed is refused as outside the profile, not as
   // legally invalid. Whether a line's supply qualifies for § 13b remains the caller's input, never checked here.
   if (money.ok && !isSupportedComposition(new Set(money.value.lines.map((line) => line.vat.treatment)))) {
-    errors.push({ code: 'unsupported_mixed_vat_treatments', path: 'lines' });
+    appendOwn(errors, { code: 'unsupported_mixed_vat_treatments', path: 'lines' });
   }
   // EXTERNAL, BR-CO-25 (SeMoX CIUS model; not implemented by the pinned Schematron, so the domain owns it): with a
   // positive amount due (BT-115) at least one of BT-9 and BT-20 is present. It needs the computed BT-115, so it is
   // checked only when the calculation succeeded. Presence is read from the raw input: a supplied-but-malformed value is
   // reported by its own diagnostic, not also as missing. A tier list is BT-20 content (MDR-39), so it counts as BT-20.
   if (money.ok && money.value.totals.amountDue.units > 0n && isRecord(input.payment) && input.payment.dueDate === undefined && input.payment.termsText === undefined && input.payment.skonto === undefined) {
-    errors.push({ code: 'missing_payment_due_information', path: 'payment' });
+    appendOwn(errors, { code: 'missing_payment_due_information', path: 'payment' });
   }
 
   if (money.ok && errors.length === 0 && stoppedAt === undefined) {
@@ -392,7 +394,7 @@ export function buildInvoice(rawInput: unknown, options: DocumentOptions = {}): 
       const data = lineData[String(index)];
       const totalsLine = money.value.totals.lines[index];
       if (data === undefined || totalsLine === undefined) return { ok: false, errors: [{ code: 'internal_inconsistency', path: `lines[${index}]` }], truncated: false };
-      lines.push({ ...data, quantity: calculated.quantity, unitPrice: calculated.unitPrice, vat: calculated.vat, netAmount: totalsLine.netAmount });
+      appendOwn(lines, { ...data, quantity: calculated.quantity, unitPrice: calculated.unitPrice, vat: calculated.vat, netAmount: totalsLine.netAmount });
     }
     const common = {
       currency: 'EUR' as const,
@@ -472,7 +474,7 @@ function snapshot(value: unknown, path: string, depth: number, problems: string[
     if (descriptor === undefined) return { present: false };
     // Own check: a descriptor is an ordinary object, so `'value' in descriptor` would also see Object.prototype.value (IR38-03).
     if (!Object.hasOwn(descriptor, 'value')) {
-      problems.push(childPath);
+      appendOwn(problems, childPath);
       return { present: false };
     }
     return { present: true, value: snapshot(descriptor.value, childPath, depth + 1, problems) };
@@ -483,7 +485,7 @@ function snapshot(value: unknown, path: string, depth: number, problems: string[
     for (const key of Object.keys(value)) {
       if (!/^(0|[1-9][0-9]*)$/.test(key)) continue;
       const entry = readData(value, key, `${path}[${key}]`);
-      if (entry.present) Reflect.set(copy, key, entry.value);
+      if (entry.present) defineOwn(copy, key, entry.value);
     }
     return copy;
   }
@@ -493,8 +495,8 @@ function snapshot(value: unknown, path: string, depth: number, problems: string[
   const copy: Record<string, unknown> = Object.create(null);
   for (const key of Object.keys(value)) {
     const entry = readData(value, key, path === '' ? key : `${path}.${key}`);
-    // defineProperty, not assignment: a key named "__proto__" must stay an ordinary own property of the copy.
-    if (entry.present) Object.defineProperty(copy, key, { value: entry.value, enumerable: true, writable: true, configurable: true });
+    // Not assignment: a key named "__proto__" must stay an ordinary own property of the copy.
+    if (entry.present) defineOwn(copy, key, entry.value);
   }
   return copy;
 }
@@ -576,14 +578,14 @@ function readSeller(parent: Record<string, unknown>, errors: DocumentError[]): I
   // BR-CO-26 (MDR-21): at least one of BT-29, BT-30, BT-31 identifies the seller. BT-32 alone does not satisfy it,
   // and this invariant is never merged with the tax-identifier rule below -- each fails independently.
   if (!suppliesBt29 && !suppliesBt30 && !suppliesBt31) {
-    errors.push({ code: 'missing_seller_identification', path: 'seller' });
+    appendOwn(errors, { code: 'missing_seller_identification', path: 'seller' });
   }
   // Seller tax identifier: BT-31 or BT-32. Every implemented treatment needs it: standard (BR-S-02, BR-DE-16),
   // kleinunternehmer (BR-E-02, BR-DE-16) and reverse-charge (BR-AE-02, BR-DE-16), verified in UBL and CII; it is not
   // relaxed for any category. BT-63/BG-11 (the tax representative branch these rules also accept) is not implemented in
   // M1, so only these two are checked (MDR-21).
   if (!suppliesBt31 && !suppliesBt32) {
-    errors.push({ code: 'missing_seller_tax_identifier', path: 'seller' });
+    appendOwn(errors, { code: 'missing_seller_tax_identifier', path: 'seller' });
   }
 
   if (errors.length > errorsBefore || !party || !contact) return undefined;
@@ -595,13 +597,13 @@ function readSellerIdentifiers(parent: Record<string, unknown>, errors: Document
   const value = parent.sellerIdentifiers;
   if (value === undefined) return [];
   if (!Array.isArray(value)) {
-    errors.push({ code: 'invalid_type', path: 'seller.sellerIdentifiers' });
+    appendOwn(errors, { code: 'invalid_type', path: 'seller.sellerIdentifiers' });
     return [];
   }
   const identifiers: SellerIdentifier[] = [];
   for (let index = 0; index < value.length; index++) {
     const text = readTextValue(ownElement(value, index), `seller.sellerIdentifiers[${index}]`, errors);
-    if (text !== undefined) identifiers.push({ value: text });
+    if (text !== undefined) appendOwn(identifiers, { value: text });
   }
   return identifiers;
 }
@@ -621,7 +623,7 @@ function readBuyer(parent: Record<string, unknown>, reverseCharge: boolean, erro
   // Presence is read from the raw input, never from the validated value: a supplied-but-malformed field is reported by
   // its own diagnostic and must not also be reported as missing.
   if (reverseCharge && record.legalRegistrationId === undefined && record.vatId === undefined) {
-    errors.push({ code: 'missing_buyer_identifier', path: 'buyer' });
+    appendOwn(errors, { code: 'missing_buyer_identifier', path: 'buyer' });
   }
 
   if (errors.length > errorsBefore || !party) return undefined;
@@ -744,7 +746,7 @@ function readClearing(payment: Record<string, unknown>, errors: DocumentError[])
   if (typeof kind !== 'string') return report(errors, 'invalid_type', `${path}.kind`) ?? false;
   if (kind === 'refund-transfer') return report(errors, 'unsupported_credit_note_refund_transfer', `${path}.kind`) ?? false;
   if (kind !== 'clearing') return report(errors, 'unsupported_credit_note_settlement', `${path}.kind`) ?? false;
-  for (const name of Object.keys(settlement)) if (!SETTLEMENT_FIELDS.includes(name)) errors.push({ code: 'unknown_field', path: `${path}.${name}` });
+  for (const name of Object.keys(settlement)) if (!SETTLEMENT_FIELDS.includes(name)) appendOwn(errors, { code: 'unknown_field', path: `${path}.${name}` });
   // Exactly the boolean true: "true", 1 or an omitted field is not a confirmation.
   if (settlement.reciprocalObligationConfirmed !== true) return report(errors, 'missing_clearing_confirmation', `${path}.reciprocalObligationConfirmed`) ?? false;
   return true;
@@ -798,7 +800,7 @@ function readSkonto(payment: Record<string, unknown>, notation: NumberNotation, 
       if (days !== undefined && days <= highestDays) report(errors, 'unsupported_skonto_tier_order', `${tierPath}.days`);
       const percent = readSkontoPercent(entry.percent, `${tierPath}.percent`, notation, errors);
       if (days !== undefined) highestDays = Math.max(highestDays, days);
-      if (days !== undefined && percent !== undefined) tiers.push({ days, percent });
+      if (days !== undefined && percent !== undefined) appendOwn(tiers, { days, percent });
     }
   }
   return tiers;
@@ -860,7 +862,7 @@ function readNotes(parent: Record<string, unknown>, errors: DocumentError[]): re
   const value = parent.notes;
   if (value === undefined) return [];
   if (!Array.isArray(value)) {
-    errors.push({ code: 'invalid_type', path: 'notes' });
+    appendOwn(errors, { code: 'invalid_type', path: 'notes' });
     return [];
   }
   const notes: InvoiceNote[] = [];
@@ -868,13 +870,13 @@ function readNotes(parent: Record<string, unknown>, errors: DocumentError[]): re
     const entry = ownElement(value, index);
     const path = `notes[${index}]`;
     if (entry === undefined) {
-      errors.push({ code: 'missing_field', path });
+      appendOwn(errors, { code: 'missing_field', path });
     } else if (!isRecord(entry)) {
-      errors.push({ code: 'invalid_type', path });
+      appendOwn(errors, { code: 'invalid_type', path });
     } else {
-      for (const name of Object.keys(entry)) if (!NOTE_FIELDS.includes(name)) errors.push({ code: 'unknown_field', path: `${path}.${name}` });
+      for (const name of Object.keys(entry)) if (!NOTE_FIELDS.includes(name)) appendOwn(errors, { code: 'unknown_field', path: `${path}.${name}` });
       const text = readTextValue(entry.text, `${path}.text`, errors, true);
-      if (text !== undefined) notes.push({ text });
+      if (text !== undefined) appendOwn(notes, { text });
     }
   }
   return notes;
@@ -886,7 +888,8 @@ function readNotes(parent: Record<string, unknown>, errors: DocumentError[]): re
 // reported by invoice.ts. Object.keys visits the elements that exist, so a huge sparse array cannot stall the scan, and
 // lists array indices in ascending order, so the scan ends at the first index the monetary scan did not reach.
 function readLineData(input: Record<string, unknown>, scanLimit: bigint | undefined, errors: DocumentError[]): { lines: Record<string, { name: string; unitCode: UnitCode }>; stoppedAt: string | undefined } {
-  const lines: Record<string, { name: string; unitCode: UnitCode }> = {};
+  // No prototype: an index is written and read back here, and must not reach an inherited numeric setter or value (IR39-01).
+  const lines: Record<string, { name: string; unitCode: UnitCode }> = Object.create(null);
   const list = input.lines;
   if (!Array.isArray(list)) return { lines, stoppedAt: undefined };
 
@@ -920,16 +923,16 @@ function readObject(
 ): Record<string, unknown> | undefined {
   const value = parent[key];
   if (value === undefined) {
-    errors.push({ code: 'missing_field', path });
+    appendOwn(errors, { code: 'missing_field', path });
     return undefined;
   }
   if (!isRecord(value)) {
-    errors.push({ code: 'invalid_type', path });
+    appendOwn(errors, { code: 'invalid_type', path });
     return undefined;
   }
   // Ceiling: unknown fields are reported without bound, as invoice.ts does for its own levels.
   for (const name of Object.keys(value)) {
-    if (!allowed.includes(name)) errors.push({ code: 'unknown_field', path: `${path}.${name}` });
+    if (!allowed.includes(name)) appendOwn(errors, { code: 'unknown_field', path: `${path}.${name}` });
   }
   return value;
 }
@@ -963,7 +966,7 @@ function readOptionalText(parent: Record<string, unknown>, key: string, path: st
 }
 
 function report(errors: DocumentError[], code: DocumentErrorCode, path: string): undefined {
-  errors.push({ code, path });
+  appendOwn(errors, { code, path });
   return undefined;
 }
 
