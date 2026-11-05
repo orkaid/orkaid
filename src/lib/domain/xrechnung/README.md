@@ -36,7 +36,7 @@ Three kinds of rule are kept apart, in the code comments as well:
 | --- | --- | --- |
 | **External** | imposed by EN 16931, the XRechnung CIUS, the UBL binding or law | BT-10 present (BR-DE-15); seller contact BT-41/42/43 (BR-DE-2, -5, -6, -7); city and post code (BR-DE-3, -4, -8, -9); seller identification by BT-29, BT-30 or BT-31 (BR-CO-26); seller VAT or tax identifier BT-31 or BT-32 (BR-S-02, BR-E-02, BR-AE-02, BR-DE-16); electronic addresses with scheme (BR-62, BR-63); payment instructions (BR-DE-1); document totals and VAT breakdown (BR-CO-10 to BR-CO-17); at most two decimals on BT-131 and the totals (BR-DEC-*); the date of supply is a required invoice particular under § 14 Abs. 4 Satz 1 Nr. 6 UStG (statute text: https://www.gesetze-im-internet.de/ustg_1980/__14.html; § 31 Abs. 4 UStDV also allows stating a calendar month, which this profile does not support), while the validator only reports its absence at information level (BR-DE-TMP-32) |
 | **Conditional** | applies only in stated circumstances | valid IBAN when payment means is 58 (BR-DE-19); credit-transfer group with an account identifier when payment means is 30 or 58 (BR-DE-23, BR-50, BR-61); payment due date (BT-9) or payment terms (BT-20) when the amount due (BT-115) is positive (BR-CO-25; the pinned validator artefacts do not implement it, so `buildInvoice` enforces it after the monetary calculation; BT-9 and BT-20 are otherwise both optional) |
-| **Profile** | chosen for the current implementation only; not a claim that law or XRechnung requires exactly this, and not a permanent limit | a seller or buyer USt-IdNr, when given, is `DE` + 9 digits; exactly one of a complete delivery date (BT-72) and a complete invoicing period (BG-14), see below; street addresses of both parties required; both parties in Germany; electronic address schemes `EM`, `0204` and `0088` only (a scheme identifier, with no routing or Leitweg-ID meaning); payment means 30 or 58 (credit transfer) only, with one account (BG-17) identified by an IBAN (no non-IBAN BT-84) and BT-86, when given, a BIC; no `#` in payment terms (BT-20), because structured Skonto (BR-DE-18) is not supported; a small list of unit codes (`UNIT_CODES`); quantity (BT-129) and unit price (BT-146) with at most 6 effective fractional digits (trailing zeros not counted, the written scale kept) and below 10^9; every calculated amount (BT-131, BT-116, BT-117, BT-106, BT-109, BT-110, BT-112, BT-115) below 10^10 EUR, an interoperability guard for the pinned validator, not an EN 16931, XRechnung or XSD maximum |
+| **Profile** | chosen for the current implementation only; not a claim that law or XRechnung requires exactly this, and not a permanent limit | a seller or buyer USt-IdNr, when given, is `DE` + 9 digits; exactly one of a complete delivery date (BT-72) and a complete invoicing period (BG-14), see below; street addresses of both parties required; both parties in Germany; electronic address schemes `EM`, `0204` and `0088` only (a scheme identifier, with no routing or Leitweg-ID meaning); payment means 30 or 58 (credit transfer) only, with one account (BG-17) identified by an IBAN (no non-IBAN BT-84) and BT-86, when given, a BIC; structured Skonto on a 380 within the limits below (`#` in the free text of BT-20 is an XRechnung rule, not a profile limit); a small list of unit codes (`UNIT_CODES`); quantity (BT-129) and unit price (BT-146) with at most 6 effective fractional digits (trailing zeros not counted, the written scale kept) and below 10^9; every calculated amount (BT-131, BT-116, BT-117, BT-106, BT-109, BT-110, BT-112, BT-115) below 10^10 EUR, an interoperability guard for the pinned validator, not an EN 16931, XRechnung or XSD maximum |
 
 Input outside the profile fails with an explicit `unsupported_*` (or field-specific) error. Such an error means "not
 supported by this profile", not "legally invalid". BT-10 is buyer-provided business information: it is required and
@@ -84,6 +84,53 @@ shares with the supporting documents of BG-24. The OpenPeppol BIS Billing docume
 `DocumentTypeCode` 50 (other additional documents carry no type code), and Orkaid follows that documentation. The pinned
 validator accepts the document but cannot tell which interpretation a recipient applies, so the tests assert the emitted
 structure itself. BG-24, attachments and general Peppol support are not part of this implementation.
+
+## Structured Skonto in BT-20 (MDR-39)
+
+An optional `payment.skonto` on an invoice 380 is a list of `{ days, percent }`. It is descriptive payment information: it
+changes no BT-115, VAT or total, the validated document holds no Skonto amount, discounted amount, base or date, and BT-9 stays
+independent. `days` is a JSON number; `percent` is a decimal string in the `notation` of the call, held as an exact decimal.
+
+```
+payment.termsText  "Zahlbar in 30 Tagen."                  BT-20 is one element, in UBL and CII alike:
+payment.skonto     [{ days: 14, percent: "2.25" },         Zahlbar in 30 Tagen.\n
+                    { days: 28, percent: "1" }]            #SKONTO#TAGE=14#PROZENT=2.25#\n
+                                                           #SKONTO#TAGE=28#PROZENT=1.00#\n
+```
+
+`paymentTermsText` builds that string for both serializers, and with no tier list it is exactly the free text. A tier list counts as
+BT-20 for BR-CO-25, so a positive amount due may rest on it alone.
+
+| Layer | Content |
+| --- | --- |
+| Official (XRechnung 3.0.2 of 2024-06-20, sections 11.1, 12.6, 13.2) | BT-20 is one text element, 0..1. A Skonto entry has the segments `SKONTO`, `TAGE=n` and `PROZENT=n`, the percentage unsigned with a point and two decimals, in capitals, no additional whitespace, and an XML-conformant line break after each complete entry. Unstructured text contains no `#`. `BASISBETRAG` is the official fourth segment for a discount on part of BT-115 |
+| Pinned validator (Schematron 2.6.0, configuration 2026-08-31) | BR-DE-18, fatal, the same rule for UBL Invoice, UBL CreditNote and CII: the line format and the final line break, nothing else. It does not read BT-9 or BT-115 and does not check range, order or uniqueness |
+| Orkaid profile (restrictions, not rules of the standard) | see the table below |
+| Unverified | how any recipient platform interprets `TAGE` or accepts the tier lines. Nothing here was tested with a recipient |
+
+| Refused by this profile | Diagnostic and path |
+| --- | --- |
+| fewer than 1 or more than 10 tiers | `unsupported_skonto_tier_count` at `payment.skonto` |
+| `days` that is not an integer from 1 to 365 | `unsupported_skonto_days` at `payment.skonto[i].days` |
+| `days` not strictly ascending; never sorted, merged or repaired | `unsupported_skonto_tier_order` at `payment.skonto[i].days` |
+| `percent` of 0 or above 100 | `unsupported_skonto_percent` at `payment.skonto[i].percent` |
+| a `baseAmount`, because `BASISBETRAG` is not supported | `unsupported_skonto_base_amount` at `payment.skonto[i].baseAmount` |
+| any tier list on a credit note 381, not a universal XRechnung prohibition: the validator accepts it, but no source consulted says what it means there | `unsupported_skonto_on_credit_note` at `payment.skonto` |
+
+Established diagnostics keep their meaning: `invalid_decimal`, `negative_amount` and `input_length_guard` for percent text,
+`fraction_digits_limit` for a third effective fractional digit, `missing_field`, `invalid_type` and `unknown_field` for shape, and
+`unsupported_hash_in_payment_terms` for `#` in the free text. Free text can only precede the tiers.
+
+**The reference point of `TAGE` is not defined.** XRechnung 3.0.2 does not unequivocally define it: the specification, the
+semantic model, the Schematron and the test instance read do not state it. `days` is therefore neutral. Orkaid assumes no reference
+point, computes no deadline and attaches no contractual meaning. Whether a calendar date is ever displayed is an open question.
+
+**The whole of BT-115 is the base.** The specification takes BT-115 as the base of the percentage unless `BASISBETRAG` is given (an
+inference from its wording). Without that segment every tier states a percentage of the whole amount due, and the domain cannot
+detect that a caller meant only part of it.
+
+Acceptance by the pinned validator is the only claim: not recipient acceptance, not certification and not a defined reference point.
+The licensed EN 16931 text was not read.
 
 ## Delivery date or invoicing period (BT-72 or BG-14)
 

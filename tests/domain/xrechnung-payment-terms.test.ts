@@ -14,7 +14,7 @@ import { childNames, one, parseXml, select } from '../support/xml.ts';
 // ram:DueDateDateTime/udt:DateTimeString[@format='102'] and .../ram:SpecifiedTradePaymentTerms/ram:Description), the UBL
 // 2.1 and CII D16B XSD sequences, and BR-CO-25 ("Im Falle eines positiven Zahlbetrags BT-115 muss entweder ... BT-9
 // oder ... BT-20 vorhanden sein"), which the pinned Schematron does not implement.
-// PROFILE: no `#` in BT-20 (structured Skonto, BR-DE-18, is not in M1); multiline policy and length limit as BT-22.
+// No `#` in the free text of BT-20 (structured Skonto: xrechnung-skonto.test.ts); multiline policy and length limit as BT-22.
 
 const base = () => loadFixtureInput('a-simple');
 const DUE = '2026-10-24';
@@ -177,7 +177,7 @@ test('BT-20: empty, whitespace-only, padded, CR, CRLF and other control characte
   assert.deepEqual(rejected(termsOnly(5)), ['invalid_type@payment.termsText']);
 });
 
-test('BT-20: `#` is rejected anywhere (structured Skonto, BR-DE-18, is outside M1); no Skonto syntax is parsed', () => {
+test('BT-20: `#` is rejected anywhere in the free text; no Skonto syntax is parsed', () => {
   for (const text of ['#', 'Rechnung #12', '#SKONTO#TAGE=14#PROZENT=2.00#', 'Zahlbar in 30 Tagen.\n#SKONTO#TAGE=14#PROZENT=2.00#', 'a\n#b']) {
     assert.deepEqual(rejected(termsOnly(text)), ['unsupported_hash_in_payment_terms@payment.termsText'], JSON.stringify(text));
   }

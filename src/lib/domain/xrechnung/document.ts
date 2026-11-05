@@ -24,8 +24,9 @@ import {
   type InvoiceTotals,
   type VatInput,
 } from './invoice.ts';
-import type { Decimal } from './decimal.ts';
+import { compare, effectiveFractionDigits, formatDecimal, roundHalfUp, type Decimal } from './decimal.ts';
 import { checkLeitwegId } from './leitweg-id.ts';
+import { parseDecimalInput, type NumberNotation } from './number-notation.ts';
 
 // PROFILE: unit codes (UN/ECE Recommendation 20/21). Each is present in the KoSIT configuration 2026-08-31 code list
 // (rule BR-CL-23); tools/kosit/validate.ts re-verifies that against the validator configuration on every run.
@@ -87,7 +88,9 @@ export type InvoiceDocumentInput = {
   precedingInvoice?: { number: string; issueDate?: string }; // BT-25, BT-26
   payment: {
     dueDate?: string; // BT-9, 0..1, YYYY-MM-DD
-    termsText?: string; // BT-20, 0..1, one text that may contain LF; no `#` in M1
+    termsText?: string; // BT-20 free text, 0..1, one text that may contain LF; no `#`
+    /** 380 only, refused on a 381 (PROFILE, MDR-39). Projected into BT-20 after the free text. `days` is an integer count, not a decimal. */
+    skonto?: readonly { days: number; percent: string }[];
     /** 380 only: required there, refused on a 381. */
     means?: {
       kind: string;
@@ -145,10 +148,17 @@ export type PaymentAccount = {
  */
 export type PaymentMeans = { readonly kind: 'credit-transfer'; readonly code: '30' | '58'; readonly account: PaymentAccount };
 
+/**
+ * One Skonto condition (MDR-39), descriptive only: it changes no amount. `days` is a neutral count: XRechnung 3.0.2 does not
+ * unequivocally define its reference point, so none is assumed and no deadline exists in the model. `percent` has scale 2.
+ */
+export type SkontoTier = { readonly days: number; readonly percent: Decimal };
+
 /** BT-9 and BT-20 are independent and both optional; BR-CO-25 (checked by buildInvoice) needs one of them when BT-115 > 0. */
 export type Payment = {
   readonly dueDate?: string; // BT-9
   readonly termsText?: string; // BT-20, unstructured; may contain LF
+  readonly skonto?: readonly SkontoTier[]; // BT-20, structured; paymentTermsText builds the element from both
   readonly means: PaymentMeans;
 };
 
@@ -233,7 +243,13 @@ export type DocumentErrorCode =
   | 'unsupported_electronic_address_scheme'
   | 'unsupported_payment_means'
   | 'unsupported_payment_account_scheme'
-  | 'unsupported_hash_in_payment_terms' // PROFILE: `#` in BT-20 (structured Skonto, BR-DE-18, is not in M1)
+  | 'unsupported_hash_in_payment_terms' // `#` in the free text of BT-20; structured Skonto is `payment.skonto` (MDR-39)
+  | 'unsupported_skonto_tier_count' // PROFILE (MDR-39): not 1 to 10 tiers
+  | 'unsupported_skonto_days' // PROFILE (MDR-39): not an integer from 1 to 365
+  | 'unsupported_skonto_tier_order' // PROFILE (MDR-39): days not strictly ascending
+  | 'unsupported_skonto_percent' // PROFILE (MDR-39): not above 0 and at most 100
+  | 'unsupported_skonto_base_amount' // PROFILE (MDR-39): BASISBETRAG is not supported
+  | 'unsupported_skonto_on_credit_note' // PROFILE (MDR-39): a tier list on a 381
   | 'invalid_leitweg_id_format' // PROFILE (MDR-38), only with buyerReferencePolicy 'leitweg-id': BT-10 is not the Leitweg-ID structure
   | 'invalid_leitweg_id_checksum' // PROFILE (MDR-38), same policy: the check digits are not the canonical pair
   | 'invalid_invoicing_period' // BR-29: the end date (BT-74) is before the start date (BT-73)
@@ -282,7 +298,8 @@ const SELLER_FIELDS = [...PARTY_FIELDS, 'sellerIdentifiers', 'legalRegistrationI
 const BUYER_FIELDS = [...PARTY_FIELDS, 'legalRegistrationId', 'vatId'];
 const ADDRESS_FIELDS = ['street', 'city', 'postCode', 'country'];
 const NOTE_FIELDS = ['text'];
-const PAYMENT_FIELDS = ['dueDate', 'termsText', 'means', 'settlement'];
+const PAYMENT_FIELDS = ['dueDate', 'termsText', 'skonto', 'means', 'settlement'];
+const SKONTO_TIER_FIELDS = ['days', 'percent'];
 const INVOICING_PERIOD_FIELDS = ['startDate', 'endDate'];
 const PRECEDING_INVOICE_FIELDS = ['number', 'issueDate'];
 const SETTLEMENT_FIELDS = ['kind', 'reciprocalObligationConfirmed'];
@@ -317,7 +334,9 @@ export function buildInvoice(rawInput: unknown, options: DocumentOptions = {}): 
     return { ok: false, errors: reported, truncated: stoppedAt !== undefined };
   }
 
-  const money = calculateInvoice(input, options, { invoice: DOCUMENT_FIELDS, line: LINE_FIELDS });
+  // Read once and handed on, so an accessor cannot make the amounts and the Skonto percent use different notations.
+  const notation = (Object.hasOwn(options, 'notation') ? options.notation : undefined) ?? 'canonical';
+  const money = calculateInvoice(input, { notation }, { invoice: DOCUMENT_FIELDS, line: LINE_FIELDS });
   if (!isRecord(input)) return failure([], money, undefined);
   const scanLimit = firstUnscannedLine(money);
 
@@ -342,7 +361,7 @@ export function buildInvoice(rawInput: unknown, options: DocumentOptions = {}): 
   const creditNote = input.documentTypeCode === '381';
   const commercial = input.documentTypeCode === '380';
   const precedingInvoice = readPrecedingInvoice(input, creditNote, commercial, errors);
-  const payment = creditNote ? readCreditNotePayment(input, errors) : readPayment(input, commercial, errors);
+  const payment = creditNote ? readCreditNotePayment(input, errors) : readPayment(input, commercial, notation, errors);
   const notes = readNotes(input, errors);
   const { lines: lineData, stoppedAt } = readLineData(input, scanLimit, errors);
   // PROFILE: the supported treatment compositions are listed, not derived. One treatment alone, or standard combined
@@ -355,8 +374,8 @@ export function buildInvoice(rawInput: unknown, options: DocumentOptions = {}): 
   // EXTERNAL, BR-CO-25 (SeMoX CIUS model; not implemented by the pinned Schematron, so the domain owns it): with a
   // positive amount due (BT-115) at least one of BT-9 and BT-20 is present. It needs the computed BT-115, so it is
   // checked only when the calculation succeeded. Presence is read from the raw input: a supplied-but-malformed value is
-  // reported by its own diagnostic, not also as missing.
-  if (money.ok && money.value.totals.amountDue.units > 0n && isRecord(input.payment) && input.payment.dueDate === undefined && input.payment.termsText === undefined) {
+  // reported by its own diagnostic, not also as missing. A tier list is BT-20 content (MDR-39), so it counts as BT-20.
+  if (money.ok && money.value.totals.amountDue.units > 0n && isRecord(input.payment) && input.payment.dueDate === undefined && input.payment.termsText === undefined && input.payment.skonto === undefined) {
     errors.push({ code: 'missing_payment_due_information', path: 'payment' });
   }
 
@@ -668,17 +687,18 @@ function readContact(record: Record<string, unknown>, errors: DocumentError[]): 
   return name !== undefined && telephone !== undefined && email !== undefined ? { name, telephone, email } : undefined;
 }
 
-function readPayment(parent: Record<string, unknown>, commercial: boolean, errors: DocumentError[]): Payment | undefined {
+function readPayment(parent: Record<string, unknown>, commercial: boolean, notation: NumberNotation, errors: DocumentError[]): Payment | undefined {
   const record = readObject(parent, 'payment', 'payment', PAYMENT_FIELDS, errors);
   if (record === undefined) return undefined;
   const errorsBefore = errors.length;
   // BT-9 and BT-20 are each 0..1. Nothing is derived: no due date from the issue date or the terms, no default terms.
   const dueDate = record.dueDate === undefined ? undefined : readDate(record, 'dueDate', 'payment.dueDate', errors);
   const termsText = record.termsText === undefined ? undefined : readPaymentTerms(record.termsText, errors);
+  const skonto = readSkonto(record, notation, errors);
   if (commercial && record.settlement !== undefined) report(errors, 'unsupported_settlement_on_invoice', 'payment.settlement');
   const means = readPaymentMeans(record, errors);
   if (errors.length > errorsBefore || means === undefined) return undefined;
-  return { ...(dueDate !== undefined ? { dueDate } : {}), ...(termsText !== undefined ? { termsText } : {}), means };
+  return { ...(dueDate !== undefined ? { dueDate } : {}), ...(termsText !== undefined ? { termsText } : {}), ...(skonto !== undefined ? { skonto } : {}), means };
 }
 
 // BG-3 (MDR-35). PROFILE: exactly one on a 381, with BT-25; BT-26 is optional. On a 380 it is refused rather than
@@ -707,6 +727,8 @@ function readCreditNotePayment(parent: Record<string, unknown>, errors: Document
   const dueDate = record.dueDate === undefined ? undefined : readDate(record, 'dueDate', 'payment.dueDate', errors);
   const termsText = record.termsText === undefined ? undefined : readPaymentTerms(record.termsText, errors);
   if (record.means !== undefined) report(errors, 'unsupported_credit_note_payment_means', 'payment.means');
+  // PROFILE (MDR-39), not an XRechnung prohibition: no source consulted says what an early-payment discount means on a credit note.
+  if (record.skonto !== undefined) report(errors, 'unsupported_skonto_on_credit_note', 'payment.skonto');
   const settled = readClearing(record, errors);
   if (errors.length > errorsBefore || !settled) return undefined;
   return { ...(dueDate !== undefined ? { dueDate } : {}), ...(termsText !== undefined ? { termsText } : {}), settlement: { kind: 'clearing' } };
@@ -732,13 +754,84 @@ function isCreditNotePayment(payment: Payment | CreditNotePayment | undefined): 
   return payment !== undefined && Object.hasOwn(payment, 'settlement');
 }
 
-// BT-20 is one text value that may span several lines (the BT-22 multiline policy). PROFILE: no `#` at all. XRechnung
-// forbids `#` in unstructured BT-20 text and reserves it for structured Skonto lines (BR-DE-18), which M1 does not
-// support, so any `#` is refused rather than parsed.
+// The free text of BT-20 is one value that may span several lines (the BT-22 multiline policy). EXTERNAL: XRechnung 3.0.2
+// forbids `#` in unstructured BT-20 text and reserves it for structured Skonto lines (BR-DE-18). Those come only from
+// `payment.skonto`, so any `#` here is refused rather than parsed.
 function readPaymentTerms(value: unknown, errors: DocumentError[]): string | undefined {
   const text = readTextValue(value, 'payment.termsText', errors, true);
   if (text === undefined) return undefined;
   return text.includes('#') ? report(errors, 'unsupported_hash_in_payment_terms', 'payment.termsText') : text;
+}
+
+// PROFILE limits on structured Skonto (MDR-39), stricter than the standard: the pinned validator accepts TAGE=0, PROZENT=101.00
+// and duplicate or descending tiers, so it cannot evidence them. Input is refused, never sorted, merged or repaired.
+const MIN_SKONTO_TIERS = 1;
+const MAX_SKONTO_TIERS = 10;
+const MIN_SKONTO_DAYS = 1;
+const MAX_SKONTO_DAYS = 365;
+const MAX_SKONTO_PERCENT: Decimal = { units: 100n, scale: 0 };
+const SKONTO_PERCENT_SCALE = 2;
+
+function readSkonto(payment: Record<string, unknown>, notation: NumberNotation, errors: DocumentError[]): readonly SkontoTier[] | undefined {
+  const path = 'payment.skonto';
+  const list = payment.skonto;
+  if (list === undefined) return undefined;
+  if (!Array.isArray(list)) return report(errors, 'invalid_type', path);
+  // Checked before any element is read, so a huge sparse array costs nothing.
+  if (list.length < MIN_SKONTO_TIERS || list.length > MAX_SKONTO_TIERS) return report(errors, 'unsupported_skonto_tier_count', path);
+
+  const tiers: SkontoTier[] = [];
+  let highestDays = 0;
+  for (let index = 0; index < list.length; index++) {
+    const tierPath = `${path}[${index}]`;
+    const entry = ownElement(list, index);
+    if (entry === undefined) {
+      report(errors, 'missing_field', tierPath);
+    } else if (!isRecord(entry)) {
+      report(errors, 'invalid_type', tierPath);
+    } else {
+      for (const name of Object.keys(entry)) {
+        if (name === 'baseAmount') report(errors, 'unsupported_skonto_base_amount', `${tierPath}.baseAmount`);
+        else if (!SKONTO_TIER_FIELDS.includes(name)) report(errors, 'unknown_field', `${tierPath}.${name}`);
+      }
+      const days = readSkontoDays(entry.days, `${tierPath}.days`, errors);
+      if (days !== undefined && days <= highestDays) report(errors, 'unsupported_skonto_tier_order', `${tierPath}.days`);
+      const percent = readSkontoPercent(entry.percent, `${tierPath}.percent`, notation, errors);
+      if (days !== undefined) highestDays = Math.max(highestDays, days);
+      if (days !== undefined && percent !== undefined) tiers.push({ days, percent });
+    }
+  }
+  return tiers;
+}
+
+// A count, not a decimal: a JSON number, never text. `% 1` is 0 only for a finite integer, and the range keeps it safe.
+function readSkontoDays(value: unknown, path: string, errors: DocumentError[]): number | undefined {
+  if (value === undefined) return report(errors, 'missing_field', path);
+  if (typeof value !== 'number') return report(errors, 'invalid_type', path);
+  return value % 1 === 0 && value >= MIN_SKONTO_DAYS && value <= MAX_SKONTO_DAYS ? value : report(errors, 'unsupported_skonto_days', path);
+}
+
+// In order, as for BT-129 and BT-146 (invoice.ts): grammar and sign, then precision, then range.
+function readSkontoPercent(value: unknown, path: string, notation: NumberNotation, errors: DocumentError[]): Decimal | undefined {
+  if (value === undefined) return report(errors, 'missing_field', path);
+  if (typeof value !== 'string') return report(errors, 'invalid_type', path);
+  const parsed = parseDecimalInput(value, notation);
+  if (!parsed.ok) return report(errors, parsed.code, path);
+  if (effectiveFractionDigits(parsed.value) > SKONTO_PERCENT_SCALE) return report(errors, 'fraction_digits_limit', path);
+  if (parsed.value.units === 0n || compare(parsed.value, MAX_SKONTO_PERCENT) > 0) return report(errors, 'unsupported_skonto_percent', path);
+  // Only changes the written scale: at most two effective fractional digits are left, so nothing rounds.
+  return roundHalfUp(parsed.value, SKONTO_PERCENT_SCALE);
+}
+
+/**
+ * BT-20, the one element both serializers write (MDR-39): the free text followed by LF when both exist, then one BR-DE-18 line
+ * per tier, each followed by the LF XRechnung 3.0.2 section 12.6 requires. With no tiers it is exactly the free text.
+ */
+export function paymentTermsText(payment: { readonly termsText?: string; readonly skonto?: readonly SkontoTier[] }): string | undefined {
+  const text = hasOwnField(payment, 'termsText') ? payment.termsText : undefined;
+  if (!hasOwnField(payment, 'skonto')) return text;
+  const tiers = payment.skonto.map((tier) => `#SKONTO#TAGE=${tier.days}#PROZENT=${formatDecimal(tier.percent)}#\n`).join('');
+  return text === undefined ? tiers : `${text}\n${tiers}`;
 }
 
 function readPaymentMeans(parent: Record<string, unknown>, errors: DocumentError[]): PaymentMeans | undefined {

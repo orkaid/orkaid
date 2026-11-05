@@ -9,7 +9,7 @@
 // are URIID/@schemeID, and dates are DateTimeString with format 102. The output is deterministic: fixed order,
 // two-space indentation, LF newlines, UTF-8, no timestamps.
 
-import { hasOwnField, isValidatedInvoice, type Invoice, type InvoiceLine, type InvoiceParty, type PaymentAccount, type PrecedingInvoiceReference } from './document.ts';
+import { hasOwnField, isValidatedInvoice, paymentTermsText, type Invoice, type InvoiceLine, type InvoiceParty, type PaymentAccount, type PrecedingInvoiceReference } from './document.ts';
 import type { Decimal } from './decimal.ts';
 import { formatXmlDecimal } from './number-notation.ts';
 
@@ -210,8 +210,9 @@ function creditTransfer(account: PaymentAccount): readonly Element[] {
 // One SpecifiedTradePaymentTerms (CII-SR rule: at most one) holding BT-20 and/or BT-9 in XSD order: Description, then
 // DueDateDateTime. Absent when neither is supplied (BR-CO-25 allows that only for a zero amount due; buildInvoice checks it).
 function paymentTerms(payment: Invoice['payment']): readonly Element[] {
+  const text = paymentTermsText(payment); // BT-20, with the LF after each Skonto line kept literally (MDR-39)
   const children = [
-    ...(hasOwnField(payment, 'termsText') ? [leaf('ram:Description', payment.termsText)] : []), // BT-20
+    ...(text !== undefined ? [leaf('ram:Description', text)] : []),
     ...(hasOwnField(payment, 'dueDate') ? [date('ram:DueDateDateTime', payment.dueDate)] : []), // BT-9
   ];
   return children.length > 0 ? [group('ram:SpecifiedTradePaymentTerms', ...children)] : [];

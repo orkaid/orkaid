@@ -8,7 +8,7 @@
 // verification against it is claimed. The output is deterministic: fixed order, two-space indentation, LF newlines,
 // UTF-8, no timestamps.
 
-import { hasOwnField, isValidatedInvoice, type Invoice, type InvoiceLine, type InvoiceParty, type PaymentAccount, type PrecedingInvoiceReference } from './document.ts';
+import { hasOwnField, isValidatedInvoice, paymentTermsText, type Invoice, type InvoiceLine, type InvoiceParty, type PaymentAccount, type PrecedingInvoiceReference } from './document.ts';
 import type { Decimal } from './decimal.ts';
 import { formatXmlDecimal } from './number-notation.ts';
 
@@ -71,7 +71,7 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
       group('cac:AccountingCustomerParty', party(invoice.buyer)), // BG-7
       ...(hasOwnField(invoice, 'deliveryDate') ? [group('cac:Delivery', leaf('cbc:ActualDeliveryDate', invoice.deliveryDate))] : []), // BT-72
       paymentMeans(invoice),
-      ...(hasOwnField(invoice.payment, 'termsText') ? [group('cac:PaymentTerms', leaf('cbc:Note', invoice.payment.termsText))] : []), // BT-20
+      ...paymentTerms(invoice.payment),
       taxTotal(invoice, currency),
       group(
         'cac:LegalMonetaryTotal', // BG-22
@@ -85,6 +85,12 @@ export function serializeUblInvoice(invoice: Invoice): UblResult {
   };
 
   return { ok: true, xml: `<?xml version="1.0" encoding="UTF-8"?>\n${render(root, 0).join('\n')}\n` };
+}
+
+// BT-20. Line breaks stay literal in the element text: BR-DE-18 requires the LF after each Skonto line (MDR-39).
+function paymentTerms(payment: Invoice['payment']): readonly Element[] {
+  const text = paymentTermsText(payment);
+  return text === undefined ? [] : [group('cac:PaymentTerms', leaf('cbc:Note', text))];
 }
 
 // BT-11 (MDR-36). A UBL Invoice has ProjectReference. A UBL CreditNote has no such element: the XRechnung model binds BT-11 to

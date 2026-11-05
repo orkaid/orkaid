@@ -32,7 +32,12 @@ export type PeriodFixtureName = (typeof PERIOD_FIXTURE_NAMES)[number] | (typeof 
 export const LEITWEG_FIXTURE_NAMES = ['ze-leitweg-id-invoice', 'zf-leitweg-id-credit-note'] as const;
 export type LeitwegFixtureName = (typeof LEITWEG_FIXTURE_NAMES)[number];
 
-export function loadFixtureInput(name: FixtureName | CreditNoteFixtureName | ReferenceFixtureName | PeriodFixtureName | LeitwegFixtureName): JsonObject {
+// Structured Skonto (MDR-39) on a 380, with the amounts of a-simple: zg = one tier, neither BT-9 nor free text; zh = three
+// tiers after multiline free text, with BT-9.
+export const SKONTO_FIXTURE_NAMES = ['zg-skonto-single-tier', 'zh-skonto-tiers-terms-due-date'] as const;
+export type SkontoFixtureName = (typeof SKONTO_FIXTURE_NAMES)[number];
+
+export function loadFixtureInput(name: FixtureName | CreditNoteFixtureName | ReferenceFixtureName | PeriodFixtureName | LeitwegFixtureName | SkontoFixtureName): JsonObject {
   return JSON.parse(readFileSync(resolve(import.meta.dirname, `../fixtures/xrechnung/${name}.json`), 'utf8')) as JsonObject;
 }
 
