@@ -1,8 +1,6 @@
-<p align="left">
+<h1 align="left">
   <img src="public/assets/orkaid-logo-horizontal-light-600x160.png" alt="Orkaid" width="300">
-</p>
-
-# Orkaid
+</h1>
 
 An independent, open-source hub of professional tools, built in public.
 
