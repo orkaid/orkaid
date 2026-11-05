@@ -21,6 +21,8 @@
 // XSD element positions). A Leitweg-ID as BT-10 (MDR-38) on a 380 and a 381, in UBL and CII, is built with the opt-in
 // policy; the pinned configuration only requires BT-10 to be present (BR-DE-15), so the existing missing-BT-10 control is the
 // only negative control and no rejection of a malformed Leitweg-ID is claimed or derived from a hand-edited probe.
+// Structured Skonto (MDR-39) on a 380, in UBL and CII, with mutated controls that break the BR-DE-18 line format. The Orkaid
+// profile limits (tier count, day range, order, percent range, BASISBETRAG, 381) are not validator rules and have no control here.
 // A pass here is not legal certification and says nothing about tax correctness.
 
 import { spawnSync } from 'node:child_process';
@@ -31,7 +33,7 @@ import { basename, join, resolve } from 'node:path';
 import { buildInvoice, UNIT_CODES } from '../../src/lib/domain/xrechnung/document.ts';
 import { serializeCiiInvoice } from '../../src/lib/domain/xrechnung/cii.ts';
 import { serializeUblInvoice } from '../../src/lib/domain/xrechnung/ubl.ts';
-import { CREDIT_NOTE_FIXTURE_NAMES, CREDIT_NOTE_PERIOD_FIXTURE_NAMES, FIXTURE_NAMES, LEITWEG_FIXTURE_NAMES, PERIOD_FIXTURE_NAMES, REFERENCE_FIXTURE_NAMES, loadFixtureInput, type CreditNoteFixtureName, type FixtureName, type LeitwegFixtureName, type PeriodFixtureName, type ReferenceFixtureName } from '../../tests/support/fixtures.ts';
+import { CREDIT_NOTE_FIXTURE_NAMES, CREDIT_NOTE_PERIOD_FIXTURE_NAMES, FIXTURE_NAMES, LEITWEG_FIXTURE_NAMES, PERIOD_FIXTURE_NAMES, REFERENCE_FIXTURE_NAMES, SKONTO_FIXTURE_NAMES, loadFixtureInput, type CreditNoteFixtureName, type FixtureName, type LeitwegFixtureName, type PeriodFixtureName, type ReferenceFixtureName, type SkontoFixtureName } from '../../tests/support/fixtures.ts';
 import { parseReport, type ParsedReport } from './report.ts';
 
 export type Manifest = {
@@ -56,7 +58,7 @@ const isCreditNoteFixture = (name: string): boolean => ([...CREDIT_NOTE_FIXTURE_
 // M1 current evidence: these fixtures are also validated in CII (their goldens are `<name>.cii.xml`).
 const CII_FIXTURES: readonly FixtureName[] = ['e-kleinunternehmer', 'f-kleinunternehmer-lines', 'g-reverse-charge-vat-ids', 'h-reverse-charge-registration-ids', 'i-invoice-note', 'j-invoice-notes-multiline', 'k-payment-terms-only', 'l-payment-due-date-and-terms', 'm-payment-means-30', 'n-payment-means-30-account-details', 'o-eas-0204-seller-0088-buyer', 'p-eas-0088-seller-0204-buyer', 'q-seller-bt29-bt32', 'r-numeric-precision-boundary', 's-standard-and-reverse-charge'];
 const ciiName = (name: string): string => `${name}.cii`;
-type AnyFixtureName = FixtureName | CreditNoteFixtureName | ReferenceFixtureName | PeriodFixtureName | LeitwegFixtureName;
+type AnyFixtureName = FixtureName | CreditNoteFixtureName | ReferenceFixtureName | PeriodFixtureName | LeitwegFixtureName | SkontoFixtureName;
 const isLeitwegFixture = (name: string): boolean => (LEITWEG_FIXTURE_NAMES as readonly string[]).includes(name);
 
 // Mutated copies of a Kleinunternehmer golden that the official validator must reject, each by the named rules.
@@ -182,7 +184,23 @@ const PERIOD_CONTROLS: typeof KLEINUNTERNEHMER_CONTROLS = {
   'control-period-cii-after-payment-terms': { syntax: 'cii', base: 'za-period-month-references', mutate: (x) => movedAfter(x, CII_PERIOD, '      </ram:SpecifiedTradePaymentTerms>\n'), codes: ['cvc-complex-type.2.4.a'] },
   'control-period-cii-without-delivery': { syntax: 'cii', base: 'za-period-month-references', mutate: (x) => removeElement(x, /^ *<ram:ApplicableHeaderTradeDelivery><\/ram:ApplicableHeaderTradeDelivery>\n/m), codes: ['cvc-complex-type.2.4.a'] },
 };
-const SPECIAL_CONTROLS = { ...KLEINUNTERNEHMER_CONTROLS, ...REVERSE_CHARGE_CONTROLS, ...PAYMENT_MEANS_CONTROLS, ...EVIDENCE_CONTROLS, ...MIXED_CONTROLS, ...CREDIT_NOTE_CONTROLS, ...REFERENCE_CONTROLS, ...PERIOD_CONTROLS };
+// Structured Skonto (MDR-39). The domain never writes these lines, so each control is a labelled mutation of the zh golden
+// (three tiers after free text, with BT-9) that breaks the BR-DE-18 format in one way.
+const SKONTO_BASE = 'zh-skonto-tiers-terms-due-date';
+const SKONTO_LAST_LINE = '#SKONTO#TAGE=28#PROZENT=1.00#\n';
+const SKONTO_MUTATIONS: Record<string, (xml: string, closing: string) => string> = {
+  'no-final-lf': (x, closing) => replaceExact(x, `${SKONTO_LAST_LINE}${closing}`, `${SKONTO_LAST_LINE.trimEnd()}${closing}`),
+  'comma-decimal': (x) => replaceExact(x, '#PROZENT=2.25#', '#PROZENT=2,25#'),
+  lowercase: (x) => replaceExact(x, '#SKONTO#TAGE=14#', '#skonto#tage=14#'),
+  'malformed-segment': (x) => replaceExact(x, '#TAGE=14#PROZENT=2.25#', '#TAGE=14#2.25#'),
+};
+const SKONTO_CONTROLS: typeof KLEINUNTERNEHMER_CONTROLS = Object.fromEntries(
+  Object.entries(SKONTO_MUTATIONS).flatMap(([label, mutate]) => [
+    [`control-skonto-ubl-${label}`, { syntax: 'ubl' as const, base: SKONTO_BASE, mutate: (x: string) => mutate(x, '</cbc:Note>'), codes: ['BR-DE-18'] }],
+    [`control-skonto-cii-${label}`, { syntax: 'cii' as const, base: SKONTO_BASE, mutate: (x: string) => mutate(x, '</ram:Description>'), codes: ['BR-DE-18'] }],
+  ]),
+);
+const SPECIAL_CONTROLS = { ...KLEINUNTERNEHMER_CONTROLS, ...REVERSE_CHARGE_CONTROLS, ...PAYMENT_MEANS_CONTROLS, ...EVIDENCE_CONTROLS, ...MIXED_CONTROLS, ...CREDIT_NOTE_CONTROLS, ...REFERENCE_CONTROLS, ...PERIOD_CONTROLS, ...SKONTO_CONTROLS };
 const REQUIRED_STEPS = ['val-xsd', 'val-sch.1', 'val-sch.2', 'val-xml'];
 
 const sha256Hex = (data: Buffer | string): string => createHash('sha256').update(data).digest('hex');
@@ -383,7 +401,7 @@ function main(): void {
   const manifest = JSON.parse(readFileSync(join(ROOT, 'tools/kosit/kosit-manifest.json'), 'utf8')) as Manifest;
   const triage = JSON.parse(readFileSync(join(ROOT, 'tests/fixtures/xrechnung/kosit-triage.json'), 'utf8')) as Triage;
   const requested = process.argv.slice(2);
-  const allNames = [...FIXTURE_NAMES, ...CII_FIXTURES.map(ciiName), ...CREDIT_NOTE_FIXTURE_NAMES, ...CREDIT_NOTE_FIXTURE_NAMES.map(ciiName), ...REFERENCE_FIXTURE_NAMES, ...REFERENCE_FIXTURE_NAMES.map(ciiName), ...PERIOD_FIXTURE_NAMES, ...PERIOD_FIXTURE_NAMES.map(ciiName), ...CREDIT_NOTE_PERIOD_FIXTURE_NAMES, ...CREDIT_NOTE_PERIOD_FIXTURE_NAMES.map(ciiName), ...LEITWEG_FIXTURE_NAMES, ...LEITWEG_FIXTURE_NAMES.map(ciiName), CONTROL_NAME, ...Object.keys(SPECIAL_CONTROLS)];
+  const allNames = [...FIXTURE_NAMES, ...CII_FIXTURES.map(ciiName), ...CREDIT_NOTE_FIXTURE_NAMES, ...CREDIT_NOTE_FIXTURE_NAMES.map(ciiName), ...REFERENCE_FIXTURE_NAMES, ...REFERENCE_FIXTURE_NAMES.map(ciiName), ...PERIOD_FIXTURE_NAMES, ...PERIOD_FIXTURE_NAMES.map(ciiName), ...CREDIT_NOTE_PERIOD_FIXTURE_NAMES, ...CREDIT_NOTE_PERIOD_FIXTURE_NAMES.map(ciiName), ...LEITWEG_FIXTURE_NAMES, ...LEITWEG_FIXTURE_NAMES.map(ciiName), ...SKONTO_FIXTURE_NAMES, ...SKONTO_FIXTURE_NAMES.map(ciiName), CONTROL_NAME, ...Object.keys(SPECIAL_CONTROLS)];
   const names = requested.length > 0 ? requested : allNames;
   for (const name of names) if (!allNames.includes(name)) fail(`unknown fixture ${name}`);
 
