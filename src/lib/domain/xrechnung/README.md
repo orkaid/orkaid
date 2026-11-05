@@ -4,6 +4,23 @@ Deterministic, framework-independent domain code for the XRechnung tool. This is
 production-ready or fully compliant XRechnung generator**, and an accepted validation result is **not legal
 certification**.
 
+## Semantic contract identifier
+
+The Orkaid semantic domain contract is identified by `xrechnung-domain-v1` (MDR-40). This is the only place the identifier is
+stated; other documents refer here instead of repeating it.
+
+| It identifies | It does not identify |
+| --- | --- |
+| the Orkaid semantic domain contract of the first-release capabilities (MDR-32) | the XRechnung standard version (3.0.2), the KoSIT validator configuration (2026-08-31), the npm package version or a public application release |
+
+Status: **M2 exit and the model freeze are still pending** (MDR-33). The identifier is selected and stated; that does not
+declare the contract frozen, M2 complete or the product production-ready. No runtime version check, migration or
+configuration exists for it.
+
+First-release credit note 381 boundary (MDR-41): **confirmed clearing only**. Refund by credit transfer is outside the frozen
+first-release profile and stays unsupported; the diagnostics are listed under "Credit note 381 (first bounded slice)" below. This is an Orkaid profile boundary,
+not a statement that XRechnung or EN 16931 prohibit a refund on a credit note.
+
 ```
 semantic input (strings)
   -> document.ts  buildInvoice: validates the business data, delegates every amount to invoice.ts
@@ -58,7 +75,8 @@ A credit note reverses part or all of an earlier ordinary invoice. The document 
 | CII | the same root with `TypeCode` 381; BG-3 is `InvoiceReferencedDocument`; the `qdt` namespace is declared only on a 381 |
 
 Not supported in this slice, and not abandoned: refund scenarios (the sources consulted do not say whose account BG-17
-designates on a credit note), correction 384, self-billing 389, negative amounts and lines, allowances and charges.
+designates on a credit note; the first-release contract excludes refund by credit transfer, MDR-41, and
+the question stays open for a later contract version), correction 384, self-billing 389, negative amounts and lines, allowances and charges.
 **Recipient compatibility is limited.** XRechnung section 13.1 distinguishes a commercial credit note (381) from a
 correction of an invoice (384), and its change history carries the entry XRG-v1.2.0-23, titled not to use a credit
 note with reference to cancellation invoices. Orkaid does not claim that every recipient, in particular in the public
