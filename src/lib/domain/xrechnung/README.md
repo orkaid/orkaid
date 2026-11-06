@@ -13,8 +13,10 @@ stated; other documents refer here instead of repeating it.
 | --- | --- |
 | the Orkaid semantic domain contract of the first-release capabilities (MDR-32) | the XRechnung standard version (3.0.2), the KoSIT validator configuration (2026-08-31), the npm package version or a public application release |
 
-Status: **M2 exit and the model freeze are still pending** (MDR-33). The identifier is selected and stated; that does not
-declare the contract frozen, M2 complete or the product production-ready. No runtime version check, migration or
+Status: **M2 exit completed and the semantic model frozen on 2026-11-06** (MDR-33), at commit
+`52d62c89d6039b56edbaab79f3390fdfdd99f663`, for the first-release capabilities of MDR-32. Later documentation commits do
+not move the freeze. The declaration covers the semantic contract only: it does not declare the user interface, the
+first-release gate, the product production-ready, certified or accepted by any recipient. No runtime version check, migration or
 configuration exists for it.
 
 First-release credit note 381 boundary (MDR-41): **confirmed clearing only**. Refund by credit transfer is outside the frozen
