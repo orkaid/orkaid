@@ -216,6 +216,44 @@ document does not prove cent-exact amounts: the tests compare every amount again
 The KoSIT check covers one validator and configuration combination on synthetic fixtures. It says nothing about tax
 correctness or acceptance by a recipient.
 
+## Supported and not supported (first-release boundary, MDR-32)
+
+This section gathers the boundary in one place. The sections above remain the detailed description. "Not supported" means
+**outside the implemented Orkaid profile**; it is never a statement that the law, EN 16931 or XRechnung prohibits the
+case. `buildInvoice` refuses unsupported input with a structured error (`code` and field `path`) and never produces a
+valid document from it.
+
+**Supported**
+
+| Scenario | Scope |
+| --- | --- |
+| Invoice 380 | German domestic B2B, EUR, standard VAT (19% and 7%), Kleinunternehmer or reverse-charge treatment as described under "Implemented profile", structured Skonto, BT-11/12/13, BT-72 or BG-14, opt-in Leitweg-ID check |
+| Credit note 381 | bounded: confirmed clearing only (MDR-41), a preceding invoice reference, positive amounts |
+
+**Not supported, and how `buildInvoice` reports it**
+
+| Class | Diagnostic code (path) | Kind |
+| --- | --- | --- |
+| Document-level allowances and charges | `unknown_field` (`allowances`, `charges`; no field of that kind exists) | field not in the profile |
+| Line-level allowances and charges | `unknown_field` (`lines[n].allowance`, `lines[n].charge`) | field not in the profile |
+| Paid amount, prepaid amount, prepayments | `unknown_field` (`paidAmount`, `prepaidAmount`, `prepayment`) | field not in the profile |
+| Installment or staged invoicing, payment schedules | `unknown_field` (any such field, for example `installments`, `paymentSchedule`) | field not in the profile |
+| Attachments and supporting documents | `unknown_field` (`attachments`, `supportingDocuments`) | field not in the profile |
+| Negative amounts, quantities and prices (also on a 381) | `negative_amount` (`lines[n].quantity`, `lines[n].unitPrice`) | value outside the profile |
+| Document types other than 380 and 381 (384, 389, ...) | `unsupported_document_type` (`documentTypeCode`) | profile restriction |
+| Currencies other than EUR | `unsupported_currency` (`currency`) | profile restriction |
+| VAT categories, treatments and rates beyond the profile | `unsupported_vat_category`, `unsupported_vat_treatment`, `unsupported_vat_rate` (`lines[n].vat.*`) | profile restriction |
+| Parties outside Germany | `unsupported_country` (`seller.address.country`, `buyer.address.country`) | profile restriction |
+| Payment means other than credit transfer (30, 58) | `unsupported_payment_means` (`payment.means.code`) | profile restriction |
+| Credit note 381 refund by credit transfer and any non-clearing settlement | `unsupported_credit_note_refund_transfer`, `unsupported_credit_note_settlement`, `unsupported_credit_note_payment_means` | profile boundary (MDR-41) |
+
+`unknown_field` and `negative_amount` mean that the input falls outside the implemented profile. They do not mean that the
+input is legally invalid, and they are not renamed to `unsupported_*`. The error list is the interface: callers must not
+parse the message text.
+
+**Not an input of the domain model.** XML import (reading an existing XRechnung, UBL or CII document into the model) is not
+an available capability of this application. It is not a field of `buildInvoice`, so the domain has no diagnostic for it.
+
 ## Not part of the current implementation
 
 A user interface, PDF, any KoSIT service (browser or server), authentication, persistence, further VAT

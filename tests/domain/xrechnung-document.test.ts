@@ -96,6 +96,37 @@ test('input outside the implemented profile fails explicitly, per field, without
   for (const [what, input, expected] of cases) assert.deepEqual(asPairs(input), [expected], what);
 });
 
+test('first-release unsupported classes (MDR-32) without a named buildInvoice test elsewhere are refused with their implemented diagnostic', () => {
+  // Classes already covered through buildInvoice above and in the credit note tests (other document types 384, other
+  // currencies, VAT categories and rates, foreign countries, payment means, 381 refund and settlement) are not repeated.
+  // `unknown_field` and `negative_amount` mean "outside the implemented profile", not "legally invalid".
+  const credit = loadFixtureInput('t-credit-note-full-reversal');
+  const cases: [string, JsonObject, string][] = [
+    ['document-level allowances', { ...base(), allowances: [] }, 'unknown_field@allowances'],
+    ['document-level charges', { ...base(), charges: [] }, 'unknown_field@charges'],
+    ['a line allowance', withValue(base(), 'lines.0.allowance', '1.00'), 'unknown_field@lines[0].allowance'],
+    ['a line charge', withValue(base(), 'lines.0.charge', '1.00'), 'unknown_field@lines[0].charge'],
+    ['a paid amount', { ...base(), paidAmount: '5.00' }, 'unknown_field@paidAmount'],
+    ['a prepaid amount', { ...base(), prepaidAmount: '5.00' }, 'unknown_field@prepaidAmount'],
+    ['a prepayment', { ...base(), prepayment: { amount: '5.00' } }, 'unknown_field@prepayment'],
+    ['staged invoicing', { ...base(), installments: [{ amount: '5.00' }] }, 'unknown_field@installments'],
+    ['a payment schedule', { ...base(), paymentSchedule: [] }, 'unknown_field@paymentSchedule'],
+    ['attachments', { ...base(), attachments: [] }, 'unknown_field@attachments'],
+    ['supporting documents', { ...base(), supportingDocuments: [] }, 'unknown_field@supportingDocuments'],
+    ['self-billing (389)', withValue(base(), 'documentTypeCode', '389'), 'unsupported_document_type@documentTypeCode'],
+    ['a negative quantity', withValue(base(), 'lines.0.quantity', '-1'), 'negative_amount@lines[0].quantity'],
+    ['a paid amount on a credit note', { ...credit, paidAmount: '5.00' }, 'unknown_field@paidAmount'],
+    ['document-level allowances on a credit note', { ...credit, allowances: [] }, 'unknown_field@allowances'],
+    ['attachments on a credit note', { ...credit, attachments: [] }, 'unknown_field@attachments'],
+    ['a negative unit price on a credit note', withValue(credit, 'lines.0.unitPrice', '-1.00'), 'negative_amount@lines[0].unitPrice'],
+  ];
+  for (const [what, input, expected] of cases) {
+    const result = buildInvoice(input);
+    assert.equal(result.ok, false, `${what}: must not produce a valid document`);
+    assert.deepEqual(asPairs(input), [expected], what);
+  }
+});
+
 test('every supported unit code is accepted, and a code that is not on the list is not', () => {
   assert.ok(UNIT_CODES.length > 0 && UNIT_CODES.length <= 10, 'the list stays small and explicit');
   for (const code of UNIT_CODES) assert.equal(buildInvoice(withValue(base(), 'lines.0.unitCode', code)).ok, true, code);
