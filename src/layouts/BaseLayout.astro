@@ -8,9 +8,10 @@ interface Props {
   description: string;
   pathname: string;
   noindex?: boolean;
+  width?: 'default' | 'wide';
 }
 
-const { locale, title, description, pathname, noindex = false } = Astro.props;
+const { locale, title, description, pathname, noindex = false, width = 'default' } = Astro.props;
 const origin = Astro.site ?? new URL('https://orkaid.de');
 const deUrl = new URL(localePath('de', pathname), origin);
 const enUrl = new URL(localePath('en', pathname), origin);
@@ -46,7 +47,7 @@ const copy = ui[locale];
     <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
-    <div class="site-shell">
+    <div class:list={['site-shell', { 'site-shell--wide': width === 'wide' }]}>
       <a class="skip-link" href="#content">{locale === 'de' ? 'Zum Inhalt' : 'Skip to content'}</a>
       <header class="site-header">
         <div class="brand-block">

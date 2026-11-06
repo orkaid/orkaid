@@ -52,6 +52,8 @@
   --accent: #4fa7a3;
   --highlight: #FFF997;
   --muted: #6b7370;
+  /* Error semantics only (6.25:1 on --paper); always paired with a glyph and a word, never colour alone. */
+  --danger: #b3261e;
   --rule: #d8d3c8;
   --serif: 'Source Serif 4', serif;
   --sans: 'IBM Plex Sans', sans-serif;
@@ -170,6 +172,13 @@ a:hover {
 
 .site-main {
   flex: 1;
+}
+
+/* Route-scoped wide shell (BaseLayout width="wide"): header, main and footer lose the 70rem cap together so their edges stay aligned. */
+.site-shell--wide .site-header,
+.site-shell--wide .site-main,
+.site-shell--wide .site-footer {
+  max-width: 120rem;
 }
 
 .site-footer {
