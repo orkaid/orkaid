@@ -1,0 +1,315 @@
+// German and English copy of the XRechnung workspace. German accounting terms are kept exactly (USt-IdNr., Steuernummer,
+// Leistungsdatum); a view never mixes the two languages. Error texts are keyed by the domain's own diagnostic codes.
+
+import type { DocumentErrorCode } from '../lib/domain/xrechnung/document.ts';
+import type { Locale } from './ui.ts';
+
+export type Msg = { readonly de: string; readonly en: string };
+const m = (de: string, en: string): Msg => ({ de, en });
+
+/** `{name}` placeholders. */
+export function fill(text: string, values: Record<string, string | number>): string {
+  return text.replace(/\{(\w+)\}/g, (_, key: string) => String(values[key] ?? ''));
+}
+
+export const copy = {
+  pageTitle: m('XRechnung-Generator', 'XRechnung generator'),
+  pageIntro: m(
+    'Rechnung (Typ 380) im implementierten Profil erfassen und als UBL- oder CII-XML erzeugen. Die Eingaben bleiben in Ihrem Browser.',
+    'Enter an invoice (type 380) in the implemented profile and generate UBL or CII XML. Your input stays in your browser.',
+  ),
+  noscript: m(
+    'Dieses Werkzeug rechnet vollständig in Ihrem Browser und benötigt JavaScript. Es werden keine Rechnungsdaten übertragen.',
+    'This tool runs entirely in your browser and needs JavaScript. No invoice data is transmitted.',
+  ),
+  loading: m('Wird geladen …', 'Loading …'),
+  required: m('Pflicht', 'required'),
+  optional: m('optional', 'optional'),
+  requiredLegend: m('* Pflichtangabe', '* required'),
+  choose: m('Bitte wählen', 'Please choose'),
+  helpFor: m('Hilfe: {field}', 'Help: {field}'),
+  more: m('Mehr dazu', 'More'),
+  close: m('Schließen', 'Close'),
+  jump: m('Zum Feld', 'Jump to field'),
+  check: m('Prüfen', 'Check'),
+  addLine: m('Position hinzufügen', 'Add line'),
+  removeLine: m('Position {n} entfernen', 'Remove line {n}'),
+  lineLegend: m('Position {n}', 'Line {n}'),
+  fixedDE: m('Deutschland (DE)', 'Germany (DE)'),
+  fixedEUR: m('Euro (EUR)', 'Euro (EUR)'),
+  fixed380: m('380 – Rechnung', '380 – Commercial invoice'),
+  country: m('Land', 'Country'),
+  currency: m('Währung', 'Currency'),
+  documentType: m('Rechnungsart', 'Document type'),
+
+  'sec.document': m('Rechnungsdaten', 'Invoice details'),
+  'sec.seller': m('Verkäufer (Rechnungssteller)', 'Seller (invoice issuer)'),
+  'sec.buyer': m('Käufer (Rechnungsempfänger)', 'Buyer (invoice recipient)'),
+  'sec.lines': m('Rechnungspositionen', 'Invoice lines'),
+  'sec.payment': m('Zahlung', 'Payment'),
+  'sec.notes': m('Hinweise', 'Notes'),
+  'sec.general': m('Allgemein', 'General'),
+  secOpen: m('{n} offen', '{n} open'),
+  secErrors: m('{n} zu korrigieren', '{n} to correct'),
+  secUntouched: m('nicht geprüft', 'not checked'),
+
+  'grp.sellerTax': m('Steuerliche Kennung des Verkäufers (mindestens eine)', 'Seller tax identification (at least one)'),
+  'grp.sellerTaxHint': m(
+    'USt-IdNr. oder Steuernummer ist erforderlich. Ohne USt-IdNr. wird zusätzlich eine Kennung oder Registernummer benötigt.',
+    'A VAT ID or a tax number is required. Without a VAT ID, an identifier or registration number is needed as well.',
+  ),
+  'grp.sellerId': m('Weitere Kennung des Verkäufers', 'Further seller identification'),
+  'grp.paymentDue': m('Fälligkeit', 'Payment due'),
+  'grp.paymentDueHint': m(
+    'Bei einem offenen Betrag: Fälligkeitsdatum oder Zahlungsbedingungen angeben (mindestens eines).',
+    'With an amount due: give a due date or payment terms (at least one).',
+  ),
+
+  'f.invoiceNumber': m('Rechnungsnummer', 'Invoice number'),
+  'f.issueDate': m('Rechnungsdatum', 'Issue date'),
+  'f.deliveryDate': m('Leistungsdatum', 'Date of supply'),
+  'f.buyerReference': m('Käuferreferenz', 'Buyer reference'),
+  'f.name': m('Name', 'Name'),
+  'f.street': m('Straße und Hausnummer', 'Street and number'),
+  'f.postCode': m('PLZ', 'Post code'),
+  'f.city': m('Ort', 'City'),
+  'f.schemeId': m('Adressschema', 'Address scheme'),
+  'f.addressValue': m('Elektronische Adresse', 'Electronic address'),
+  'f.contactName': m('Ansprechpartner', 'Contact name'),
+  'f.contactTelephone': m('Telefon', 'Telephone'),
+  'f.contactEmail': m('E-Mail', 'E-mail'),
+  'f.vatId': m('USt-IdNr.', 'VAT ID'),
+  'f.taxRegistrationId': m('Steuernummer', 'Tax number'),
+  'f.legalRegistrationId': m('Registernummer', 'Legal registration ID'),
+  'f.sellerIdentifier': m('Kennung des Verkäufers', 'Seller identifier'),
+  'f.lines.name': m('Beschreibung', 'Description'),
+  'f.lines.unitCode': m('Einheit', 'Unit'),
+  'f.lines.quantity': m('Menge', 'Quantity'),
+  'f.lines.unitPrice': m('Einzelpreis (netto)', 'Unit price (net)'),
+  'f.lines.vat.rate': m('USt-Satz', 'VAT rate'),
+  'f.lines.net': m('Netto', 'Net'),
+  'f.meansCode': m('Zahlungsart', 'Payment means'),
+  'f.iban': m('IBAN', 'IBAN'),
+  'f.accountName': m('Kontoinhaber', 'Account holder'),
+  'f.bic': m('BIC', 'BIC'),
+  'f.dueDate': m('Fälligkeitsdatum', 'Due date'),
+  'f.termsText': m('Zahlungsbedingungen', 'Payment terms'),
+  'f.note': m('Hinweistext', 'Note'),
+  vat19: m('19 %', '19 %'),
+  vat7: m('7 %', '7 %'),
+
+  means30: m('30 – Überweisung', '30 – Credit transfer'),
+  means58: m('58 – SEPA-Überweisung', '58 – SEPA credit transfer'),
+  meansHint: m(
+    '30: Überweisung allgemein. 58: SEPA-Überweisung. Beide werden mit IBAN angegeben; die IBAN wird in diesem Werkzeug immer geprüft.',
+    '30: credit transfer in general. 58: SEPA credit transfer. Both are given with an IBAN; this tool always checks the IBAN.',
+  ),
+  schemeEM: m('EM – E-Mail-Adresse', 'EM – e-mail address'),
+  scheme0204: m('0204', '0204'),
+  scheme0088: m('0088', '0088'),
+  schemeHint: m(
+    'Schemakennung aus der EAS-Liste; ohne Routing-Bedeutung in diesem Werkzeug.',
+    'Scheme identifier from the EAS list; no routing meaning in this tool.',
+  ),
+
+  // Rail
+  'rail.amounts': m('Beträge', 'Amounts'),
+  'rail.preview': m('Vorschau (nur Positionen)', 'Preview (lines only)'),
+  'rail.calculated': m('Berechnet', 'Calculated'),
+  'rail.noAmounts': m('Beträge erscheinen, sobald alle Positionen vollständig und gültig sind.', 'Amounts appear once every line is complete and valid.'),
+  'rail.vatLine': m('USt {rate} % auf {base}', 'VAT {rate} % on {base}'),
+  'rail.net': m('Summe netto', 'Total net'),
+  'rail.vat': m('Umsatzsteuer', 'VAT'),
+  'rail.gross': m('Gesamtbetrag brutto', 'Total gross'),
+  'rail.due': m('Zahlbetrag', 'Amount due'),
+  'rail.status': m('Status', 'Status'),
+  'ladder.input': m('Eingaben vollständig', 'Input complete'),
+  'ladder.local': m('Gegen die Regeln dieses Werkzeugs geprüft', "Checked against this tool's rules"),
+  'ladder.xml': m('XML erzeugt', 'XML generated'),
+  'ladder.external': m('Externer Validator / Empfänger', 'External validator / recipient'),
+  'ladder.external.state': m('nicht Teil dieses Werkzeugs', 'not part of this tool'),
+  'state.yes': m('ja', 'yes'),
+  'state.no': m('nein', 'no'),
+  'state.notChecked': m('noch nicht geprüft', 'not checked yet'),
+  'state.pending': m('noch nicht möglich', 'not yet possible'),
+  'status.pristine': m('Noch nicht geprüft', 'Not checked yet'),
+  'status.local': m('Gegen die Regeln dieses Werkzeugs geprüft', "Checked against this tool's rules"),
+  'status.generated': m('{format}-XML erzeugt, {time}', '{format} XML generated, {time}'),
+  'status.changed': m('Formular seit dem letzten Export geändert.', 'Form changed since the last export.'),
+  'notice.external': m(
+    'Kein externer Validator und kein Empfänger hat dieses Dokument geprüft. Keine Steuer- oder Rechtsberatung.',
+    'No external validator and no recipient has checked this document. No tax or legal advice.',
+  ),
+  'diag.heading': m('Prüfergebnis', 'Check result'),
+  'diag.none': m('Keine offenen Punkte.', 'No open points.'),
+  'diag.truncated': m('Weitere Probleme können nach der Korrektur erscheinen.', 'More problems may appear after these are fixed.'),
+  'diag.internal': m('Interner Fehler des Werkzeugs (Code {code}). Bitte melden; es wurde nichts exportiert.', 'Internal error of the tool (code {code}). Please report it; nothing was exported.'),
+  'export.heading': m('Export', 'Export'),
+  'export.ubl': m('UBL 2.1 XML herunterladen', 'Download UBL 2.1 XML'),
+  'export.cii': m('CII XML herunterladen', 'Download CII XML'),
+  'export.blocked': m('Der Export ist erst möglich, wenn die Prüfung ohne offene Punkte besteht.', 'Export is possible once the check has no open points.'),
+  'export.hint': m('Das XML wird lokal erzeugt; es verlässt Ihren Browser nicht.', 'The XML is generated locally and does not leave your browser.'),
+  'dock.summary': m('Zusammenfassung & Export', 'Summary & export'),
+  'dock.preview': m('(Vorschau)', '(preview)'),
+
+  'help.heading': m('Hilfe zu diesem Feld', 'Help for this field'),
+  'help.headingSection': m('Hilfe zu diesem Abschnitt', 'Help for this section'),
+  'help.enter': m('Was ist einzutragen', 'What to enter'),
+  'help.status': m('Status', 'Status'),
+  'help.required': m('Pflicht', 'Required'),
+  'help.optional': m('Optional', 'Optional'),
+  'help.conditional': m('Bedingt', 'Conditional'),
+  'help.format': m('Format', 'Format'),
+  'help.valid': m('Gültiges Beispiel (fiktiv)', 'Valid example (fictional)'),
+  'help.invalid': m('Ungültig', 'Invalid'),
+  'help.mistakes': m('Häufige Fehler (Meldungen dieses Werkzeugs)', 'Common mistakes (messages of this tool)'),
+  'help.external': m('Externe Regeln (Norm, XRechnung, Gesetz)', 'External rules (standard, XRechnung, statute)'),
+  'help.profile': m('Einschränkung dieses Werkzeugs (kein Gesetz)', 'Restriction of this tool (not law)'),
+  'help.unverified': m('Nicht geklärt', 'Not established'),
+  'help.sources': m('Quellen', 'Sources'),
+  'help.fields': m('Feldübersicht', 'Field overview'),
+  'help.colField': m('Feld', 'Field'),
+  'help.colStatus': m('Status', 'Status'),
+  'help.colFormat': m('Format', 'Format'),
+  'help.noExternal': m('Keine zusätzliche externe Regel in den ausgewerteten Quellen.', 'No further external rule in the sources consulted.'),
+} as const satisfies Record<string, Msg>;
+
+export type CopyKey = keyof typeof copy;
+export const t = (key: CopyKey, locale: Locale, values: Record<string, string | number> = {}): string => fill(copy[key][locale], values);
+
+export const unitLabels: Readonly<Record<string, Msg>> = {
+  C62: m('Einheit', 'one (unit)'),
+  H87: m('Stück', 'piece'),
+  HUR: m('Stunde', 'hour'),
+  DAY: m('Tag', 'day'),
+  MON: m('Monat', 'month'),
+  KGM: m('Kilogramm', 'kilogram'),
+  LTR: m('Liter', 'litre'),
+  MTR: m('Meter', 'metre'),
+};
+
+/** Count texts with the singular where German and English need it. */
+export function openCountText(missing: number, invalid: number, locale: Locale): string {
+  if (missing === 0 && invalid === 0) return '';
+  const parts: string[] = [];
+  if (locale === 'de') {
+    if (missing > 0) parts.push(missing === 1 ? '1 Pflichtangabe fehlt' : `${missing} Pflichtangaben fehlen`);
+    if (invalid > 0) parts.push(invalid === 1 ? '1 Angabe korrigieren' : `${invalid} Angaben korrigieren`);
+  } else {
+    if (missing > 0) parts.push(missing === 1 ? '1 required entry missing' : `${missing} required entries missing`);
+    if (invalid > 0) parts.push(invalid === 1 ? '1 entry to correct' : `${invalid} entries to correct`);
+  }
+  return parts.join(', ');
+}
+
+/** Normalizes `lines[3].quantity` to its label key; group paths and unknown paths fall back to a section name. */
+export function labelFor(path: string, locale: Locale): string {
+  const normalized = path.replace(/^lines\[\d+\]/, 'lines');
+  const key = LABEL_KEYS[normalized];
+  if (key !== undefined) return copy[key][locale];
+  if (path === 'seller') return copy['sec.seller'][locale];
+  if (path === 'buyer') return copy['sec.buyer'][locale];
+  if (path === 'payment') return copy['sec.payment'][locale];
+  if (path === 'lines') return copy['sec.lines'][locale];
+  return path;
+}
+
+/** Domain path (line indices removed) to label key. A test proves every form field id has one. */
+export const LABEL_KEYS: Readonly<Record<string, CopyKey>> = {
+  invoiceNumber: 'f.invoiceNumber', issueDate: 'f.issueDate', deliveryDate: 'f.deliveryDate', buyerReference: 'f.buyerReference',
+  'seller.name': 'f.name', 'seller.address.street': 'f.street', 'seller.address.postCode': 'f.postCode', 'seller.address.city': 'f.city',
+  'seller.electronicAddress.schemeId': 'f.schemeId', 'seller.electronicAddress.value': 'f.addressValue',
+  'seller.contact.name': 'f.contactName', 'seller.contact.telephone': 'f.contactTelephone', 'seller.contact.email': 'f.contactEmail',
+  'seller.vatId': 'f.vatId', 'seller.taxRegistrationId': 'f.taxRegistrationId', 'seller.legalRegistrationId': 'f.legalRegistrationId',
+  'seller.sellerIdentifiers[0]': 'f.sellerIdentifier',
+  'buyer.name': 'f.name', 'buyer.address.street': 'f.street', 'buyer.address.postCode': 'f.postCode', 'buyer.address.city': 'f.city',
+  'buyer.electronicAddress.schemeId': 'f.schemeId', 'buyer.electronicAddress.value': 'f.addressValue', 'buyer.vatId': 'f.vatId',
+  'payment.means.code': 'f.meansCode', 'payment.means.account.id.value': 'f.iban', 'payment.means.account.name': 'f.accountName',
+  'payment.means.account.bic': 'f.bic', 'payment.dueDate': 'f.dueDate', 'payment.termsText': 'f.termsText',
+  'notes[0].text': 'f.note',
+  'lines.name': 'f.lines.name', 'lines.unitCode': 'f.lines.unitCode', 'lines.quantity': 'f.lines.quantity',
+  'lines.unitPrice': 'f.lines.unitPrice', 'lines.vat.rate': 'f.lines.vat.rate',
+};
+
+const outside = m('Außerhalb des unterstützten Funktionsumfangs dieses Werkzeugs: {field}.', 'Outside what this tool supports: {field}.');
+const notReachable = outside;
+
+/**
+ * One text per domain diagnostic code (compile-time exhaustive). Wording: what is wrong, what to do, the format.
+ * "unsupported" means outside this tool's profile, never "legally invalid".
+ */
+export const errorMessages: Readonly<Record<DocumentErrorCode, Msg>> = {
+  missing_field: m('Pflichtangabe fehlt: {field}.', 'Required entry missing: {field}.'),
+  empty_text: m('{field} enthält nur Leerzeichen. Bitte einen Wert eintragen.', '{field} contains only spaces. Please enter a value.'),
+  invalid_text: m(
+    '{field}: Entfernen Sie Leerzeichen am Anfang oder Ende sowie Steuerzeichen. Der Text wird nicht automatisch verändert.',
+    '{field}: remove spaces at the start or end, and control characters. The text is not changed automatically.',
+  ),
+  text_too_long: m('{field} ist zu lang. Bitte kürzen.', '{field} is too long. Please shorten it.'),
+  invalid_date: m('{field}: kein gültiges Kalenderdatum. Format JJJJ-MM-TT, z. B. 2026-11-05.', '{field}: not a valid calendar date. Format YYYY-MM-DD, e.g. 2026-11-05.'),
+  invalid_vat_id: m('{field}: in diesem Werkzeug nur „DE“ und genau 9 Ziffern, ohne Leerzeichen.', '{field}: this tool accepts only “DE” and exactly 9 digits, no spaces.'),
+  invalid_email: m('{field}: keine gültige E-Mail-Adresse.', '{field}: not a valid e-mail address.'),
+  invalid_telephone: m('{field}: mindestens 3 Ziffern erforderlich.', '{field}: at least 3 digits are required.'),
+  invalid_iban: m('{field}: keine gültige IBAN. Ohne Leerzeichen, Großbuchstaben, gültige Prüfziffern.', '{field}: not a valid IBAN. No spaces, capital letters, valid check digits.'),
+  invalid_bic: m('{field}: kein gültiger BIC (8 oder 11 Zeichen).', '{field}: not a valid BIC (8 or 11 characters).'),
+  unsupported_country: m('{field}: nur Deutschland (DE) wird unterstützt.', '{field}: only Germany (DE) is supported.'),
+  unsupported_electronic_address_scheme: m('{field}: dieses Schema wird nicht unterstützt. Bitte aus der Liste wählen.', '{field}: this scheme is not supported. Please choose from the list.'),
+  unsupported_payment_means: m('{field}: nur 30 und 58 werden unterstützt.', '{field}: only 30 and 58 are supported.'),
+  unsupported_payment_account_scheme: outside,
+  unsupported_hash_in_payment_terms: m('{field}: das Zeichen „#“ ist im freien Text nicht zulässig.', '{field}: the character “#” is not allowed in the free text.'),
+  unsupported_skonto_tier_count: notReachable,
+  unsupported_skonto_days: notReachable,
+  unsupported_skonto_tier_order: notReachable,
+  unsupported_skonto_percent: notReachable,
+  unsupported_skonto_base_amount: notReachable,
+  unsupported_skonto_on_credit_note: notReachable,
+  invalid_leitweg_id_format: notReachable,
+  invalid_leitweg_id_checksum: notReachable,
+  invalid_invoicing_period: notReachable,
+  unsupported_delivery_date_with_invoicing_period: notReachable,
+  unsupported_preceding_invoice_reference: notReachable,
+  unsupported_settlement_on_invoice: notReachable,
+  unsupported_credit_note_payment_means: notReachable,
+  unsupported_credit_note_refund_transfer: notReachable,
+  unsupported_credit_note_settlement: notReachable,
+  missing_clearing_confirmation: notReachable,
+  missing_payment_due_information: m(
+    'Bei einem offenen Betrag ist ein Fälligkeitsdatum oder eine Zahlungsbedingung erforderlich.',
+    'With an amount due, a due date or payment terms are required.',
+  ),
+  unsupported_unit_code: m('{field}: diese Einheit wird nicht unterstützt. Bitte aus der Liste wählen.', '{field}: this unit is not supported. Please choose from the list.'),
+  missing_seller_identification: m(
+    'Der Verkäufer braucht mindestens eine Kennung: USt-IdNr., Registernummer oder eine weitere Kennung.',
+    'The seller needs at least one identification: VAT ID, legal registration ID or another identifier.',
+  ),
+  missing_seller_tax_identifier: m(
+    'Der Verkäufer braucht eine USt-IdNr. oder eine Steuernummer.',
+    'The seller needs a VAT ID or a tax number.',
+  ),
+  missing_buyer_identifier: notReachable,
+  unsupported_mixed_vat_treatments: notReachable,
+  internal_inconsistency: m('Interner Fehler.', 'Internal error.'),
+  // Monetary codes (invoice.ts)
+  invalid_decimal: m('{field}: keine gültige Zahl. Zahl mit {sep} als Dezimaltrennzeichen, z. B. {example}.', '{field}: not a valid number. Use {sep} as the decimal separator, e.g. {example}.'),
+  negative_amount: m('{field}: negative Werte werden nicht unterstützt.', '{field}: negative values are not supported.'),
+  input_length_guard: m('{field}: Eingabe zu lang.', '{field}: input too long.'),
+  invalid_type: m('Interner Fehler: ungültiger Datentyp ({field}).', 'Internal error: invalid data type ({field}).'),
+  unknown_field: m('Interner Fehler: unbekanntes Feld ({field}).', 'Internal error: unknown field ({field}).'),
+  no_lines: m('Mindestens eine Rechnungsposition ist erforderlich.', 'At least one invoice line is required.'),
+  error_list_truncated: m('Die Fehlerliste wurde gekürzt.', 'The error list was truncated.'),
+  fraction_digits_limit: m('{field}: höchstens 6 Nachkommastellen (ohne nachgestellte Nullen).', '{field}: at most 6 fractional digits (trailing zeros not counted).'),
+  magnitude_limit: m('{field}: Wert zu groß (unter 1.000.000.000).', '{field}: value too large (below 1,000,000,000).'),
+  calculated_amount_limit: m('Ein berechneter Betrag überschreitet die Grenze dieses Werkzeugs (unter 10.000.000.000 EUR).', 'A calculated amount exceeds this tool’s limit (below 10,000,000,000 EUR).'),
+  unsupported_document_type: outside,
+  unsupported_currency: outside,
+  unsupported_vat_treatment: outside,
+  unsupported_vat_category: outside,
+  unsupported_vat_rate: m('{field}: nur 19 % und 7 % werden unterstützt. Bitte wählen.', '{field}: only 19 % and 7 % are supported. Please choose.'),
+};
+
+/** Text of one diagnostic for the page locale. `{sep}` and `{example}` describe the number notation of the page. */
+export function describeError(code: DocumentErrorCode, path: string, locale: Locale, label?: string): string {
+  const sep = locale === 'de' ? 'Komma' : 'point';
+  const example = locale === 'de' ? '12,50' : '12.50';
+  return fill(errorMessages[code][locale], { field: label ?? labelFor(path, locale), sep, example });
+}

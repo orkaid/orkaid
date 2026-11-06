@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import XRechnungWorkspace from '../../../components/tools/xrechnung/XRechnungWorkspace.svelte';
+import { copy } from '../../../i18n/xrechnung';
+---
+
+<BaseLayout
+  locale="de"
+  width="wide"
+  title="XRechnung-Generator — Orkaid"
+  description="Rechnung (Typ 380) erfassen und als UBL- oder CII-XML erzeugen. Die Eingaben bleiben in Ihrem Browser."
+  pathname="/tools/xrechnung/"
+>
+  <header class="tool-head">
+    <h1>{copy.pageTitle.de}</h1>
+    <p>{copy.pageIntro.de}</p>
+  </header>
+  <noscript><p class="tool-noscript">{copy.noscript.de}</p></noscript>
+  <div id="xr-root" data-locale="de"><XRechnungWorkspace locale="de" /></div>
+  <script>
+    import '../../../components/tools/xrechnung/mount.ts';
+  </script>
+</BaseLayout>
+
+<style>
+  .tool-head { padding-block: var(--space-3) var(--space-2); }
+  .tool-head h1 { max-width: none; font-size: 1.75rem; line-height: 1.2; letter-spacing: 0; }
+  .tool-head p:last-child { margin: 0.25rem 0 0; max-width: 70ch; color: var(--muted); }
+  .tool-noscript { padding: var(--space-2); border: 1px solid var(--ink); }
+</style>

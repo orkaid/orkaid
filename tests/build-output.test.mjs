@@ -5,7 +5,7 @@ import test from 'node:test';
 
 const dist = join(process.cwd(), 'dist');
 const sourceCss = readFileSync(join(process.cwd(), 'src/styles/tokens.css'), 'utf8');
-const expectedPaths = ['/', '/datenschutz/', '/impressum/', '/tools/'];
+const expectedPaths = ['/', '/datenschutz/', '/impressum/', '/tools/', '/tools/xrechnung/'];
 const routes = expectedPaths.flatMap((path) => [
   { file: path === '/' ? 'index.html' : `${path.slice(1)}index.html`, locale: 'de', path },
   { file: path === '/' ? 'en/index.html' : `en${path}index.html`, locale: 'en', path },
@@ -138,6 +138,20 @@ test('generated German and English content route sets are exact mirrors', () => 
   const routeSets = localeRouteSets();
   assert.deepEqual(routeSets.de, expectedPaths);
   assert.deepEqual(routeSets.en, routeSets.de);
+});
+
+test('XRechnung workspace pages need no inline script or style and use no Astro island loader (CSP script-src/style-src are \'self\')', () => {
+  for (const [file, heading] of [['tools/xrechnung/index.html', 'XRechnung-Generator'], ['en/tools/xrechnung/index.html', 'XRechnung generator']]) {
+    const html = readOutput(file);
+    assert.match(html, new RegExp(`<h1[^>]*>${heading}</h1>`));
+    assert.match(html, /<script type="module" src="\/_astro\/[^"]+\.js"><\/script>/, `${file} loads its bundle as an external module`);
+    assert.doesNotMatch(html, /<script(?![^>]*\ssrc=)[^>]*>/, `${file} has no inline script`);
+    assert.doesNotMatch(html, /<style[\s>]/, `${file} has no inline style element`);
+    assert.doesNotMatch(html, /\sstyle=/, `${file} has no inline style attribute`);
+    assert.doesNotMatch(html, /astro-island/, `${file} does not use the inline island loader`);
+    assert.match(html, /site-shell site-shell--wide/, `${file} uses the route-scoped wide shell`);
+  }
+  for (const file of ['index.html', 'tools/index.html', 'impressum/index.html']) assert.doesNotMatch(readOutput(file), /site-shell--wide/, `${file} keeps the default width`);
 });
 
 test('Cloudflare Pages static headers provide transport-level and CSP hardening', () => {
