@@ -156,10 +156,10 @@
       <div class="grid-meta">
         <Field id="invoiceNumber" {locale} label={copy['f.invoiceNumber'][locale]} required bind:value={f.invoiceNumber} error={errorFor('invoiceNumber')} onblur={() => touch('invoiceNumber')} />
         <Field id="issueDate" {locale} label={copy['f.issueDate'][locale]} required kind="date" bind:value={f.issueDate} error={errorFor('issueDate')} onblur={() => touch('issueDate')} />
-        <fieldset class="group supply span-all">
+        <fieldset class="group supply span-all" aria-describedby="supply-hint">
           <legend>{copy['grp.supply'][locale]}</legend>
           <p class="group-hint" id="supply-hint">{copy['grp.supplyHint'][locale]}</p>
-          <div class="choices" role="radiogroup" aria-describedby="supply-hint">
+          <div class="choices">
             <label class="choice"><input type="radio" name="supplyMode" value="date" bind:group={form.supplyMode} /> {copy['supply.date'][locale]}</label>
             <label class="choice"><input type="radio" name="supplyMode" value="period" bind:group={form.supplyMode} /> {copy['supply.period'][locale]}</label>
           </div>
