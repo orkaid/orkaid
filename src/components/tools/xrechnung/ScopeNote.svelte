@@ -7,6 +7,7 @@
     { key: 'now', title: 'scope.nowTitle' },
     { key: 'core', title: 'scope.coreTitle' },
     { key: 'out', title: 'scope.outTitle' },
+    { key: 'tool', title: 'scope.toolTitle' },
   ] as const;
 </script>
 

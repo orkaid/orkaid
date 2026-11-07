@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import { copy, describeError } from '../../../i18n/xrechnung.ts';
   import { helpEntries, helpFor, type HelpId, type HelpStatus } from '../../../i18n/xrechnung-help.ts';
   import type { Locale } from '../../../i18n/ui.ts';
@@ -12,10 +13,13 @@
   let trigger: HTMLElement | null = null;
 
   /** Opens the drawer for one help entry; focus returns to `from` when it closes. */
-  export function open(helpId: HelpId, from: HTMLElement | null): void {
+  export async function open(helpId: HelpId, from: HTMLElement | null): Promise<void> {
     id = helpId;
     trigger = from ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    // The content is rendered per open: wait for it, so the close button exists when focus is set (every opening alike).
+    await tick();
     dialog?.showModal();
+    dialog?.querySelector<HTMLElement>('.close')?.focus();
   }
 
   const entry = $derived(id ? helpEntries[id] : undefined);
