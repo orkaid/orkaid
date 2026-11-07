@@ -315,6 +315,7 @@
   .leitweg { display: flex; flex-wrap: wrap; align-items: center; gap: 0 0.5rem; margin-block-start: 0.25rem; }
   .leitweg .hint { flex-basis: 100%; margin: 0; max-inline-size: 60ch; color: var(--muted); font-size: 0.8125rem; }
   .buyer-ref { grid-column: 1 / -1; max-inline-size: 36rem; }
+  @media (pointer: coarse) { .leitweg .sec-help { inline-size: 2.75rem; block-size: 2.75rem; } }
   .group { margin: 0; padding: 0.5rem 0.75rem 0.75rem; border: 1px solid var(--rule); min-width: 0; }
   .group legend { padding-inline: 0.25rem; font: 500 0.8125rem/1.3 var(--sans); }
   .group-hint { margin: 0 0 0.5rem; color: var(--muted); font-size: 0.8125rem; }
