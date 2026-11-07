@@ -34,7 +34,7 @@
 
 <div class="lines">
   {#if groupError}<p class="group-error" role="alert">{groupError}</p>{/if}
-  <p class="number-hint">{copy['lines.numberHint'][locale]}</p>
+  <p class="number-hint" id="lines-number-hint">{copy['lines.numberHint'][locale]}</p>
   <div class="head">
     <span aria-hidden="true">#</span><span>{copy['f.lines.name'][locale]}</span>
     <span class="h">{copy['f.lines.quantity'][locale]}<button type="button" class="help-head" aria-label={fill(copy.helpFor[locale], { field: copy['f.lines.quantity'][locale] })} onclick={(e) => onmore('quantityPrice', e.currentTarget)}>?</button></span>
@@ -48,9 +48,9 @@
       <legend>{fill(copy.lineLegend[locale], { n: i + 1 })}</legend>
       <span class="num" aria-hidden="true">{i + 1}</span>
       <div class="c-name"><Field id={`lines[${i}].name`} {locale} label={copy['f.lines.name'][locale]} required bind:value={line.name} error={errorFor(`lines[${i}].name`)} onblur={() => touch(`lines[${i}].name`)} /></div>
-      <div class="c-qty"><Field id={`lines[${i}].quantity`} {locale} label={copy['f.lines.quantity'][locale]} required inputmode="decimal" bind:value={line.quantity} helpId="quantityPrice" error={errorFor(`lines[${i}].quantity`)} onblur={() => touch(`lines[${i}].quantity`)} onmore={(el) => onmore('quantityPrice', el)} /></div>
+      <div class="c-qty"><Field id={`lines[${i}].quantity`} {locale} label={copy['f.lines.quantity'][locale]} required inputmode="decimal" describedById="lines-number-hint" bind:value={line.quantity} helpId="quantityPrice" error={errorFor(`lines[${i}].quantity`)} onblur={() => touch(`lines[${i}].quantity`)} onmore={(el) => onmore('quantityPrice', el)} /></div>
       <div class="c-unit"><Field id={`lines[${i}].unitCode`} {locale} label={copy['f.lines.unitCode'][locale]} required kind="select" options={unitOptions} bind:value={line.unitCode} helpId="unitCode" error={errorFor(`lines[${i}].unitCode`)} onblur={() => touch(`lines[${i}].unitCode`)} onmore={(el) => onmore('unitCode', el)} /></div>
-      <div class="c-price"><Field id={`lines[${i}].unitPrice`} {locale} label={copy['f.lines.unitPrice'][locale]} required inputmode="decimal" bind:value={line.unitPrice} helpId="quantityPrice" error={errorFor(`lines[${i}].unitPrice`)} onblur={() => touch(`lines[${i}].unitPrice`)} onmore={(el) => onmore('quantityPrice', el)} /></div>
+      <div class="c-price"><Field id={`lines[${i}].unitPrice`} {locale} label={copy['f.lines.unitPrice'][locale]} required inputmode="decimal" describedById="lines-number-hint" bind:value={line.unitPrice} helpId="quantityPrice" error={errorFor(`lines[${i}].unitPrice`)} onblur={() => touch(`lines[${i}].unitPrice`)} onmore={(el) => onmore('quantityPrice', el)} /></div>
       <div class="c-vat"><Field id={`lines[${i}].vat.rate`} {locale} label={copy['f.lines.vat.rate'][locale]} required kind="select" options={vatOptions} bind:value={line.vatRate} helpId="vatRate" error={errorFor(`lines[${i}].vat.rate`)} onblur={() => touch(`lines[${i}].vat.rate`)} onmore={(el) => onmore('vatRate', el)} /></div>
       <div class="c-net"><span class="net-label">{copy['f.lines.net'][locale]}</span><output class="net" for={`lines[${i}].quantity lines[${i}].unitPrice lines[${i}].vat.rate`}>{net(i)}</output></div>
       <div class="c-remove">

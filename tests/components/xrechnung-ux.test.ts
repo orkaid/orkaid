@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-import { buildDocumentInput, checkForm } from '../../src/components/tools/xrechnung/form-adapter.ts';
+import { checkForm } from '../../src/components/tools/xrechnung/form-adapter.ts';
 import { emptyFormState } from '../../src/components/tools/xrechnung/form-state.ts';
 import { copy, describeError, scopeLists } from '../../src/i18n/xrechnung.ts';
 import { helpEntries } from '../../src/i18n/xrechnung-help.ts';

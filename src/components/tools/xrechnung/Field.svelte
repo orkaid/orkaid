@@ -17,6 +17,8 @@
     helpId?: HelpId;
     error?: string | undefined;
     hint?: string | undefined;
+    /** Id of a description that lives outside the field and is shared with other fields. */
+    describedById?: string;
     inputmode?: 'text' | 'decimal' | 'email' | 'tel';
     autocomplete?: string;
     rows?: number;
@@ -25,12 +27,12 @@
   };
   let {
     id, label, locale, value = $bindable(), kind = 'text', required = false, optionalMark = false, options = [], helpId,
-    error, hint, inputmode, autocomplete = 'off', rows = 3, onblur, onmore,
+    error, hint, describedById, inputmode, autocomplete = 'off', rows = 3, onblur, onmore,
   }: Props = $props();
 
   let hintOpen = $state(false);
   let helpButton: HTMLButtonElement | undefined = $state();
-  const describedBy = $derived([hintOpen && helpId ? `${id}-help` : '', hint ? `${id}-hint` : '', kind === 'date' ? `${id}-date` : '', error ? `${id}-error` : ''].filter(Boolean).join(' ') || undefined);
+  const describedBy = $derived([hintOpen && helpId ? `${id}-help` : '', hint ? `${id}-hint` : '', kind === 'date' ? `${id}-date` : '', describedById ?? '', error ? `${id}-error` : ''].filter(Boolean).join(' ') || undefined);
 </script>
 
 <div class="field" class:invalid={error !== undefined} class:date={kind === 'date'}>
