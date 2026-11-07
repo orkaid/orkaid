@@ -246,14 +246,22 @@ export const helpEntries = {
     sources: [`${DOC} — isValidIban (ISO 13616 mod-97; no per-country length check, like the validator)`],
     de: {
       title: 'IBAN', short: 'Die IBAN des Kontos, auf das gezahlt werden soll. Beispiel (fiktiv): DE79000000001234567890.',
-      enter: 'Tragen Sie die IBAN ohne Leerzeichen in Großbuchstaben ein.', status: 'required', format: 'Zwei Buchstaben, zwei Prüfziffern, danach 11 bis 30 Buchstaben oder Ziffern; gültige Prüfziffern (Modulo 97).', valid: 'DE79000000001234567890',
-      invalid: [{ value: 'DE79 0000 0000 1234 5678 90', note: 'Leerzeichen.' }, { value: 'de79000000001234567890', note: 'Kleinbuchstaben.' }],
+      enter: 'Tragen Sie die IBAN durchgehend, ohne Leerzeichen und in Großbuchstaben ein. Dieses Werkzeug ändert Ihre Eingabe nicht automatisch.', status: 'required', format: 'Zwei Buchstaben, zwei Prüfziffern, danach 11 bis 30 Buchstaben oder Ziffern. Die Prüfziffern (Stellen 3–4) müssen rechnerisch zu den übrigen Zeichen passen (ISO 13616, Modulo 97); richtige Länge und Zeichen allein genügen nicht.', valid: 'DE79000000001234567890',
+      invalid: [
+        { value: 'DE79 0000 0000 1234 5678 90', note: 'Leerzeichen.' },
+        { value: 'de79000000001234567890', note: 'Kleinbuchstaben.' },
+        { value: 'DE79000000001234567891', note: 'Aufbau richtig, aber eine Ziffer gegenüber dem gültigen Beispiel geändert: Die Prüfsumme stimmt nicht mehr.' },
+      ],
       profile: ['Die Länge je Land wird nicht geprüft (wie im Validator).'],
     },
     en: {
       title: 'IBAN', short: 'The IBAN of the account to be paid. Example (fictional): DE79000000001234567890.',
-      enter: 'Enter the IBAN in capital letters without spaces.', status: 'required', format: 'Two letters, two check digits, then 11 to 30 letters or digits; valid check digits (mod 97).', valid: 'DE79000000001234567890',
-      invalid: [{ value: 'DE79 0000 0000 1234 5678 90', note: 'Contains spaces.' }, { value: 'de79000000001234567890', note: 'Lower case.' }],
+      enter: 'Enter the IBAN as one continuous string in capital letters without spaces. This tool does not change your input automatically.', status: 'required', format: 'Two letters, two check digits, then 11 to 30 letters or digits. The check digits (positions 3–4) must be mathematically consistent with the remaining characters (ISO 13616, mod 97); correct length and characters alone are not enough.', valid: 'DE79000000001234567890',
+      invalid: [
+        { value: 'DE79 0000 0000 1234 5678 90', note: 'Contains spaces.' },
+        { value: 'de79000000001234567890', note: 'Lower case.' },
+        { value: 'DE79000000001234567891', note: 'Well-formed, but one digit differs from the valid example: the checksum no longer matches.' },
+      ],
       profile: ['The per-country length is not checked (like the validator).'],
     },
   },

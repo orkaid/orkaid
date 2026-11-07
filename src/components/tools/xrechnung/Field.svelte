@@ -2,6 +2,7 @@
   import { copy, fill } from '../../../i18n/xrechnung.ts';
   import { helpFor, type HelpId } from '../../../i18n/xrechnung-help.ts';
   import type { Locale } from '../../../i18n/ui.ts';
+  import { displayDate } from './date-display.ts';
   import Glyph from './Glyph.svelte';
 
   type Option = { value: string; label: string };
@@ -30,7 +31,8 @@
 
   let hintOpen = $state(false);
   let helpButton: HTMLButtonElement | undefined = $state();
-  const describedBy = $derived([hintOpen && helpId ? `${id}-help` : '', hint ? `${id}-hint` : '', error ? `${id}-error` : ''].filter(Boolean).join(' ') || undefined);
+  const dateText = $derived(kind === 'date' ? displayDate(value, locale) : undefined);
+  const describedBy = $derived([hintOpen && helpId ? `${id}-help` : '', hint ? `${id}-hint` : '', dateText ? `${id}-date` : '', error ? `${id}-error` : ''].filter(Boolean).join(' ') || undefined);
 </script>
 
 <div class="field" class:invalid={error !== undefined}>
@@ -63,6 +65,7 @@
     <input {id} type={kind} bind:value {onblur} {inputmode} {autocomplete} spellcheck="false" aria-invalid={error !== undefined} aria-describedby={describedBy} />
   {/if}
   {#if hint}<p class="hint" id={`${id}-hint`}>{hint}</p>{/if}
+  {#if kind === 'date'}<p class="hint" id={`${id}-date`}>{dateText ? fill(copy['date.selected'][locale], { date: dateText }) : copy['date.format'][locale]}</p>{/if}
   {#if error}<p class="error" id={`${id}-error`}><Glyph kind="error" /> <span>{error}</span></p>{/if}
 </div>
 

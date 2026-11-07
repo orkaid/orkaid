@@ -8,6 +8,7 @@
   import Glyph from './Glyph.svelte';
   import HelpDrawer from './HelpDrawer.svelte';
   import LinesEditor from './LinesEditor.svelte';
+  import ScopeNote from './ScopeNote.svelte';
   import SummaryRail, { type RailStatus } from './SummaryRail.svelte';
   import { checkForm, countByKind, exportXml, previewTotals, type DiagnosticItem, type ExportFormat, type SectionId } from './form-adapter.ts';
   import { emptyFormState } from './form-state.ts';
@@ -148,6 +149,7 @@
 <form class="workspace" novalidate onsubmit={(event) => { event.preventDefault(); void showResults(); }}>
   <div class="main">
     <p class="legend">{copy.requiredLegend[locale]}</p>
+    <ScopeNote {locale} />
 
     <section aria-labelledby="h-document" id="section-document">
       {@render head('document', undefined)}
@@ -221,7 +223,7 @@
       {@render head('payment', 'sec.payment')}
       <div class="grid-pay">
         <Field id="payment.means.code" {locale} label={copy['f.meansCode'][locale]} required kind="select" options={meansOptions} bind:value={f['payment.means.code']} helpId="paymentMeans" hint={copy.meansHint[locale]} error={errorFor('payment.means.code')} onblur={() => touch('payment.means.code')} onmore={(el) => openHelp('paymentMeans', el)} />
-        <Field id="payment.means.account.id.value" {locale} label={copy['f.iban'][locale]} required autocomplete="off" bind:value={f['payment.means.account.id.value']} helpId="iban" error={errorFor('payment.means.account.id.value')} onblur={() => touch('payment.means.account.id.value')} onmore={(el) => openHelp('iban', el)} />
+        <Field id="payment.means.account.id.value" {locale} label={copy['f.iban'][locale]} required autocomplete="off" bind:value={f['payment.means.account.id.value']} helpId="iban" hint={copy.ibanHint[locale]} error={errorFor('payment.means.account.id.value')} onblur={() => touch('payment.means.account.id.value')} onmore={(el) => openHelp('iban', el)} />
         <Field id="payment.means.account.name" {locale} label={copy['f.accountName'][locale]} optionalMark bind:value={f['payment.means.account.name']} error={errorFor('payment.means.account.name')} onblur={() => touch('payment.means.account.name')} />
         <Field id="payment.means.account.bic" {locale} label={copy['f.bic'][locale]} optionalMark bind:value={f['payment.means.account.bic']} helpId="bic" error={errorFor('payment.means.account.bic')} onblur={() => touch('payment.means.account.bic')} onmore={(el) => openHelp('bic', el)} />
         <fieldset class="group span-all">

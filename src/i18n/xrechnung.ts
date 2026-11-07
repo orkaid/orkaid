@@ -90,6 +90,7 @@ export const copy = {
   'f.lines.net': m('Netto', 'Net'),
   'f.meansCode': m('Zahlungsart', 'Payment means'),
   'f.iban': m('IBAN', 'IBAN'),
+  'ibanHint': m('Durchgehend, Großbuchstaben, ohne Leerzeichen. Die Prüfziffern müssen stimmen.', 'Continuous, capital letters, no spaces. The check digits must be correct.'),
   'f.accountName': m('Kontoinhaber', 'Account holder'),
   'f.bic': m('BIC', 'BIC'),
   'f.dueDate': m('Fälligkeitsdatum', 'Due date'),
@@ -140,6 +141,20 @@ export const copy = {
     'Kein externer Validator und kein Empfänger hat dieses Dokument geprüft. Keine Steuer- oder Rechtsberatung.',
     'No external validator and no recipient has checked this document. No tax or legal advice.',
   ),
+  'scope.title': m('Was dieses Werkzeug nicht kann', 'What this tool cannot do'),
+  'scope.summary': m(
+    'Derzeit: Rechnung Typ 380, deutsches Inlandsprofil, EUR. Weitere Fälle sind im Fachkern vorhanden oder liegen außerhalb des Profils.',
+    'Currently: invoice type 380, German domestic profile, EUR. Further cases exist in the domain core or lie outside the profile.',
+  ),
+  'scope.nowTitle': m('In dieser Oberfläche möglich', 'Available in this interface'),
+  'scope.coreTitle': m('Im Fachkern vorhanden, hier noch nicht bedienbar', 'In the domain core, not yet available here'),
+  'scope.outTitle': m('Außerhalb des Profils dieses Werkzeugs', 'Outside this tool’s profile'),
+  'scope.disclaimer': m(
+    'Gemeint ist stets der Umfang dieses Werkzeugs. Es ist keine Aussage, dass das Recht, EN 16931 oder XRechnung solche Fälle verbieten.',
+    'This always describes the scope of this tool. It does not say that the law, EN 16931 or XRechnung prohibit such cases.',
+  ),
+  'date.selected': m('Gewählt: {date}', 'Selected: {date}'),
+  'date.format': m('Anzeige: TT.MM.JJJJ', 'Shown as: day, month, year (e.g. 7 Nov 2026)'),
   'diag.heading': m('Prüfergebnis', 'Check result'),
   'diag.none': m('Keine offenen Punkte.', 'No open points.'),
   'diag.truncated': m('Weitere Probleme können nach der Korrektur erscheinen.', 'More problems may appear after these are fixed.'),
@@ -250,7 +265,10 @@ export const errorMessages: Readonly<Record<DocumentErrorCode, Msg>> = {
   invalid_vat_id: m('{field}: in diesem Werkzeug nur „DE“ und genau 9 Ziffern, ohne Leerzeichen.', '{field}: this tool accepts only “DE” and exactly 9 digits, no spaces.'),
   invalid_email: m('{field}: keine gültige E-Mail-Adresse.', '{field}: not a valid e-mail address.'),
   invalid_telephone: m('{field}: mindestens 3 Ziffern erforderlich.', '{field}: at least 3 digits are required.'),
-  invalid_iban: m('{field}: keine gültige IBAN. Ohne Leerzeichen, Großbuchstaben, gültige Prüfziffern.', '{field}: not a valid IBAN. No spaces, capital letters, valid check digits.'),
+  invalid_iban: m(
+    '{field}: keine gültige IBAN. Erwartet wird eine durchgehende IBAN in Großbuchstaben ohne Leerzeichen. Länge und Zeichen allein genügen nicht: Die beiden Prüfziffern (Stellen 3–4) müssen rechnerisch zu den übrigen Zeichen passen. Wurde eine Ziffer geändert oder vertippt, stimmt die Prüfsumme meist nicht mehr; bitte die IBAN von Kontoauszug oder Bank übernehmen.',
+    '{field}: not a valid IBAN. Enter one continuous IBAN in capital letters without spaces. Length and characters alone are not enough: the two check digits (positions 3–4) must be mathematically consistent with the remaining characters. If a digit was changed or mistyped, the checksum usually fails; copy the IBAN from a bank statement or from your bank.',
+  ),
   invalid_bic: m('{field}: kein gültiger BIC (8 oder 11 Zeichen).', '{field}: not a valid BIC (8 or 11 characters).'),
   unsupported_country: m('{field}: nur Deutschland (DE) wird unterstützt.', '{field}: only Germany (DE) is supported.'),
   unsupported_electronic_address_scheme: m('{field}: dieses Schema wird nicht unterstützt. Bitte aus der Liste wählen.', '{field}: this scheme is not supported. Please choose from the list.'),
@@ -313,3 +331,19 @@ export function describeError(code: DocumentErrorCode, path: string, locale: Loc
   const example = locale === 'de' ? '12,50' : '12.50';
   return fill(errorMessages[code][locale], { field: label ?? labelFor(path, locale), sep, example });
 }
+
+/** Compact scope note (MDR-32 obligation at M3). Mirrors the domain README "Supported and not supported"; tool limits are not legal prohibitions. */
+export const scopeLists: Record<'now' | 'core' | 'out', { readonly de: readonly string[]; readonly en: readonly string[] }> = {
+  now: {
+    de: ['Rechnung Typ 380', 'Deutsches Inlandsprofil (Verkäufer und Käufer in Deutschland), Währung EUR', 'Umsatzsteuer: Normalsatz 19 % und ermäßigter Satz 7 %', 'Zahlung per Überweisung (Code 30 oder 58) mit IBAN', 'Prüfung im Browser gegen die Regeln dieses Werkzeugs und Export als UBL- oder CII-XML'],
+    en: ['Invoice type 380', 'German domestic profile (seller and buyer in Germany), currency EUR', 'VAT: standard rate 19% and reduced rate 7%', 'Payment by credit transfer (code 30 or 58) with an IBAN', 'Check in the browser against this tool’s rules and export as UBL or CII XML'],
+  },
+  core: {
+    de: ['Gutschrift 381 (nur bestätigte Verrechnung)', 'Kleinunternehmer-Behandlung', 'Reverse Charge, auch zusammen mit Normalsatz in einer Rechnung', 'Leistungszeitraum (BG-14) statt Leistungsdatum', 'Projekt-, Vertrags- und Bestellreferenz (BT-11, BT-12, BT-13)', 'Strukturiertes Skonto', 'Optionale Prüfung der Leitweg-ID'],
+    en: ['Credit note 381 (confirmed clearing only)', 'Kleinunternehmer treatment', 'Reverse charge, also combined with standard rate in one invoice', 'Invoicing period (BG-14) instead of date of supply', 'Project, contract and purchase order references (BT-11, BT-12, BT-13)', 'Structured Skonto', 'Optional Leitweg-ID check'],
+  },
+  out: {
+    de: ['Andere Dokumenttypen als 380 und 381 (zum Beispiel 384, 389)', 'Andere Währungen als EUR; Beteiligte außerhalb Deutschlands', 'Andere Steuerkategorien, Steuersätze oder Steuerbehandlungen als im Profil', 'Andere Zahlungsarten als Überweisung (30, 58); Erstattung einer Gutschrift per Überweisung', 'Nachlässe und Zuschläge, Anzahlungen, Teil- und Ratenrechnungen, Anhänge, negative Mengen und Preise', 'XML-Import und PDF-Erzeugung'],
+    en: ['Document types other than 380 and 381 (for example 384, 389)', 'Currencies other than EUR; parties outside Germany', 'VAT categories, rates or treatments beyond the profile', 'Payment means other than credit transfer (30, 58); refunding a credit note by credit transfer', 'Allowances and charges, prepayments, staged or installment invoices, attachments, negative quantities and prices', 'XML import and PDF generation'],
+  },
+};
