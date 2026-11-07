@@ -32,6 +32,15 @@
 
   let hintOpen = $state(false);
   let helpButton: HTMLButtonElement | undefined = $state();
+  // The wide line-row layout hides this toggle (the column headers carry the help). A help left open at a narrower width
+  // would then stay open with no way to close it, so the open state ends with the toggle's visibility.
+  $effect(() => {
+    const button = helpButton;
+    if (!button) return;
+    const observer = new ResizeObserver(() => { if (button.offsetParent === null) hintOpen = false; });
+    observer.observe(button);
+    return () => observer.disconnect();
+  });
   const describedBy = $derived([hintOpen && helpId ? `${id}-help` : '', hint ? `${id}-hint` : '', kind === 'date' ? `${id}-date` : '', describedById ?? '', error ? `${id}-error` : ''].filter(Boolean).join(' ') || undefined);
 </script>
 
