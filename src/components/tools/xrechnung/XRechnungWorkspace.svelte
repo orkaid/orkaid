@@ -156,8 +156,41 @@
       <div class="grid-meta">
         <Field id="invoiceNumber" {locale} label={copy['f.invoiceNumber'][locale]} required bind:value={f.invoiceNumber} error={errorFor('invoiceNumber')} onblur={() => touch('invoiceNumber')} />
         <Field id="issueDate" {locale} label={copy['f.issueDate'][locale]} required kind="date" bind:value={f.issueDate} error={errorFor('issueDate')} onblur={() => touch('issueDate')} />
-        <Field id="deliveryDate" {locale} label={copy['f.deliveryDate'][locale]} required kind="date" bind:value={f.deliveryDate} helpId="deliveryDate" error={errorFor('deliveryDate')} onblur={() => touch('deliveryDate')} onmore={(el) => openHelp('deliveryDate', el)} />
-        <Field id="buyerReference" {locale} label={copy['f.buyerReference'][locale]} required bind:value={f.buyerReference} helpId="buyerReference" error={errorFor('buyerReference')} onblur={() => touch('buyerReference')} onmore={(el) => openHelp('buyerReference', el)} />
+        <fieldset class="group supply span-all">
+          <legend>{copy['grp.supply'][locale]}</legend>
+          <p class="group-hint" id="supply-hint">{copy['grp.supplyHint'][locale]}</p>
+          <div class="choices" role="radiogroup" aria-describedby="supply-hint">
+            <label class="choice"><input type="radio" name="supplyMode" value="date" bind:group={form.supplyMode} /> {copy['supply.date'][locale]}</label>
+            <label class="choice"><input type="radio" name="supplyMode" value="period" bind:group={form.supplyMode} /> {copy['supply.period'][locale]}</label>
+          </div>
+          {#if form.supplyMode === 'date'}
+            <div class="two">
+              <Field id="deliveryDate" {locale} label={copy['f.deliveryDate'][locale]} required kind="date" bind:value={f.deliveryDate} helpId="deliveryDate" error={errorFor('deliveryDate')} onblur={() => touch('deliveryDate')} onmore={(el) => openHelp('deliveryDate', el)} />
+            </div>
+          {:else}
+            <div class="two">
+              <Field id="invoicingPeriod.startDate" {locale} label={copy['f.periodStart'][locale]} required kind="date" bind:value={f['invoicingPeriod.startDate']} helpId="invoicingPeriod" error={errorFor('invoicingPeriod.startDate')} onblur={() => touch('invoicingPeriod.startDate')} onmore={(el) => openHelp('invoicingPeriod', el)} />
+              <Field id="invoicingPeriod.endDate" {locale} label={copy['f.periodEnd'][locale]} required kind="date" bind:value={f['invoicingPeriod.endDate']} error={errorFor('invoicingPeriod.endDate')} onblur={() => touch('invoicingPeriod.endDate')} />
+            </div>
+          {/if}
+        </fieldset>
+        <div class="buyer-ref">
+          <Field id="buyerReference" {locale} label={copy['f.buyerReference'][locale]} required bind:value={f.buyerReference} helpId="buyerReference" error={errorFor('buyerReference')} onblur={() => touch('buyerReference')} onmore={(el) => openHelp('buyerReference', el)} />
+          <div class="leitweg">
+            <label class="choice"><input id="leitwegCheck" type="checkbox" bind:checked={form.leitwegCheck} aria-describedby="leitweg-note" onchange={() => { if (form.leitwegCheck && f.buyerReference !== '') touch('buyerReference'); }} /> {copy.leitwegCheck[locale]}</label>
+            <button type="button" class="sec-help" aria-label={fill(copy.helpFor[locale], { field: copy.leitwegCheck[locale] })} onclick={(event) => openHelp('leitwegCheck', event.currentTarget)}>?</button>
+            <p class="hint" id="leitweg-note">{copy.leitwegNote[locale]}</p>
+          </div>
+        </div>
+        <fieldset class="group span-all">
+          <legend>{copy['grp.references'][locale]}</legend>
+          <p class="group-hint">{copy['grp.referencesHint'][locale]}</p>
+          <div class="two">
+            <Field id="projectReference" {locale} label={copy['f.projectReference'][locale]} optionalMark bind:value={f.projectReference} helpId="references" error={errorFor('projectReference')} onblur={() => touch('projectReference')} onmore={(el) => openHelp('references', el)} />
+            <Field id="contractReference" {locale} label={copy['f.contractReference'][locale]} optionalMark bind:value={f.contractReference} helpId="references" error={errorFor('contractReference')} onblur={() => touch('contractReference')} onmore={(el) => openHelp('references', el)} />
+            <Field id="orderReference" {locale} label={copy['f.orderReference'][locale]} optionalMark bind:value={f.orderReference} helpId="references" error={errorFor('orderReference')} onblur={() => touch('orderReference')} onmore={(el) => openHelp('references', el)} />
+          </div>
+        </fieldset>
         <dl class="fixed">
           <div><dt>{copy.documentType[locale]}</dt><dd>{copy.fixed380[locale]}</dd></div>
           <div><dt>{copy.currency[locale]}</dt><dd>{copy.fixedEUR[locale]}</dd></div>
@@ -276,6 +309,12 @@
   .parties { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
   .grid-party, .grid-pay { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem 0.75rem; align-items: start; }
   .span, .span-all { grid-column: 1 / -1; }
+  .choices { display: flex; flex-wrap: wrap; gap: 0.25rem 1.5rem; margin-bottom: 0.5rem; }
+  .choice { display: inline-flex; align-items: center; gap: 0.5rem; min-block-size: 2.25rem; font: 500 0.875rem var(--sans); cursor: pointer; }
+  .choice input { inline-size: 1.125rem; block-size: 1.125rem; margin: 0; accent-color: var(--ink); }
+  .leitweg { display: flex; flex-wrap: wrap; align-items: center; gap: 0 0.5rem; margin-block-start: 0.25rem; }
+  .leitweg .hint { flex-basis: 100%; margin: 0; max-inline-size: 60ch; color: var(--muted); font-size: 0.8125rem; }
+  .buyer-ref { grid-column: 1 / -1; max-inline-size: 36rem; }
   .group { margin: 0; padding: 0.5rem 0.75rem 0.75rem; border: 1px solid var(--rule); min-width: 0; }
   .group legend { padding-inline: 0.25rem; font: 500 0.8125rem/1.3 var(--sans); }
   .group-hint { margin: 0 0 0.5rem; color: var(--muted); font-size: 0.8125rem; }
