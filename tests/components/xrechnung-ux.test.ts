@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-import { displayDate } from '../../src/components/tools/xrechnung/date-display.ts';
 import { buildDocumentInput, checkForm } from '../../src/components/tools/xrechnung/form-adapter.ts';
 import { emptyFormState } from '../../src/components/tools/xrechnung/form-state.ts';
 import { copy, describeError, scopeLists } from '../../src/i18n/xrechnung.ts';
@@ -12,33 +11,11 @@ const locales = ['de', 'en'] as const;
 const VALID_IBAN = 'DE79000000001234567890';
 const WRONG_CHECKSUM_IBAN = 'DE79000000001234567891'; // well-formed, last digit changed
 
-test('date display is unambiguous per locale and never alters the ISO value', () => {
-  assert.equal(displayDate('2026-11-07', 'de'), '07.11.2026');
-  assert.equal(displayDate('2026-11-07', 'en'), '7 Nov 2026');
-  assert.equal(displayDate('2026-01-31', 'en'), '31 Jan 2026');
-  for (const bad of ['', '2026-1-7', '07.11.2026', '2026-13-01', '2026-00-10', '2026-11-32', '12026-11-07']) {
-    assert.equal(displayDate(bad, 'de'), undefined, bad);
-  }
-  const state = emptyFormState();
-  state.fields.issueDate = '2026-11-07';
-  displayDate(state.fields.issueDate, 'de');
-  assert.equal(state.fields.issueDate, '2026-11-07');
-});
-
-test('the ISO date typed in the form is what reaches the domain input unchanged', () => {
-  const state = emptyFormState();
-  state.fields.issueDate = '2026-11-07';
-  state.fields.deliveryDate = '2026-11-01';
-  const input = buildDocumentInput(state) as Record<string, unknown>;
-  assert.equal(input.issueDate, '2026-11-07');
-  assert.equal(input.deliveryDate, '2026-11-01');
-});
-
 test('IBAN: the documented example passes the domain, the one-digit change fails with invalid_iban, and input is not normalised', () => {
   const state = emptyFormState();
   const codeFor = (iban: string) => {
     state.fields['payment.means.account.id.value'] = iban;
-    const result = checkForm(state, 'en');
+    const result = checkForm(state);
     return result.ok ? undefined : result.items.find((item) => item.path === 'payment.means.account.id.value')?.code;
   };
   assert.equal(codeFor(VALID_IBAN), undefined);

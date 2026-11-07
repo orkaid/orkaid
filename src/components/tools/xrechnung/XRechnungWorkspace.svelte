@@ -28,11 +28,11 @@
   let statusHeading: HTMLElement | undefined = $state();
 
   // The domain answers on every change: full validation, and the lines-only preview for the totals.
-  const result = $derived(checkForm(form, locale));
+  const result = $derived(checkForm(form));
   const items = $derived<readonly DiagnosticItem[]>(result.ok ? [] : result.items);
   const truncated = $derived(!result.ok && result.truncated);
   const counts = $derived(countByKind(items));
-  const preview = $derived(previewTotals(form, locale));
+  const preview = $derived(previewTotals(form));
   const totals = $derived(result.ok ? result.invoice.totals : preview.ok ? preview.totals : undefined);
   const snapshot = $derived(JSON.stringify(form));
   const status = $derived<RailStatus>(
@@ -109,7 +109,7 @@
   function runExport(format: ExportFormat): void {
     exportFailure = undefined;
     // Always rebuilt from the current form: never an earlier XML.
-    const out = exportXml(form, locale, format);
+    const out = exportXml(form, format);
     if (!out.ok) {
       if (out.reason === 'serializer') exportFailure = out.code;
       void showResults();
@@ -125,7 +125,7 @@
     drawer?.open(id, from);
   }
 
-  const gross = $derived(totals ? `${formatLocalizedDecimal(totals.totalWithVat, locale)} EUR${result.ok ? '' : ` ${copy['dock.preview'][locale]}`}` : '—');
+  const gross = $derived(totals ? `${formatLocalizedDecimal(totals.totalWithVat, 'de')} EUR${result.ok ? '' : ` ${copy['dock.preview'][locale]}`}` : '—');
   const meansOptions = [{ value: '30', label: copy.means30[locale] }, { value: '58', label: copy.means58[locale] }];
   const schemeOptions = [
     { value: 'EM', label: copy.schemeEM[locale] },

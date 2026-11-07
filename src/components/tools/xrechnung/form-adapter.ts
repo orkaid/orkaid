@@ -5,8 +5,8 @@
 import { serializeCiiInvoice } from '../../../lib/domain/xrechnung/cii.ts';
 import { buildInvoice, type DocumentErrorCode, type DocumentOptions, type Invoice } from '../../../lib/domain/xrechnung/document.ts';
 import { calculateInvoiceTotals, type InvoiceTotals } from '../../../lib/domain/xrechnung/invoice.ts';
-import type { NumberLocale } from '../../../lib/domain/xrechnung/number-notation.ts';
 import { serializeUblInvoice } from '../../../lib/domain/xrechnung/ubl.ts';
+import { dateInput, decimalInput } from './input-format.ts';
 import type { FieldId, FormState } from './form-state.ts';
 
 export type SectionId = 'document' | 'seller' | 'buyer' | 'lines' | 'payment' | 'notes';
@@ -48,9 +48,12 @@ export function fieldValues(state: FormState): Record<string, string> {
 }
 
 // An empty field is omitted (the domain then answers "missing"); it is never sent as '' and never trimmed.
-const put = (target: Record<string, unknown>, key: string, value: string): void => {
-  if (value !== '') target[key] = value;
+const put = (target: Record<string, unknown>, key: string, value: string, convert?: (text: string) => string): void => {
+  if (value !== '') target[key] = convert === undefined ? value : convert(value);
 };
+// Dates and decimals are typed in the German format and reach the domain canonical (see input-format.ts).
+const putDate = (target: Record<string, unknown>, key: string, value: string): void => put(target, key, value, dateInput);
+const putDecimal = (target: Record<string, unknown>, key: string, value: string): void => put(target, key, value, decimalInput);
 
 /** The domain input for an invoice 380. Objects are always present so a diagnostic names the field, not its parent. */
 export function buildDocumentInput(state: FormState): Record<string, unknown> {
@@ -89,21 +92,21 @@ export function buildDocumentInput(state: FormState): Record<string, unknown> {
   const means: Record<string, unknown> = { kind: 'credit-transfer', account };
   put(means, 'code', f['payment.means.code']);
   const payment: Record<string, unknown> = { means };
-  put(payment, 'dueDate', f['payment.dueDate']);
+  putDate(payment, 'dueDate', f['payment.dueDate']);
   put(payment, 'termsText', f['payment.termsText']);
 
   const input: Record<string, unknown> = { documentTypeCode: '380', currency: 'EUR' };
   put(input, 'invoiceNumber', f.invoiceNumber);
-  put(input, 'issueDate', f.issueDate);
+  putDate(input, 'issueDate', f.issueDate);
   // Only the active alternative of BT-72 / BG-14 enters the input. In period mode the object is always present, so an empty
   // boundary is reported on its own visible field and not as a missing `deliveryDate` the user cannot see.
   if (state.supplyMode === 'period') {
     const period: Record<string, unknown> = {};
-    put(period, 'startDate', f['invoicingPeriod.startDate']);
-    put(period, 'endDate', f['invoicingPeriod.endDate']);
+    putDate(period, 'startDate', f['invoicingPeriod.startDate']);
+    putDate(period, 'endDate', f['invoicingPeriod.endDate']);
     input.invoicingPeriod = period;
   } else {
-    put(input, 'deliveryDate', f.deliveryDate);
+    putDate(input, 'deliveryDate', f.deliveryDate);
   }
   put(input, 'buyerReference', f.buyerReference);
   put(input, 'projectReference', f.projectReference);
@@ -117,8 +120,8 @@ export function buildDocumentInput(state: FormState): Record<string, unknown> {
     const out: Record<string, unknown> = {};
     put(out, 'name', line.name);
     put(out, 'unitCode', line.unitCode);
-    put(out, 'quantity', line.quantity);
-    put(out, 'unitPrice', line.unitPrice);
+    putDecimal(out, 'quantity', line.quantity);
+    putDecimal(out, 'unitPrice', line.unitPrice);
     const vat: Record<string, unknown> = { treatment: 'standard', category: 'S' };
     put(vat, 'rate', line.vatRate);
     out.vat = vat;
@@ -137,8 +140,8 @@ export function buildMonetaryInput(state: FormState): Record<string, unknown> {
     currency: 'EUR',
     lines: state.lines.map((line) => {
       const out: Record<string, unknown> = {};
-      put(out, 'quantity', line.quantity);
-      put(out, 'unitPrice', line.unitPrice);
+      putDecimal(out, 'quantity', line.quantity);
+      putDecimal(out, 'unitPrice', line.unitPrice);
       const vat: Record<string, unknown> = { treatment: 'standard', category: 'S' };
       put(vat, 'rate', line.vatRate);
       out.vat = vat;
@@ -150,8 +153,8 @@ export function buildMonetaryInput(state: FormState): Record<string, unknown> {
 export type PreviewResult = { readonly ok: true; readonly totals: InvoiceTotals } | { readonly ok: false };
 
 /** Lines-only totals from the domain's own calculation: a preview, never a statement that the invoice is valid. */
-export function previewTotals(state: FormState, locale: NumberLocale): PreviewResult {
-  const result = calculateInvoiceTotals(buildMonetaryInput(state), { notation: locale });
+export function previewTotals(state: FormState): PreviewResult {
+  const result = calculateInvoiceTotals(buildMonetaryInput(state));
   return result.ok ? { ok: true, totals: result.value } : { ok: false };
 }
 
@@ -196,13 +199,13 @@ export type CheckResult =
   | { readonly ok: false; readonly items: readonly DiagnosticItem[]; readonly truncated: boolean };
 
 /** The single place the call options are built, so a check and an export can never apply different policies. */
-export function documentOptions(state: FormState, locale: NumberLocale): DocumentOptions {
-  return state.leitwegCheck ? { notation: locale, buyerReferencePolicy: 'leitweg-id' } : { notation: locale };
+export function documentOptions(state: FormState): DocumentOptions {
+  return state.leitwegCheck ? { buyerReferencePolicy: 'leitweg-id' } : {};
 }
 
 /** One run of the domain's full validation on the current form. */
-export function checkForm(state: FormState, locale: NumberLocale): CheckResult {
-  const result = buildInvoice(buildDocumentInput(state), documentOptions(state, locale));
+export function checkForm(state: FormState): CheckResult {
+  const result = buildInvoice(buildDocumentInput(state), documentOptions(state));
   if (result.ok) return { ok: true, invoice: result.value };
   return { ok: false, items: toDiagnosticItems(result.errors, fieldValues(state)), truncated: result.truncated };
 }
@@ -220,8 +223,8 @@ export type ExportResult =
   | { readonly ok: false; readonly reason: 'serializer'; readonly code: string };
 
 /** Always re-runs validation and serialization on the current form; never returns XML produced earlier. */
-export function exportXml(state: FormState, locale: NumberLocale, format: ExportFormat): ExportResult {
-  const checked = checkForm(state, locale);
+export function exportXml(state: FormState, format: ExportFormat): ExportResult {
+  const checked = checkForm(state);
   if (!checked.ok) return { ok: false, reason: 'invalid', items: checked.items, truncated: checked.truncated };
   const serialized = format === 'ubl' ? serializeUblInvoice(checked.invoice) : serializeCiiInvoice(checked.invoice);
   if (!serialized.ok) return { ok: false, reason: 'serializer', code: serialized.errors[0]?.code ?? 'unknown' };

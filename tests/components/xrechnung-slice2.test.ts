@@ -16,21 +16,21 @@ const LEITWEG_BAD_CHECKSUM = '04011000-12345-00';
 function validState(): FormState {
   const state = emptyFormState();
   Object.assign(state.fields, {
-    invoiceNumber: 'RE-2026-0002', issueDate: '2026-11-05', deliveryDate: '2026-11-01', buyerReference: 'BR-4711',
+    invoiceNumber: 'RE-2026-0002', issueDate: '05.11.2026', deliveryDate: '01.11.2026', buyerReference: 'BR-4711',
     'seller.name': 'Muster GmbH', 'seller.address.street': 'Musterstraße 1', 'seller.address.postCode': '10115', 'seller.address.city': 'Berlin',
     'seller.electronicAddress.schemeId': 'EM', 'seller.electronicAddress.value': 'rechnung@muster.example',
     'seller.contact.name': 'Erika Mustermann', 'seller.contact.telephone': '+49 30 1234567', 'seller.contact.email': 'erika@muster.example',
     'seller.vatId': 'DE123456789',
     'buyer.name': 'Beispiel AG', 'buyer.address.street': 'Beispielweg 2', 'buyer.address.postCode': '80331', 'buyer.address.city': 'München',
     'buyer.electronicAddress.schemeId': 'EM', 'buyer.electronicAddress.value': 'einkauf@beispiel.example',
-    'payment.means.code': '58', 'payment.means.account.id.value': 'DE79000000001234567890', 'payment.dueDate': '2026-12-05',
+    'payment.means.code': '58', 'payment.means.account.id.value': 'DE79000000001234567890', 'payment.dueDate': '05.12.2026',
   });
   state.lines = [{ name: 'Beratung', unitCode: 'HUR', quantity: '10', unitPrice: '95', vatRate: '19' }];
   return state;
 }
 
 const problems = (state: FormState) => {
-  const result = checkForm(state, 'en');
+  const result = checkForm(state);
   return result.ok ? assert.fail('expected diagnostics') : result.items;
 };
 
@@ -62,22 +62,22 @@ test('BT-11, BT-12, BT-13 are sent exactly as typed, omitted when empty, and ind
   assert.equal(found?.fieldId, 'contractReference');
   assert.equal(found?.section, 'document');
   state.fields.contractReference = 'V-1';
-  assert.ok(checkForm(state, 'en').ok);
+  assert.ok(checkForm(state).ok);
 });
 
 test('date and period are mutually exclusive in the submitted input; inactive values stay in the form only', () => {
   const state = validState();
-  state.fields['invoicingPeriod.startDate'] = '2026-10-01';
-  state.fields['invoicingPeriod.endDate'] = '2026-10-31';
+  state.fields['invoicingPeriod.startDate'] = '01.10.2026';
+  state.fields['invoicingPeriod.endDate'] = '31.10.2026';
   assert.ok(!('invoicingPeriod' in buildDocumentInput(state))); // date mode: period values are not sent
   state.supplyMode = 'period';
   const input = buildDocumentInput(state);
   assert.ok(!('deliveryDate' in input)); // period mode: the typed delivery date is not sent
   assert.deepEqual(input.invoicingPeriod, { startDate: '2026-10-01', endDate: '2026-10-31' });
-  assert.equal(state.fields.deliveryDate, '2026-11-01'); // still held in the form
-  assert.ok(checkForm(state, 'en').ok);
+  assert.equal(state.fields.deliveryDate, '01.11.2026'); // still held in the form
+  assert.ok(checkForm(state).ok);
   state.supplyMode = 'date';
-  assert.ok(checkForm(state, 'en').ok);
+  assert.ok(checkForm(state).ok);
 });
 
 test('an incomplete or inverted period is reported on its own visible field, never on deliveryDate or as an unreachable code', () => {
@@ -88,20 +88,20 @@ test('an incomplete or inverted period is reported on its own visible field, nev
   assert.deepEqual([byPath.get('invoicingPeriod.startDate')?.kind, byPath.get('invoicingPeriod.startDate')?.fieldId], ['missing', 'invoicingPeriod.startDate']);
   assert.deepEqual([byPath.get('invoicingPeriod.endDate')?.kind, byPath.get('invoicingPeriod.endDate')?.fieldId], ['missing', 'invoicingPeriod.endDate']);
   assert.ok(!items.some((item) => item.path === 'deliveryDate'));
-  state.fields['invoicingPeriod.startDate'] = '2026-10-31';
+  state.fields['invoicingPeriod.startDate'] = '31.10.2026';
   items = problems(state);
   assert.equal(items.find((item) => item.path === 'invoicingPeriod.endDate')?.kind, 'missing');
-  state.fields['invoicingPeriod.endDate'] = '2026-10-01';
+  state.fields['invoicingPeriod.endDate'] = '01.10.2026';
   const order = problems(state).find((item) => item.code === 'invalid_invoicing_period');
   assert.deepEqual([order?.path, order?.fieldId, order?.kind], ['invoicingPeriod.endDate', 'invoicingPeriod.endDate', 'invalid']);
-  state.fields['invoicingPeriod.endDate'] = '2026-10-31';
-  assert.ok(checkForm(state, 'en').ok);
-  state.fields['invoicingPeriod.endDate'] = '2026-10-31';
-  state.fields['invoicingPeriod.startDate'] = '2026-10-31'; // equal dates: a one-day period
-  assert.ok(checkForm(state, 'en').ok);
+  state.fields['invoicingPeriod.endDate'] = '31.10.2026';
+  assert.ok(checkForm(state).ok);
+  state.fields['invoicingPeriod.endDate'] = '31.10.2026';
+  state.fields['invoicingPeriod.startDate'] = '31.10.2026'; // equal dates: a one-day period
+  assert.ok(checkForm(state).ok);
   for (const mode of ['date', 'period'] as const) {
     state.supplyMode = mode;
-    state.fields['invoicingPeriod.startDate'] = '2026-10-01';
+    state.fields['invoicingPeriod.startDate'] = '01.10.2026';
     assert.ok(!problems({ ...state, fields: { ...state.fields, deliveryDate: 'x', 'invoicingPeriod.endDate': 'y' } }).some((item) => item.code === 'unsupported_delivery_date_with_invoicing_period'));
   }
 });
@@ -109,8 +109,8 @@ test('an incomplete or inverted period is reported on its own visible field, nev
 test('the Leitweg-ID check is off by default: the same BT-10 value is accepted and exported', () => {
   const state = validState();
   state.fields.buyerReference = LEITWEG_BAD_CHECKSUM;
-  assert.ok(checkForm(state, 'en').ok);
-  assert.ok(exportXml(state, 'en', 'ubl').ok);
+  assert.ok(checkForm(state).ok);
+  assert.ok(exportXml(state, 'ubl').ok);
 });
 
 test('enabling the check changes validation, not BT-10; checking and exporting use the same policy', () => {
@@ -122,23 +122,23 @@ test('enabling the check changes validation, not BT-10; checking and exporting u
   const bad = problems(state).find((item) => item.path === 'buyerReference');
   assert.deepEqual([bad?.code, bad?.kind, bad?.fieldId], ['invalid_leitweg_id_checksum', 'invalid', 'buyerReference']);
   for (const format of ['ubl', 'cii'] as const) {
-    const out = exportXml(state, 'en', format);
+    const out = exportXml(state, format);
     assert.equal(out.ok, false);
     assert.ok(!out.ok && out.reason === 'invalid' && out.items.some((item) => item.code === 'invalid_leitweg_id_checksum'));
   }
   assert.equal(state.fields.buyerReference, LEITWEG_BAD_CHECKSUM); // text untouched
   state.fields.buyerReference = LEITWEG;
-  assert.ok(checkForm(state, 'en').ok);
+  assert.ok(checkForm(state).ok);
   for (const format of ['ubl', 'cii'] as const) {
-    const out = exportXml(state, 'en', format);
+    const out = exportXml(state, format);
     assert.ok(out.ok && out.xml.includes(LEITWEG));
   }
   // What the form calls valid is exactly what the domain says for the same input and the same option.
-  const direct = buildInvoice(buildDocumentInput(state), { notation: 'en', buyerReferencePolicy: 'leitweg-id' });
-  assert.equal(direct.ok, checkForm(state, 'en').ok);
+  const direct = buildInvoice(buildDocumentInput(state), { buyerReferencePolicy: 'leitweg-id' });
+  assert.equal(direct.ok, checkForm(state).ok);
   state.leitwegCheck = false;
   state.fields.buyerReference = LEITWEG_BAD_CHECKSUM;
-  assert.ok(exportXml(state, 'en', 'cii').ok);
+  assert.ok(exportXml(state, 'cii').ok);
 });
 
 test('every new field has a label in both languages and every new diagnostic a specific, honest text', () => {

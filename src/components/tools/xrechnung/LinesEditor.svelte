@@ -29,11 +29,12 @@
     lines.splice(index, 1);
     queueMicrotask(() => document.getElementById(`lines[${Math.min(index, lines.length - 1)}].name`)?.focus());
   }
-  const net = (index: number) => (totals?.lines[index] ? formatLocalizedDecimal(totals.lines[index].netAmount, locale) : '—');
+  const net = (index: number) => (totals?.lines[index] ? formatLocalizedDecimal(totals.lines[index].netAmount, 'de') : '—');
 </script>
 
 <div class="lines">
   {#if groupError}<p class="group-error" role="alert">{groupError}</p>{/if}
+  <p class="number-hint">{copy['lines.numberHint'][locale]}</p>
   <div class="head">
     <span aria-hidden="true">#</span><span>{copy['f.lines.name'][locale]}</span>
     <span class="h">{copy['f.lines.quantity'][locale]}<button type="button" class="help-head" aria-label={fill(copy.helpFor[locale], { field: copy['f.lines.quantity'][locale] })} onclick={(e) => onmore('quantityPrice', e.currentTarget)}>?</button></span>
@@ -93,4 +94,5 @@
     .row :global(.label-row) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
     .row :global(.help) { display: none; }
   }
+  .number-hint { margin: 0 0 0.5rem; color: var(--muted); font-size: 0.8125rem; }
 </style>

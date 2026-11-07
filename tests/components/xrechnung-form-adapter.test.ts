@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -15,24 +16,24 @@ const IBAN = 'DE79000000001234567890'; // the valid IBAN used by the domain's ow
 function validState(): FormState {
   const state = emptyFormState();
   Object.assign(state.fields, {
-    invoiceNumber: 'RE-2026-0001', issueDate: '2026-11-05', deliveryDate: '2026-11-01', buyerReference: 'BR-4711',
+    invoiceNumber: 'RE-2026-0001', issueDate: '05.11.2026', deliveryDate: '01.11.2026', buyerReference: 'BR-4711',
     'seller.name': 'Muster GmbH', 'seller.address.street': 'Musterstraße 1', 'seller.address.postCode': '10115', 'seller.address.city': 'Berlin',
     'seller.electronicAddress.schemeId': 'EM', 'seller.electronicAddress.value': 'rechnung@muster.example',
     'seller.contact.name': 'Erika Mustermann', 'seller.contact.telephone': '+49 30 1234567', 'seller.contact.email': 'erika@muster.example',
     'seller.vatId': 'DE123456789',
     'buyer.name': 'Beispiel AG', 'buyer.address.street': 'Beispielweg 2', 'buyer.address.postCode': '80331', 'buyer.address.city': 'München',
     'buyer.electronicAddress.schemeId': 'EM', 'buyer.electronicAddress.value': 'einkauf@beispiel.example',
-    'payment.means.code': '58', 'payment.means.account.id.value': IBAN, 'payment.dueDate': '2026-12-05',
+    'payment.means.code': '58', 'payment.means.account.id.value': IBAN, 'payment.dueDate': '05.12.2026',
   });
   state.lines = [
     { name: 'Beratung', unitCode: 'HUR', quantity: '10', unitPrice: '95', vatRate: '19' },
-    { name: 'Handbuch', unitCode: 'C62', quantity: '2', unitPrice: '12.50', vatRate: '7' },
+    { name: 'Handbuch', unitCode: 'C62', quantity: '2', unitPrice: '12,50', vatRate: '7' },
   ];
   return state;
 }
 
 const items = (state: FormState) => {
-  const result = checkForm(state, 'en');
+  const result = checkForm(state);
   return result.ok ? assert.fail('expected diagnostics') : result.items;
 };
 
@@ -90,50 +91,52 @@ test('empty optional fields are omitted from the domain input, never sent as emp
 
 test('a valid form builds, exports both syntaxes and rejects the same form once it is edited', () => {
   const state = validState();
-  const checked = checkForm(state, 'en');
+  const checked = checkForm(state);
   assert.ok(checked.ok);
   for (const format of ['ubl', 'cii'] as const) {
-    const out = exportXml(state, 'en', format);
+    const out = exportXml(state, format);
     assert.ok(out.ok, `${format} should export`);
     assert.match(out.xml, /^<\?xml version="1.0" encoding="UTF-8"\?>/);
     assert.equal(out.fileName, `RE-2026-0001-${format}.xml`);
   }
-  assert.match((exportXml(state, 'en', 'ubl') as { xml: string }).xml, /<Invoice /);
-  assert.match((exportXml(state, 'en', 'cii') as { xml: string }).xml, /CrossIndustryInvoice/);
+  assert.match((exportXml(state, 'ubl') as { xml: string }).xml, /<Invoice /);
+  assert.match((exportXml(state, 'cii') as { xml: string }).xml, /CrossIndustryInvoice/);
   state.fields.buyerReference = '';
-  const stale = exportXml(state, 'en', 'ubl');
+  const stale = exportXml(state, 'ubl');
   assert.equal(stale.ok, false); // export always re-validates the current form
 });
 
-test('preview totals equal the totals of the successful build, in both notations', () => {
+test('preview totals equal the totals of the successful build for the same typed (German) input', () => {
   const state = validState();
-  const built = buildInvoice(buildDocumentInput(state), { notation: 'en' });
+  const built = buildInvoice(buildDocumentInput(state));
   assert.ok(built.ok);
-  const preview = previewTotals(state, 'en');
+  const preview = previewTotals(state);
   assert.ok(preview.ok);
   assert.deepEqual(preview.totals, built.value.totals);
-  const german = validState();
-  german.lines = [{ name: 'Beratung', unitCode: 'HUR', quantity: '10', unitPrice: '95,00', vatRate: '19' }, { name: 'Handbuch', unitCode: 'C62', quantity: '2', unitPrice: '12,50', vatRate: '7' }];
-  const previewDe = previewTotals(german, 'de');
-  assert.ok(previewDe.ok);
-  assert.deepEqual(previewDe.totals, preview.totals);
+  // The canonical point notation is not an accepted way to type a price: it is refused instead of being read.
+  const dotted = validState();
+  dotted.lines[1].unitPrice = '12.50';
+  assert.equal(previewTotals(dotted).ok, false);
 });
 
 test('the preview carries only the monetary subset and is unavailable while a line is incomplete', () => {
   const state = validState();
   for (const line of (buildMonetaryInput(state).lines as Record<string, unknown>[])) assert.deepEqual(Object.keys(line).sort(), ['quantity', 'unitPrice', 'vat']);
   state.lines.push(emptyLine());
-  assert.equal(previewTotals(state, 'en').ok, false); // never a partial figure
+  assert.equal(previewTotals(state).ok, false); // never a partial figure
 });
 
-test('totals display through the domain formatter for both page locales', () => {
+test('totals are displayed in German notation on both routes, without changing the amount', () => {
   const state = validState();
-  const preview = previewTotals(state, 'en');
+  const preview = previewTotals(state);
   assert.ok(preview.ok);
-  assert.equal(formatLocalizedDecimal(preview.totals.totalWithoutVat, 'en'), '975.00');
   assert.equal(formatLocalizedDecimal(preview.totals.totalWithoutVat, 'de'), '975,00');
-  assert.equal(formatLocalizedDecimal({ units: 123456789n, scale: 2 }, 'en'), '1,234,567.89');
   assert.equal(formatLocalizedDecimal({ units: 123456789n, scale: 2 }, 'de'), '1.234.567,89');
+  for (const file of ['SummaryRail.svelte', 'LinesEditor.svelte', 'XRechnungWorkspace.svelte']) {
+    const source = readFileSync(new URL(`../../src/components/tools/xrechnung/${file}`, import.meta.url), 'utf8');
+    assert.doesNotMatch(source, /formatLocalizedDecimal\([^)]*locale\)/, file);
+    assert.match(source, /formatLocalizedDecimal\([^)]*'de'\)/, file);
+  }
 });
 
 test('line diagnostics use the index of the line as typed, including after the first line', () => {
@@ -169,7 +172,7 @@ test('notes are sent as one structured note only when text is present', () => {
   const state = validState();
   state.fields['notes[0].text'] = 'Zahlbar ohne Abzug.';
   assert.deepEqual(buildDocumentInput(state).notes, [{ text: 'Zahlbar ohne Abzug.' }]);
-  assert.ok(checkForm(state, 'en').ok);
+  assert.ok(checkForm(state).ok);
 });
 
 test('sections follow the form: the buyer reference belongs to the invoice details, not to the buyer', () => {

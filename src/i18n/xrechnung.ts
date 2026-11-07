@@ -76,6 +76,7 @@ export const copy = {
     'Optional und standardmäßig aus. Geprüft werden nur Aufbau und Prüfziffern; der Text wird nie verändert. Ein bestandener Test belegt nicht, dass die Leitweg-ID zugeteilt ist, für das Routing taugt oder ein Empfänger die Rechnung annimmt.',
     'Optional and off by default. Only the structure and check digits are checked; the text is never changed. Passing does not show that the Leitweg-ID is assigned, works for routing, or that a recipient accepts the invoice.',
   ),
+  'lines.numberHint': m('Zahlen mit Komma als Dezimaltrennzeichen, ohne Tausenderpunkt, z. B. 125,50.', 'Numbers with a comma as the decimal separator and no thousands separator, e.g. 125,50.'),
   'grp.paymentDue': m('Fälligkeit', 'Payment due'),
   'grp.paymentDueHint': m(
     'Bei einem offenen Betrag: Fälligkeitsdatum oder Zahlungsbedingungen angeben (mindestens eines).',
@@ -176,8 +177,7 @@ export const copy = {
     'Gemeint ist stets der Umfang dieses Werkzeugs. Es ist keine Aussage, dass das Recht, EN 16931 oder XRechnung solche Fälle verbieten.',
     'This always describes the scope of this tool. It does not say that the law, EN 16931 or XRechnung prohibit such cases.',
   ),
-  'date.selected': m('Gewählt: {date}', 'Selected: {date}'),
-  'date.format': m('Anzeige: TT.MM.JJJJ', 'Shown as: day, month, year (e.g. 7 Nov 2026)'),
+  'date.format': m('Format: TT.MM.JJJJ, z. B. 07.11.2026', 'Format: DD.MM.YYYY, e.g. 07.11.2026'),
   'diag.heading': m('Prüfergebnis', 'Check result'),
   'diag.none': m('Keine offenen Punkte.', 'No open points.'),
   'diag.truncated': m('Weitere Probleme können nach der Korrektur erscheinen.', 'More problems may appear after these are fixed.'),
@@ -286,7 +286,7 @@ export const errorMessages: Readonly<Record<DocumentErrorCode, Msg>> = {
     '{field}: remove spaces at the start or end, and control characters. The text is not changed automatically.',
   ),
   text_too_long: m('{field} ist zu lang. Bitte kürzen.', '{field} is too long. Please shorten it.'),
-  invalid_date: m('{field}: kein gültiges Kalenderdatum. Format JJJJ-MM-TT, z. B. 2026-11-05.', '{field}: not a valid calendar date. Format YYYY-MM-DD, e.g. 2026-11-05.'),
+  invalid_date: m('{field}: kein gültiges Kalenderdatum. Bitte TT.MM.JJJJ eingeben, z. B. 07.11.2026.', '{field}: not a valid calendar date. Please enter DD.MM.YYYY, e.g. 07.11.2026.'),
   invalid_vat_id: m('{field}: in diesem Werkzeug nur „DE“ und genau 9 Ziffern, ohne Leerzeichen.', '{field}: this tool accepts only “DE” and exactly 9 digits, no spaces.'),
   invalid_email: m('{field}: keine gültige E-Mail-Adresse.', '{field}: not a valid e-mail address.'),
   invalid_telephone: m('{field}: mindestens 3 Ziffern erforderlich.', '{field}: at least 3 digits are required.'),
@@ -342,7 +342,7 @@ export const errorMessages: Readonly<Record<DocumentErrorCode, Msg>> = {
   unsupported_mixed_vat_treatments: notReachable,
   internal_inconsistency: m('Interner Fehler.', 'Internal error.'),
   // Monetary codes (invoice.ts)
-  invalid_decimal: m('{field}: keine gültige Zahl. Zahl mit {sep} als Dezimaltrennzeichen, z. B. {example}.', '{field}: not a valid number. Use {sep} as the decimal separator, e.g. {example}.'),
+  invalid_decimal: m('{field}: keine gültige Zahl. Bitte Ziffern mit {sep} als Dezimaltrennzeichen eingeben, ohne Punkt oder Tausendertrennzeichen, z. B. {example}.', '{field}: not a valid number. Please enter digits with a {sep} as the decimal separator, with no point or thousands separator, e.g. {example}.'),
   negative_amount: m('{field}: negative Werte werden nicht unterstützt.', '{field}: negative values are not supported.'),
   input_length_guard: m('{field}: Eingabe zu lang.', '{field}: input too long.'),
   invalid_type: m('Interner Fehler: ungültiger Datentyp ({field}).', 'Internal error: invalid data type ({field}).'),
@@ -359,10 +359,10 @@ export const errorMessages: Readonly<Record<DocumentErrorCode, Msg>> = {
   unsupported_vat_rate: m('{field}: nur 19 % und 7 % werden unterstützt. Bitte wählen.', '{field}: only 19 % and 7 % are supported. Please choose.'),
 };
 
-/** Text of one diagnostic for the page locale. `{sep}` and `{example}` describe the number notation of the page. */
+/** Text of one diagnostic for the page locale. `{sep}` and `{example}` name the German input notation, the same on both routes. */
 export function describeError(code: DocumentErrorCode, path: string, locale: Locale, label?: string): string {
-  const sep = locale === 'de' ? 'Komma' : 'point';
-  const example = locale === 'de' ? '12,50' : '12.50';
+  const sep = locale === 'de' ? 'Komma' : 'comma';
+  const example = '12,50';
   return fill(errorMessages[code][locale], { field: label ?? labelFor(path, locale), sep, example });
 }
 

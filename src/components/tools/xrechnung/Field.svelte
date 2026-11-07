@@ -2,7 +2,6 @@
   import { copy, fill } from '../../../i18n/xrechnung.ts';
   import { helpFor, type HelpId } from '../../../i18n/xrechnung-help.ts';
   import type { Locale } from '../../../i18n/ui.ts';
-  import { displayDate } from './date-display.ts';
   import Glyph from './Glyph.svelte';
 
   type Option = { value: string; label: string };
@@ -31,11 +30,10 @@
 
   let hintOpen = $state(false);
   let helpButton: HTMLButtonElement | undefined = $state();
-  const dateText = $derived(kind === 'date' ? displayDate(value, locale) : undefined);
-  const describedBy = $derived([hintOpen && helpId ? `${id}-help` : '', hint ? `${id}-hint` : '', dateText ? `${id}-date` : '', error ? `${id}-error` : ''].filter(Boolean).join(' ') || undefined);
+  const describedBy = $derived([hintOpen && helpId ? `${id}-help` : '', hint ? `${id}-hint` : '', kind === 'date' ? `${id}-date` : '', error ? `${id}-error` : ''].filter(Boolean).join(' ') || undefined);
 </script>
 
-<div class="field" class:invalid={error !== undefined}>
+<div class="field" class:invalid={error !== undefined} class:date={kind === 'date'}>
   <div class="label-row">
     <label for={id}>{label}{#if required}<span class="req" aria-hidden="true"> *</span><span class="sr"> ({copy.required[locale]})</span>{:else if optionalMark}<span class="opt"> ({copy.optional[locale]})</span>{/if}</label>
     {#if helpId}
@@ -62,10 +60,10 @@
   {:else if kind === 'textarea'}
     <textarea {id} bind:value {onblur} {rows} aria-invalid={error !== undefined} aria-describedby={describedBy}></textarea>
   {:else}
-    <input {id} type={kind} bind:value {onblur} {inputmode} {autocomplete} spellcheck="false" aria-invalid={error !== undefined} aria-describedby={describedBy} />
+    <input {id} type="text" bind:value {onblur} inputmode={kind === 'date' ? undefined : inputmode} {autocomplete} spellcheck="false" aria-invalid={error !== undefined} aria-describedby={describedBy} />
   {/if}
   {#if hint}<p class="hint" id={`${id}-hint`}>{hint}</p>{/if}
-  {#if kind === 'date'}<p class="hint" id={`${id}-date`}>{dateText ? fill(copy['date.selected'][locale], { date: dateText }) : copy['date.format'][locale]}</p>{/if}
+  {#if kind === 'date'}<p class="hint" id={`${id}-date`}>{copy['date.format'][locale]}</p>{/if}
   {#if error}<p class="error" id={`${id}-error`}><Glyph kind="error" /> <span>{error}</span></p>{/if}
 </div>
 
@@ -81,7 +79,7 @@
     border: 1px solid var(--muted); border-radius: 0; font: 400 0.9375rem/1.4 var(--sans);
   }
   textarea { resize: vertical; }
-  input[type='date'] { max-inline-size: 12rem; }
+  .date input { max-inline-size: 12rem; }
   .invalid input, .invalid select, .invalid textarea { border-color: var(--danger); border-width: 2px; }
   .help {
     inline-size: 1.5rem; block-size: 1.5rem; padding: 0; border: 1px solid var(--ink); border-radius: 50%; background: var(--paper); color: var(--ink);

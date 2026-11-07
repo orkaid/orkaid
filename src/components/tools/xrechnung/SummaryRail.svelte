@@ -27,7 +27,7 @@
   };
   let { locale, status, totals, calculated, items, truncated, counts, generated, changedSinceExport, exportReady, announcement, exportFailure, onexport, ongoto, headingEl = $bindable() }: Props = $props();
 
-  const money = (value: { units: bigint; scale: number }) => `${formatLocalizedDecimal(value, locale)} EUR`;
+  const money = (value: { units: bigint; scale: number }) => `${formatLocalizedDecimal(value, 'de')} EUR`;
   const statusLine = $derived(
     status === 'pristine' ? copy['status.pristine'][locale]
     : status === 'local' ? copy['status.local'][locale]
