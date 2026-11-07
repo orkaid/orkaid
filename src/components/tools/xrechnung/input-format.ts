@@ -6,6 +6,7 @@
 
 const DECIMAL = /^(-?[0-9]+)(?:,([0-9]+))?$/;
 const DATE = /^([0-9]{2})\.([0-9]{2})\.([0-9]{4})$/;
+const ISO_DATE = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/;
 
 /**
  * `125,50` -> `125.50`, scale kept as typed. A sign is carried through so the domain can answer `negative_amount`.
@@ -25,6 +26,22 @@ export function canonicalDate(text: string): string | undefined {
   if (match === null) return undefined;
   const [, day = '', month = '', year = ''] = match;
   return `${year}-${month}-${day}`;
+}
+
+/**
+ * `2026-11-07`, the value a native date control reports, -> `07.11.2026`, the text the field shows. Digits only, no Date object.
+ * Undefined for anything that is not exactly that shape (the empty string included, which means "cleared").
+ */
+export function germanDateFromIso(iso: string): string | undefined {
+  const match = ISO_DATE.exec(iso);
+  if (match === null) return undefined;
+  const [, year = '', month = '', day = ''] = match;
+  return `${day}.${month}.${year}`;
+}
+
+/** The date to preselect in the native control: the typed text when it has the German shape, else nothing. Reads only. */
+export function isoForPicker(text: string): string {
+  return canonicalDate(text) ?? '';
 }
 
 /**

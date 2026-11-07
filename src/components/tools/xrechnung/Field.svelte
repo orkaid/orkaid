@@ -1,8 +1,10 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import { copy, fill } from '../../../i18n/xrechnung.ts';
   import { helpFor, type HelpId } from '../../../i18n/xrechnung-help.ts';
   import type { Locale } from '../../../i18n/ui.ts';
   import Glyph from './Glyph.svelte';
+  import { germanDateFromIso, isoForPicker } from './input-format.ts';
 
   type Option = { value: string; label: string };
   type Props = {
@@ -31,6 +33,29 @@
   }: Props = $props();
 
   let hintOpen = $state(false);
+  // Calendar (date fields only): a small panel with a visible native date control, opened on demand. The text field stays the
+  // one source of truth; a chosen date is written into it as TT.MM.JJJJ, so manual entry and the calendar share one path.
+  let pickerOpen = $state(false);
+  let calendarButton: HTMLButtonElement | undefined = $state();
+  let nativeInput: HTMLInputElement | undefined = $state();
+  const pickerValue = $derived(kind === 'date' ? isoForPicker(value) : '');
+  async function togglePicker(): Promise<void> {
+    if (pickerOpen) return closePicker();
+    pickerOpen = true;
+    await tick();
+    nativeInput?.focus();
+    // Progressive enhancement only: where the browser refuses or lacks it, the visible control above is the picker.
+    try { nativeInput?.showPicker?.(); } catch { /* not allowed or unsupported */ }
+  }
+  function closePicker(): void {
+    pickerOpen = false;
+    calendarButton?.focus();
+  }
+  function picked(): void {
+    const iso = nativeInput?.value ?? '';
+    value = iso === '' ? '' : (germanDateFromIso(iso) ?? value);
+    onblur?.();
+  }
   let helpButton: HTMLButtonElement | undefined = $state();
   // The wide line-row layout hides this toggle (the column headers carry the help). A help left open at a narrower width
   // would then stay open with no way to close it, so the open state ends with the toggle's visibility.
@@ -71,7 +96,22 @@
   {:else if kind === 'textarea'}
     <textarea {id} bind:value {onblur} {rows} aria-invalid={error !== undefined} aria-describedby={describedBy}></textarea>
   {:else}
-    <input {id} type="text" bind:value {onblur} inputmode={kind === 'date' ? undefined : inputmode} {autocomplete} spellcheck="false" aria-invalid={error !== undefined} aria-describedby={describedBy} />
+    {#if kind === 'date'}
+      <div class="date-row">
+        <input {id} type="text" bind:value {onblur} {autocomplete} spellcheck="false" aria-invalid={error !== undefined} aria-describedby={describedBy} />
+        <button type="button" class="cal" bind:this={calendarButton} aria-expanded={pickerOpen} aria-controls={`${id}-picker`} aria-label={fill(copy['date.calendar'][locale], { field: label })} onclick={togglePicker}>
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false"><rect x="2" y="3" width="12" height="11" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+        </button>
+      </div>
+      {#if pickerOpen}
+        <div class="picker" id={`${id}-picker`} role="group" aria-label={fill(copy['date.pick'][locale], { field: label })} onkeydown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); closePicker(); } }}>
+          <input id={`${id}-native`} type="date" bind:this={nativeInput} value={pickerValue} onchange={picked} aria-label={fill(copy['date.pick'][locale], { field: label })} />
+          <button type="button" class="done" onclick={closePicker}>{copy['date.done'][locale]}</button>
+        </div>
+      {/if}
+    {:else}
+      <input {id} type="text" bind:value {onblur} {inputmode} {autocomplete} spellcheck="false" aria-invalid={error !== undefined} aria-describedby={describedBy} />
+    {/if}
   {/if}
   {#if hint}<p class="hint" id={`${id}-hint`}>{hint}</p>{/if}
   {#if kind === 'date'}<p class="hint" id={`${id}-date`}>{copy['date.format'][locale]}</p>{/if}
@@ -90,7 +130,13 @@
     border: 1px solid var(--muted); border-radius: 0; font: 400 0.9375rem/1.4 var(--sans);
   }
   textarea { resize: vertical; }
-  .date input { max-inline-size: 12rem; }
+  .date-row { display: flex; align-items: center; gap: 0.25rem; max-inline-size: 36rem; }
+  .date-row input { flex: 1 1 auto; min-width: 0; max-inline-size: 12rem; }
+  .cal, .done { display: inline-flex; align-items: center; justify-content: center; min-block-size: 2.25rem; padding: 0 0.5rem; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); font: 500 0.8125rem var(--sans); cursor: pointer; }
+  .cal { inline-size: 2.25rem; padding: 0; }
+  .cal[aria-expanded='true'] { background: var(--ink); color: var(--paper); }
+  .picker { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.375rem 0.5rem; border-inline-start: 3px solid var(--accent); background: var(--paper); }
+  .picker input { inline-size: auto; max-inline-size: 12rem; }
   .invalid input, .invalid select, .invalid textarea { border-color: var(--danger); border-width: 2px; }
   .help {
     inline-size: 1.5rem; block-size: 1.5rem; padding: 0; border: 1px solid var(--ink); border-radius: 50%; background: var(--paper); color: var(--ink);
@@ -105,6 +151,8 @@
   .error span { color: var(--danger); }
   @media (pointer: coarse) {
     input, select, textarea { min-height: 2.75rem; }
+    .cal, .done { min-block-size: 2.75rem; }
+    .cal { inline-size: 2.75rem; }
     .help { inline-size: 2.75rem; block-size: 2.75rem; }
   }
   @media (max-width: 47.99rem) { input, select, textarea { font-size: 1rem; } }

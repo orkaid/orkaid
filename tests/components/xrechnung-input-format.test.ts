@@ -3,9 +3,9 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import { buildDocumentInput, buildMonetaryInput, checkForm, exportXml, previewTotals } from '../../src/components/tools/xrechnung/form-adapter.ts';
-import { canonicalDate, canonicalDecimal } from '../../src/components/tools/xrechnung/input-format.ts';
+import { canonicalDate, canonicalDecimal, germanDateFromIso, isoForPicker } from '../../src/components/tools/xrechnung/input-format.ts';
 import { emptyFormState, type FormState } from '../../src/components/tools/xrechnung/form-state.ts';
-import { describeError } from '../../src/i18n/xrechnung.ts';
+import { copy, describeError, fill, labelFor } from '../../src/i18n/xrechnung.ts';
 import { buildInvoice } from '../../src/lib/domain/xrechnung/document.ts';
 import { formatDecimal } from '../../src/lib/domain/xrechnung/decimal.ts';
 
@@ -196,4 +196,80 @@ test('the messages are specific, localized, and show the German format on both r
 test('the conversion module uses no floating-point or timezone-dependent API', () => {
   const source = readFileSync(new URL('../../src/components/tools/xrechnung/input-format.ts', import.meta.url), 'utf8').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
   for (const forbidden of [/\bNumber\(/, /parseFloat/, /parseInt/, /new Date/, /Date\./, /Intl\./, /toLocale/, /\bMath\./]) assert.doesNotMatch(source, forbidden, String(forbidden));
+});
+
+// ---- calendar selection: the native control reports ISO, the field shows and keeps TT.MM.JJJJ
+
+test('a date chosen in the calendar is shown in German format and reaches the domain as the same ISO value', () => {
+  assert.equal(germanDateFromIso('2026-11-07'), '07.11.2026');
+  assert.equal(germanDateFromIso('2024-02-29'), '29.02.2024');
+  for (const bad of ['', '2026-1-7', '07.11.2026', '2026-11-07 ', '12026-11-07', '٢٠٢٦-١١-٠٧']) assert.equal(germanDateFromIso(bad), undefined, JSON.stringify(bad));
+  // The round trip is exact for every date a calendar can report, and canonicalDate undoes germanDateFromIso.
+  for (const iso of ['2000-01-01', '2024-02-29', '2026-11-07', '2026-12-31', '9999-12-31']) assert.equal(canonicalDate(germanDateFromIso(iso) ?? ''), iso);
+});
+
+test('manual entry and calendar selection produce identical domain values on every date field', () => {
+  const picked = validState();
+  const typed = validState();
+  const chosen = { issueDate: '2026-11-05', deliveryDate: '2026-11-01', 'payment.dueDate': '2026-12-05' } as const;
+  for (const [id, iso] of Object.entries(chosen)) {
+    (picked.fields as Record<string, string>)[id] = germanDateFromIso(iso) ?? '';
+    (typed.fields as Record<string, string>)[id] = id === 'issueDate' ? '05.11.2026' : id === 'deliveryDate' ? '01.11.2026' : '05.12.2026';
+  }
+  assert.deepEqual(buildDocumentInput(picked), buildDocumentInput(typed));
+  for (const state of [picked, typed]) {
+    state.supplyMode = 'period';
+    state.fields['invoicingPeriod.startDate'] = germanDateFromIso('2026-10-01') ?? '';
+    state.fields['invoicingPeriod.endDate'] = germanDateFromIso('2026-10-31') ?? '';
+  }
+  assert.deepEqual(buildDocumentInput(picked), buildDocumentInput(typed));
+  assert.deepEqual(buildDocumentInput(picked).invoicingPeriod, { startDate: '2026-10-01', endDate: '2026-10-31' });
+  assert.ok(checkForm(picked).ok);
+});
+
+test('opening the picker preselects only a well-formed typed date and never rewrites malformed text', () => {
+  assert.equal(isoForPicker('07.11.2026'), '2026-11-07');
+  for (const text of ['', '7.11.2026', '07/11/2026', '2026-11-07', 'garbage', '07.11.26']) assert.equal(isoForPicker(text), '', JSON.stringify(text));
+  const state = validState();
+  state.fields.issueDate = '31.02.2026';
+  assert.equal(isoForPicker(state.fields.issueDate) === '', false); // shape is fine; the native control drops what it cannot show
+  assert.equal(state.fields.issueDate, '31.02.2026'); // opening reads, it does not write
+  state.fields.issueDate = 'garbage';
+  isoForPicker(state.fields.issueDate);
+  assert.equal(state.fields.issueDate, 'garbage');
+});
+
+test('clearing in the calendar empties the field, which is then reported as missing', () => {
+  const state = validState();
+  state.fields.issueDate = '';
+  const found = problemFor(state, 'issueDate');
+  assert.deepEqual([found?.code, found?.kind], ['missing_field', 'missing']);
+});
+
+test('calendar-chosen leap days and reversed periods behave exactly like typed ones', () => {
+  const state = validState();
+  state.fields.issueDate = germanDateFromIso('2024-02-29') ?? '';
+  assert.equal(problemFor(state, 'issueDate'), undefined);
+  state.supplyMode = 'period';
+  state.fields['invoicingPeriod.startDate'] = germanDateFromIso('2026-10-31') ?? '';
+  state.fields['invoicingPeriod.endDate'] = germanDateFromIso('2026-10-01') ?? '';
+  const order = problemFor(state, 'invoicingPeriod.endDate');
+  assert.deepEqual([order?.code, order?.fieldId], ['invalid_invoicing_period', 'invoicingPeriod.endDate']);
+  state.supplyMode = 'date';
+  assert.ok(!('invoicingPeriod' in buildDocumentInput(state)));
+});
+
+test('all five date fields get the calendar from the one shared field component, with distinct translated button names', () => {
+  const field = readFileSync(new URL('../../src/components/tools/xrechnung/Field.svelte', import.meta.url), 'utf8');
+  assert.match(field, /germanDateFromIso/);
+  assert.match(field, /showPicker/);
+  const workspace = readFileSync(new URL('../../src/components/tools/xrechnung/XRechnungWorkspace.svelte', import.meta.url), 'utf8');
+  const dateFields = [...workspace.matchAll(/<Field id="([^"]+)"[^>]*kind="date"/g)].map((match) => match[1]);
+  assert.deepEqual(dateFields.sort(), ['deliveryDate', 'invoicingPeriod.endDate', 'invoicingPeriod.startDate', 'issueDate', 'payment.dueDate']);
+  for (const locale of ['de', 'en'] as const) {
+    const names = dateFields.map((id) => fill(copy['date.calendar'][locale], { field: labelFor(id ?? '', locale) }));
+    assert.equal(new Set(names).size, 5, locale);
+    for (const name of names) assert.doesNotMatch(name, /[{}]/);
+    assert.notEqual(copy['date.calendar'].de, copy['date.calendar'].en);
+  }
 });
