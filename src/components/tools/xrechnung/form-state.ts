@@ -2,7 +2,8 @@
 // Field ids are the domain input paths (document.ts), so a diagnostic { code, path } addresses its field directly.
 
 export const FIELD_IDS = [
-  'invoiceNumber', 'issueDate', 'deliveryDate', 'buyerReference',
+  'invoiceNumber', 'issueDate', 'deliveryDate', 'invoicingPeriod.startDate', 'invoicingPeriod.endDate', 'buyerReference',
+  'projectReference', 'contractReference', 'orderReference',
   'seller.name', 'seller.address.street', 'seller.address.postCode', 'seller.address.city',
   'seller.electronicAddress.schemeId', 'seller.electronicAddress.value',
   'seller.contact.name', 'seller.contact.telephone', 'seller.contact.email',
@@ -19,7 +20,12 @@ export type FieldId = (typeof FIELD_IDS)[number];
 /** One invoice line as typed. `vatRate` is '' until the user chooses 19 or 7: no tax rate is chosen silently. */
 export type LineForm = { name: string; unitCode: string; quantity: string; unitPrice: string; vatRate: string };
 
-export type FormState = { fields: Record<FieldId, string>; lines: LineForm[] };
+/**
+ * `supplyMode` selects which of BT-72 (`deliveryDate`) and BG-14 (`invoicingPeriod.*`) is the active alternative; the other's
+ * values stay here but are never sent. `leitwegCheck` is the explicit opt-in for the Leitweg-ID check of BT-10 (off by default).
+ */
+export type SupplyMode = 'date' | 'period';
+export type FormState = { fields: Record<FieldId, string>; lines: LineForm[]; supplyMode: SupplyMode; leitwegCheck: boolean };
 
 export function emptyLine(previous?: LineForm): LineForm {
   // A new line repeats the unit and rate the user already chose on the previous line; nothing else.
@@ -28,7 +34,7 @@ export function emptyLine(previous?: LineForm): LineForm {
 
 export function emptyFormState(): FormState {
   const fields = Object.fromEntries(FIELD_IDS.map((id) => [id, ''])) as Record<FieldId, string>;
-  return { fields, lines: [emptyLine()] };
+  return { fields, lines: [emptyLine()], supplyMode: 'date', leitwegCheck: false };
 }
 
 /** Fields the domain requires for a 380 in this slice; a test proves each answers `missing_field` when empty. */

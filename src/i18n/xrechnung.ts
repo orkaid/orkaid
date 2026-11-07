@@ -59,6 +59,23 @@ export const copy = {
     'A VAT ID or a tax number is required. Without a VAT ID, an identifier or registration number is needed as well.',
   ),
   'grp.sellerId': m('Weitere Kennung des Verkäufers', 'Further seller identification'),
+  'grp.supply': m('Zeitpunkt der Leistung', 'Time of supply'),
+  'grp.supplyHint': m(
+    'Genau eines von beiden. Eingaben der nicht gewählten Alternative bleiben im Formular, werden aber nicht verwendet.',
+    'Exactly one of the two. Entries of the alternative not chosen stay in the form but are not used.',
+  ),
+  'supply.date': m('Einzelnes Leistungsdatum', 'Single date of supply'),
+  'supply.period': m('Abrechnungszeitraum', 'Invoicing period'),
+  'grp.references': m('Weitere Referenzen', 'Further references'),
+  'grp.referencesHint': m(
+    'Alle drei sind optional und unabhängig voneinander; nichts wird aus der Käuferreferenz übernommen.',
+    'All three are optional and independent of each other; nothing is taken from the buyer reference.',
+  ),
+  leitwegCheck: m('Käuferreferenz als Leitweg-ID prüfen', 'Check the buyer reference as a Leitweg-ID'),
+  leitwegNote: m(
+    'Optional und standardmäßig aus. Geprüft werden nur Aufbau und Prüfziffern; der Text wird nie verändert. Ein bestandener Test belegt nicht, dass die Leitweg-ID zugeteilt ist, für das Routing taugt oder ein Empfänger die Rechnung annimmt.',
+    'Optional and off by default. Only the structure and check digits are checked; the text is never changed. Passing does not show that the Leitweg-ID is assigned, works for routing, or that a recipient accepts the invoice.',
+  ),
   'grp.paymentDue': m('Fälligkeit', 'Payment due'),
   'grp.paymentDueHint': m(
     'Bei einem offenen Betrag: Fälligkeitsdatum oder Zahlungsbedingungen angeben (mindestens eines).',
@@ -68,7 +85,12 @@ export const copy = {
   'f.invoiceNumber': m('Rechnungsnummer', 'Invoice number'),
   'f.issueDate': m('Rechnungsdatum', 'Issue date'),
   'f.deliveryDate': m('Leistungsdatum', 'Date of supply'),
+  'f.periodStart': m('Beginn des Abrechnungszeitraums', 'Invoicing period start'),
+  'f.periodEnd': m('Ende des Abrechnungszeitraums', 'Invoicing period end'),
   'f.buyerReference': m('Käuferreferenz', 'Buyer reference'),
+  'f.projectReference': m('Projektnummer', 'Project reference'),
+  'f.contractReference': m('Vertragsnummer', 'Contract reference'),
+  'f.orderReference': m('Bestellnummer', 'Purchase order reference'),
   'f.name': m('Name', 'Name'),
   'f.street': m('Straße und Hausnummer', 'Street and number'),
   'f.postCode': m('PLZ', 'Post code'),
@@ -233,6 +255,8 @@ export function labelFor(path: string, locale: Locale): string {
 /** Domain path (line indices removed) to label key. A test proves every form field id has one. */
 export const LABEL_KEYS: Readonly<Record<string, CopyKey>> = {
   invoiceNumber: 'f.invoiceNumber', issueDate: 'f.issueDate', deliveryDate: 'f.deliveryDate', buyerReference: 'f.buyerReference',
+  'invoicingPeriod.startDate': 'f.periodStart', 'invoicingPeriod.endDate': 'f.periodEnd',
+  projectReference: 'f.projectReference', contractReference: 'f.contractReference', orderReference: 'f.orderReference',
   'seller.name': 'f.name', 'seller.address.street': 'f.street', 'seller.address.postCode': 'f.postCode', 'seller.address.city': 'f.city',
   'seller.electronicAddress.schemeId': 'f.schemeId', 'seller.electronicAddress.value': 'f.addressValue',
   'seller.contact.name': 'f.contactName', 'seller.contact.telephone': 'f.contactTelephone', 'seller.contact.email': 'f.contactEmail',
@@ -282,9 +306,18 @@ export const errorMessages: Readonly<Record<DocumentErrorCode, Msg>> = {
   unsupported_skonto_percent: notReachable,
   unsupported_skonto_base_amount: notReachable,
   unsupported_skonto_on_credit_note: notReachable,
-  invalid_leitweg_id_format: notReachable,
-  invalid_leitweg_id_checksum: notReachable,
-  invalid_invoicing_period: notReachable,
+  invalid_leitweg_id_format: m(
+    '{field}: kein Leitweg-ID-Aufbau. Erwartet: Grobadresse (Ziffern, beginnt mit 01–16 oder 99), optional „-“ und Feinadresse (Buchstaben/Ziffern), dann „-“ und zwei Prüfziffern, z. B. 04011000-12345-03. Ist das keine Leitweg-ID, schalten Sie die Prüfung ab.',
+    '{field}: not the structure of a Leitweg-ID. Expected: a coarse address (digits, starting 01–16 or 99), optionally “-” and a fine address (letters/digits), then “-” and two check digits, e.g. 04011000-12345-03. If this is not a Leitweg-ID, switch the check off.',
+  ),
+  invalid_leitweg_id_checksum: m(
+    '{field}: Die letzten zwei Ziffern (Prüfziffern) passen nicht zum übrigen Wert. Bitte die Leitweg-ID beim Empfänger erfragen und exakt übernehmen; der Wert wird nicht automatisch korrigiert.',
+    '{field}: the last two digits (check digits) do not match the rest of the value. Please get the Leitweg-ID from the recipient and enter it exactly; the value is not corrected automatically.',
+  ),
+  invalid_invoicing_period: m(
+    '{field}: Das Ende liegt vor dem Beginn. Bitte ein Enddatum am oder nach dem Beginn wählen.',
+    '{field}: the end is before the start. Please choose an end date on or after the start date.',
+  ),
   unsupported_delivery_date_with_invoicing_period: notReachable,
   unsupported_preceding_invoice_reference: notReachable,
   unsupported_settlement_on_invoice: notReachable,
@@ -336,12 +369,12 @@ export function describeError(code: DocumentErrorCode, path: string, locale: Loc
 /** Compact scope note (MDR-32 obligation at M3). Mirrors the domain README "Supported and not supported"; tool limits are not legal prohibitions. */
 export const scopeLists: Record<'now' | 'core' | 'out' | 'tool', { readonly de: readonly string[]; readonly en: readonly string[] }> = {
   now: {
-    de: ['Rechnung Typ 380', 'Deutsches Inlandsprofil (Verkäufer und Käufer in Deutschland), Währung EUR', 'Umsatzsteuer: Normalsatz 19 % und ermäßigter Satz 7 %', 'Zahlung per Überweisung (Code 30 oder 58) mit IBAN', 'Prüfung im Browser gegen die Regeln dieses Werkzeugs und Export als UBL- oder CII-XML'],
-    en: ['Invoice type 380', 'German domestic profile (seller and buyer in Germany), currency EUR', 'VAT: standard rate 19% and reduced rate 7%', 'Payment by credit transfer (code 30 or 58) with an IBAN', 'Check in the browser against this tool’s rules and export as UBL or CII XML'],
+    de: ['Rechnung Typ 380', 'Deutsches Inlandsprofil (Verkäufer und Käufer in Deutschland), Währung EUR', 'Umsatzsteuer: Normalsatz 19 % und ermäßigter Satz 7 %', 'Zahlung per Überweisung (Code 30 oder 58) mit IBAN', 'Projekt-, Vertrags- und Bestellreferenz (BT-11, BT-12, BT-13), jeweils optional', 'Leistungsdatum (BT-72) oder Abrechnungszeitraum (BG-14), genau eines von beiden', 'Optionale Leitweg-ID-Prüfung der Käuferreferenz (nur Aufbau und Prüfziffern)', 'Prüfung im Browser gegen die Regeln dieses Werkzeugs und Export als UBL- oder CII-XML'],
+    en: ['Invoice type 380', 'German domestic profile (seller and buyer in Germany), currency EUR', 'VAT: standard rate 19% and reduced rate 7%', 'Payment by credit transfer (code 30 or 58) with an IBAN', 'Project, contract and purchase order references (BT-11, BT-12, BT-13), each optional', 'Date of supply (BT-72) or invoicing period (BG-14), exactly one of the two', 'Optional Leitweg-ID check of the buyer reference (structure and check digits only)', 'Check in the browser against this tool’s rules and export as UBL or CII XML'],
   },
   core: {
-    de: ['Gutschrift 381 (nur bestätigte Verrechnung)', 'Kleinunternehmer-Behandlung', 'Reverse Charge, auch zusammen mit Normalsatz in einer Rechnung', 'Leistungszeitraum (BG-14) statt Leistungsdatum', 'Projekt-, Vertrags- und Bestellreferenz (BT-11, BT-12, BT-13)', 'Strukturiertes Skonto', 'Optionale Prüfung der Leitweg-ID'],
-    en: ['Credit note 381 (confirmed clearing only)', 'Kleinunternehmer treatment', 'Reverse charge, also combined with standard rate in one invoice', 'Invoicing period (BG-14) instead of date of supply', 'Project, contract and purchase order references (BT-11, BT-12, BT-13)', 'Structured Skonto', 'Optional Leitweg-ID check'],
+    de: ['Gutschrift 381 (nur bestätigte Verrechnung)', 'Kleinunternehmer-Behandlung', 'Reverse Charge, auch zusammen mit Normalsatz in einer Rechnung', 'Strukturiertes Skonto'],
+    en: ['Credit note 381 (confirmed clearing only)', 'Kleinunternehmer treatment', 'Reverse charge, also combined with standard rate in one invoice', 'Structured Skonto'],
   },
   out: {
     de: ['Andere Dokumenttypen als 380 und 381 (zum Beispiel 384, 389)', 'Andere Währungen als EUR; Beteiligte außerhalb Deutschlands', 'Andere Steuerkategorien, Steuersätze oder Steuerbehandlungen als im Profil', 'Andere Zahlungsarten als Überweisung (30, 58); Erstattung einer Gutschrift per Überweisung', 'Nachlässe und Zuschläge, Anzahlungen, Teil- und Ratenrechnungen, Anhänge, negative Mengen und Preise'],

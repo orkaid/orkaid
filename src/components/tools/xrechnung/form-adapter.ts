@@ -3,7 +3,7 @@
 // for presentation. No Svelte, no DOM.
 
 import { serializeCiiInvoice } from '../../../lib/domain/xrechnung/cii.ts';
-import { buildInvoice, type DocumentErrorCode, type Invoice } from '../../../lib/domain/xrechnung/document.ts';
+import { buildInvoice, type DocumentErrorCode, type DocumentOptions, type Invoice } from '../../../lib/domain/xrechnung/document.ts';
 import { calculateInvoiceTotals, type InvoiceTotals } from '../../../lib/domain/xrechnung/invoice.ts';
 import type { NumberLocale } from '../../../lib/domain/xrechnung/number-notation.ts';
 import { serializeUblInvoice } from '../../../lib/domain/xrechnung/ubl.ts';
@@ -95,8 +95,20 @@ export function buildDocumentInput(state: FormState): Record<string, unknown> {
   const input: Record<string, unknown> = { documentTypeCode: '380', currency: 'EUR' };
   put(input, 'invoiceNumber', f.invoiceNumber);
   put(input, 'issueDate', f.issueDate);
-  put(input, 'deliveryDate', f.deliveryDate);
+  // Only the active alternative of BT-72 / BG-14 enters the input. In period mode the object is always present, so an empty
+  // boundary is reported on its own visible field and not as a missing `deliveryDate` the user cannot see.
+  if (state.supplyMode === 'period') {
+    const period: Record<string, unknown> = {};
+    put(period, 'startDate', f['invoicingPeriod.startDate']);
+    put(period, 'endDate', f['invoicingPeriod.endDate']);
+    input.invoicingPeriod = period;
+  } else {
+    put(input, 'deliveryDate', f.deliveryDate);
+  }
   put(input, 'buyerReference', f.buyerReference);
+  put(input, 'projectReference', f.projectReference);
+  put(input, 'contractReference', f.contractReference);
+  put(input, 'orderReference', f.orderReference);
   input.seller = seller;
   input.buyer = party('buyer');
   input.payment = payment;
@@ -183,9 +195,14 @@ export type CheckResult =
   | { readonly ok: true; readonly invoice: Invoice }
   | { readonly ok: false; readonly items: readonly DiagnosticItem[]; readonly truncated: boolean };
 
+/** The single place the call options are built, so a check and an export can never apply different policies. */
+export function documentOptions(state: FormState, locale: NumberLocale): DocumentOptions {
+  return state.leitwegCheck ? { notation: locale, buyerReferencePolicy: 'leitweg-id' } : { notation: locale };
+}
+
 /** One run of the domain's full validation on the current form. */
 export function checkForm(state: FormState, locale: NumberLocale): CheckResult {
-  const result = buildInvoice(buildDocumentInput(state), { notation: locale });
+  const result = buildInvoice(buildDocumentInput(state), documentOptions(state, locale));
   if (result.ok) return { ok: true, invoice: result.value };
   return { ok: false, items: toDiagnosticItems(result.errors, fieldValues(state)), truncated: result.truncated };
 }

@@ -79,7 +79,7 @@ test('scope note: four groups in both languages with equal structure; capabiliti
     assert.equal(scopeLists[key].de.length, scopeLists[key].en.length, key);
   }
   const core = scopeLists.core.en.join(' | ');
-  for (const needle of ['381', 'Kleinunternehmer', 'Reverse charge', 'BG-14', 'BT-11', 'Skonto', 'Leitweg-ID']) assert.match(core, new RegExp(needle), needle);
+  for (const needle of ['381', 'Kleinunternehmer', 'Reverse charge', 'Skonto']) assert.match(core, new RegExp(needle), needle);
   const out = scopeLists.out.en.join(' | ');
   // A capability of the frozen domain must never be listed as unsupported.
   for (const needle of ['Kleinunternehmer', 'Reverse charge', 'Skonto', 'Leitweg', 'BG-14']) assert.doesNotMatch(out, new RegExp(needle, 'i'), needle);
