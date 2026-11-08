@@ -39,6 +39,19 @@ export function germanDateFromIso(iso: string): string | undefined {
   return `${day}.${month}.${year}`;
 }
 
+/** The years TT.MM.JJJJ can express. The native control gets this range; browsers otherwise accept extended years (`20260-11-07`). */
+export const NATIVE_DATE_MIN = '0001-01-01';
+export const NATIVE_DATE_MAX = '9999-12-31';
+
+/**
+ * The field text for a value the native control reported: cleared -> empty, a representable date -> TT.MM.JJJJ, anything else
+ * (an extended year) -> as reported. It is never swapped for the previous value, so the field and the control cannot show
+ * different dates: the unrepresentable text goes through `dateInput` as `UNPARSABLE` and the domain reports `invalid_date`.
+ */
+export function textFromNativeDate(iso: string): string {
+  return iso === '' ? '' : (germanDateFromIso(iso) ?? iso);
+}
+
 /** The date to preselect in the native control: the typed text when it has the German shape, else nothing. Reads only. */
 export function isoForPicker(text: string): string {
   return canonicalDate(text) ?? '';

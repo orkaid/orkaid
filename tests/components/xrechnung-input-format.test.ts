@@ -261,7 +261,7 @@ test('calendar-chosen leap days and reversed periods behave exactly like typed o
 
 test('all five date fields get the calendar from the one shared field component, with distinct translated button names', () => {
   const field = readFileSync(new URL('../../src/components/tools/xrechnung/Field.svelte', import.meta.url), 'utf8');
-  assert.match(field, /germanDateFromIso/);
+  assert.match(field, /textFromNativeDate/); // the shared conversion, built on germanDateFromIso
   assert.match(field, /showPicker/);
   const workspace = readFileSync(new URL('../../src/components/tools/xrechnung/XRechnungWorkspace.svelte', import.meta.url), 'utf8');
   const dateFields = [...workspace.matchAll(/<Field id="([^"]+)"[^>]*kind="date"/g)].map((match) => match[1]);

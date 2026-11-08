@@ -4,6 +4,7 @@
   import { helpEntries, helpFor, type HelpId, type HelpStatus } from '../../../i18n/xrechnung-help.ts';
   import type { Locale } from '../../../i18n/ui.ts';
   import Glyph from './Glyph.svelte';
+  import { returnTarget } from './focus-return.ts';
 
   type Props = { locale: Locale; onjump: (fieldId: string) => void };
   let { locale, onjump }: Props = $props();
@@ -11,11 +12,14 @@
   let dialog: HTMLDialogElement | undefined = $state();
   let id: HelpId | undefined = $state();
   let trigger: HTMLElement | null = null;
+  // The control of the field the trigger belongs to, noted at opening: a layout change can remove or hide the trigger itself.
+  let fieldContext: string | undefined;
 
-  /** Opens the drawer for one help entry; focus returns to `from` when it closes. */
+  /** Opens the drawer for one help entry; focus returns to `from` when it closes (to its field if `from` is gone by then). */
   export async function open(helpId: HelpId, from: HTMLElement | null): Promise<void> {
     id = helpId;
     trigger = from ?? (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+    fieldContext = trigger?.closest('.field')?.querySelector('input, select, textarea')?.id || undefined;
     // The content is rendered per open: wait for it, so the close button exists when focus is set (every opening alike).
     await tick();
     dialog?.showModal();
@@ -28,9 +32,14 @@
   const statusLabel = (status: HelpStatus) => copy[`help.${status}`][locale];
 
   function closed() {
-    // The platform restores focus too; doing it explicitly keeps it deterministic when the trigger was re-rendered.
-    if (trigger?.isConnected) trigger.focus();
+    // The platform restores focus too; doing it explicitly keeps it deterministic when the trigger was re-rendered. If the
+    // trigger is gone or hidden (the layout changed while the drawer was open), the field in the same context takes the focus.
+    // No trigger (a jump) means no restoring: the jump moves focus itself.
+    const shown = (element: HTMLElement) => element.isConnected && element.getClientRects().length > 0;
+    const byId = (fieldId: string | undefined) => (fieldId ? document.getElementById(fieldId) : null);
+    if (trigger) returnTarget([trigger, byId(fieldContext), byId(entry?.fieldId)], shown)?.focus();
     trigger = null;
+    fieldContext = undefined;
   }
   function backdrop(event: MouseEvent) {
     if (event.target === dialog) dialog?.close();
@@ -38,6 +47,7 @@
   function jump() {
     const target = entry?.fieldId;
     trigger = null;
+    fieldContext = undefined;
     dialog?.close();
     if (target) onjump(target);
   }

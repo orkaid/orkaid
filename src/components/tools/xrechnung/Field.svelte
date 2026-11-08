@@ -4,7 +4,7 @@
   import { helpFor, type HelpId } from '../../../i18n/xrechnung-help.ts';
   import type { Locale } from '../../../i18n/ui.ts';
   import Glyph from './Glyph.svelte';
-  import { germanDateFromIso, isoForPicker } from './input-format.ts';
+  import { isoForPicker, NATIVE_DATE_MAX, NATIVE_DATE_MIN, textFromNativeDate } from './input-format.ts';
 
   type Option = { value: string; label: string };
   type Props = {
@@ -53,7 +53,7 @@
   }
   function picked(): void {
     const iso = nativeInput?.value ?? '';
-    value = iso === '' ? '' : (germanDateFromIso(iso) ?? value);
+    value = textFromNativeDate(iso);
     onblur?.();
   }
   let helpButton: HTMLButtonElement | undefined = $state();
@@ -105,7 +105,7 @@
       </div>
       {#if pickerOpen}
         <div class="picker" id={`${id}-picker`} role="group" aria-label={fill(copy['date.pick'][locale], { field: label })} onkeydown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); closePicker(); } }}>
-          <input id={`${id}-native`} type="date" bind:this={nativeInput} value={pickerValue} onchange={picked} aria-label={fill(copy['date.pick'][locale], { field: label })} />
+          <input id={`${id}-native`} type="date" bind:this={nativeInput} value={pickerValue} min={NATIVE_DATE_MIN} max={NATIVE_DATE_MAX} onchange={picked} aria-label={fill(copy['date.pick'][locale], { field: label })} />
           <button type="button" class="done" onclick={closePicker}>{copy['date.done'][locale]}</button>
         </div>
       {/if}
