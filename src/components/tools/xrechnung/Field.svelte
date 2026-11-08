@@ -62,7 +62,13 @@
   $effect(() => {
     const button = helpButton;
     if (!button) return;
-    const observer = new ResizeObserver(() => { if (button.offsetParent === null) hintOpen = false; });
+    const observer = new ResizeObserver(() => {
+      if (button.offsetParent !== null) return;
+      // Focus inside the help (its "more", restored there when the drawer closed before this layout change) would fall to the
+      // page when the help closes: it moves to this field's own control first.
+      if (document.getElementById(`${id}-help`)?.contains(document.activeElement)) document.getElementById(id)?.focus();
+      hintOpen = false;
+    });
     observer.observe(button);
     return () => observer.disconnect();
   });

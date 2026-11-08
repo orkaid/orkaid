@@ -89,3 +89,22 @@ test('the drawer records the field context at opening and restores through the f
   assert.match(jump, /trigger = null/);
   assert.match(jump, /fieldContext = undefined/);
 });
+
+// ---- F1 follow-up: "more" outlives its toggle until the ResizeObserver runs (resize immediately followed by Escape).
+// Timing evidence comes from the production-build browser trials; these pin the two rules that make them pass.
+
+test('the drawer counts an inline "more" as usable only while its field help toggle is shown', () => {
+  const drawer = read('HelpDrawer.svelte');
+  const closed = drawer.slice(drawer.indexOf('function closed'), drawer.indexOf('function backdrop'));
+  assert.match(closed, /closest\('\.inline-help'\)\?\.closest\('\.field'\)\?\.querySelector<HTMLElement>\('\.help'\)/);
+  assert.match(closed, /shown\(element\) && \(!toggle \|\| shown\(toggle\)\)/);
+  assert.match(closed, /returnTarget\(\[trigger, byId\(fieldContext\), byId\(entry\?\.fieldId\)\], usable\)/);
+});
+
+test('closing the inline help on a layout change moves focus inside it to the field control before it is removed', () => {
+  const field = read('Field.svelte');
+  const observer = field.slice(field.indexOf('new ResizeObserver'), field.indexOf('observer.observe'));
+  const move = observer.indexOf('document.getElementById(id)?.focus()');
+  assert.ok(move > 0 && move < observer.indexOf('hintOpen = false'), 'focus moves before the help (and its "more") is removed');
+  assert.match(observer, /getElementById\(`\$\{id\}-help`\)\?\.contains\(document\.activeElement\)/);
+});

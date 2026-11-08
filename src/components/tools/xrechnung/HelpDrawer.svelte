@@ -36,8 +36,14 @@
     // trigger is gone or hidden (the layout changed while the drawer was open), the field in the same context takes the focus.
     // No trigger (a jump) means no restoring: the jump moves focus itself.
     const shown = (element: HTMLElement) => element.isConnected && element.getClientRects().length > 0;
+    // An inline help's "more" lives only as long as the field's help toggle shows: right after a layout change hides the toggle,
+    // "more" is still on screen until the field's ResizeObserver closes the help, so it counts as gone already.
+    const usable = (element: HTMLElement) => {
+      const toggle = element.closest('.inline-help')?.closest('.field')?.querySelector<HTMLElement>('.help');
+      return shown(element) && (!toggle || shown(toggle));
+    };
     const byId = (fieldId: string | undefined) => (fieldId ? document.getElementById(fieldId) : null);
-    if (trigger) returnTarget([trigger, byId(fieldContext), byId(entry?.fieldId)], shown)?.focus();
+    if (trigger) returnTarget([trigger, byId(fieldContext), byId(entry?.fieldId)], usable)?.focus();
     trigger = null;
     fieldContext = undefined;
   }
