@@ -61,8 +61,14 @@ test('scope note: four groups in both languages with equal structure; capabiliti
   for (const needle of ['Kleinunternehmer', 'Reverse Charge']) assert.doesNotMatch(core, new RegExp(needle, 'i'), needle);
   for (const needle of ['Kleinunternehmer', 'Reverse Charge']) assert.match(scopeLists.now.en.join(' | '), new RegExp(needle), needle);
   const out = scopeLists.out.en.join(' | ');
-  // A capability of the frozen domain must never be listed as unsupported.
-  for (const needle of ['Kleinunternehmer', 'Reverse charge', 'Skonto', 'Leitweg', 'BG-14']) assert.doesNotMatch(out, new RegExp(needle, 'i'), needle);
+  // A capability of the frozen domain must never be listed as unsupported. Kleinunternehmer and Reverse Charge may appear there
+  // only as the combination the profile rejects (Kleinunternehmer together with 19 %, 7 % or Reverse Charge), never on their own.
+  for (const needle of ['Skonto', 'Leitweg', 'BG-14']) assert.doesNotMatch(out, new RegExp(needle, 'i'), needle);
+  for (const locale of locales) {
+    const mentions = scopeLists.out[locale].filter((line) => /Kleinunternehmer|Reverse Charge/i.test(line));
+    assert.deepEqual(mentions.length, 1, locale);
+    assert.match(mentions[0], locale === 'de' ? /^Kleinunternehmer \(§ 19 UStG\) zusammen mit 19 %, 7 % oder Reverse Charge/ : /^Kleinunternehmer \(§ 19 UStG\) together with 19%, 7% or Reverse Charge/);
+  }
   // Application features that do not exist are a category of their own, not invoice scenarios outside the profile.
   assert.doesNotMatch(out, /XML import|PDF/);
   assert.match(scopeLists.tool.en.join(' | '), /XML import/);

@@ -62,6 +62,8 @@
           <span class="net-label">{copy['f.lines.vat.rate'][locale]}</span><span class="fixed-vat">{copy['vat.fixedKu'][locale]}</span>
         {:else}
           <Field id={`lines[${i}].vat.rate`} {locale} label={copy['f.lines.vat.rate'][locale]} required kind="select" options={vatOptions} bind:value={line.vatRate} helpId="vatRate" error={errorFor(`lines[${i}].vat.rate`)} onblur={() => touch(`lines[${i}].vat.rate`)} onmore={(el) => onmore('vatRate', el)} />
+          <!-- The closed select is too narrow to show this label in full in either layout; the select itself still names it. -->
+          {#if line.vatRate === 'reverse-charge'}<span class="vat-full" aria-hidden="true">{copy['vat.reverseCharge'][locale]}</span>{/if}
         {/if}
       </div>
       <div class="c-net"><span class="net-label">{copy['f.lines.net'][locale]}</span><output class="net" for={regime === 'kleinunternehmer' ? `lines[${i}].quantity lines[${i}].unitPrice` : `lines[${i}].quantity lines[${i}].unitPrice lines[${i}].vat.rate`}>{net(i)}</output></div>
@@ -89,6 +91,7 @@
   .net-label { font: 500 0.8125rem/1.3 var(--sans); }
   .c-vat { display: flex; flex-direction: column; gap: 0.25rem; }
   .fixed-vat { font: 400 0.9375rem/1.4 var(--sans); }
+  .vat-full { color: var(--muted); font: 400 0.75rem/1.3 var(--sans); }
   .net { font: 500 0.9375rem/1.4 var(--mono); font-variant-numeric: tabular-nums; }
   .c-remove { display: flex; align-items: flex-end; }
   .remove, .add { font: 500 0.875rem var(--sans); color: var(--ink); background: var(--paper); border: 1px solid var(--ink); cursor: pointer; }

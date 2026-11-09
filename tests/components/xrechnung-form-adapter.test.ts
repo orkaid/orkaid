@@ -149,8 +149,9 @@ test('line diagnostics use the index of the line as typed, including after the f
   assert.ok(Object.keys(fieldValues(state)).includes('lines[1].vat.rate'));
 });
 
-test('a new line repeats only the unit and the rate the user already chose', () => {
-  assert.deepEqual(emptyLine({ name: 'a', unitCode: 'HUR', quantity: '3', unitPrice: '4', vatRate: '7' }), { name: '', unitCode: 'HUR', quantity: '', unitPrice: '', vatRate: '7' });
+// Slice 3 (MDR-44, no line treatment preselected): the rate is no longer repeated; the unit still is.
+test('a new line repeats only the unit the user already chose, never the VAT rate', () => {
+  assert.deepEqual(emptyLine({ name: 'a', unitCode: 'HUR', quantity: '3', unitPrice: '4', vatRate: '7' }), { name: '', unitCode: 'HUR', quantity: '', unitPrice: '', vatRate: '' });
   assert.deepEqual(emptyLine(), { name: '', unitCode: '', quantity: '', unitPrice: '', vatRate: '' });
 });
 

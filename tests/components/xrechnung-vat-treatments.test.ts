@@ -65,9 +65,37 @@ test('no choice is made on the user\'s behalf: a fresh form is regular with no l
   assert.ok(!missing.ok && missing.items.some((item) => item.path === 'lines[0].vat.rate' && item.kind === 'missing'));
 });
 
-test('a new line repeats a standard rate as before, but never Reverse Charge', () => {
-  assert.equal(emptyLine({ name: '', unitCode: 'HUR', quantity: '', unitPrice: '', vatRate: '7' }).vatRate, '7');
-  assert.equal(emptyLine({ name: '', unitCode: 'HUR', quantity: '', unitPrice: '', vatRate: 'reverse-charge' }).vatRate, '');
+// MDR-44: no line treatment is preselected. A new line never takes its VAT treatment from another line; only the unit repeats.
+test('a new line has no VAT treatment, whatever the previous line chose (S19, S7, AE0), and the initial line has none', () => {
+  assert.equal(emptyFormState().lines[0].vatRate, '');
+  assert.equal(emptyLine().vatRate, '');
+  for (const previous of ['19', '7', 'reverse-charge'] as const) {
+    const line = emptyLine({ name: 'Vorher', unitCode: 'HUR', quantity: '1', unitPrice: '5', vatRate: previous });
+    assert.deepEqual(line, { name: '', unitCode: 'HUR', quantity: '', unitPrice: '', vatRate: '' }, `after ${previous}`);
+  }
+});
+
+test('adding a line leaves the existing selections untouched and the new line open; the form is then not ready for export', () => {
+  const state = withLines(['19', 'reverse-charge']);
+  state.fields['buyer.vatId'] = 'DE987654321';
+  assert.ok(exportXml(state, 'ubl').ok);
+  state.lines.push(emptyLine(state.lines[state.lines.length - 1]));
+  assert.deepEqual(state.lines.map((line) => line.vatRate), ['19', 'reverse-charge', '']);
+  const result = checkForm(state);
+  assert.ok(!result.ok);
+  assert.ok(result.items.some((item) => item.path === 'lines[2].vat.rate' && item.kind === 'missing'));
+  for (const format of ['ubl', 'cii'] as const) assert.equal(exportXml(state, format).ok, false, format);
+});
+
+test('a line added in Kleinunternehmer mode is E/0 like the others, and after switching back it is open while earlier choices return', () => {
+  const state = withLines(['19', '7'], 'kleinunternehmer');
+  state.lines.push({ ...emptyLine(state.lines[state.lines.length - 1]), name: 'Position 3', quantity: '1', unitPrice: '5' });
+  assert.deepEqual((buildDocumentInput(state).lines as { vat: unknown }[]).map((line) => line.vat), Array(3).fill({ treatment: 'kleinunternehmer', category: 'E', rate: '0' }));
+  assert.deepEqual(codes(state), []);
+  state.vatRegime = 'regular';
+  assert.deepEqual(state.lines.map((line) => line.vatRate), ['19', '7', '']);
+  assert.ok(codes(state).some((code) => code.endsWith('@lines[2].vat.rate')));
+  assert.ok(!codes(state).some((code) => code.endsWith('@lines[0].vat.rate') || code.endsWith('@lines[1].vat.rate')));
 });
 
 test('the default regular path sends what Slice 2 sent: the full input and the monetary input are unchanged', () => {
@@ -345,6 +373,22 @@ test('the lines editor shows fixed text instead of a choice in Kleinunternehmer 
   const workspace = readFileSync(new URL('../../src/components/tools/xrechnung/XRechnungWorkspace.svelte', import.meta.url), 'utf8');
   assert.match(workspace, /name="vatRegime" value="regular" bind:group=\{form\.vatRegime\}/);
   assert.match(workspace, /regime=\{form\.vatRegime\}/);
+  // The closed select truncates the Reverse Charge label, so the full label is repeated visibly (hidden from the accessibility tree, where the select names it).
+  assert.match(source, /\{#if line\.vatRate === 'reverse-charge'\}<span class="vat-full" aria-hidden="true">\{copy\['vat\.reverseCharge'\]\[locale\]\}<\/span>\{\/if\}/);
+});
+
+test('the buyer identifier group states its condition visibly and in each field\'s description, without marking either field required', () => {
+  const workspace = readFileSync(new URL('../../src/components/tools/xrechnung/XRechnungWorkspace.svelte', import.meta.url), 'utf8');
+  assert.match(workspace, /<p class="group-hint" class:active=\{buyerNeedsId\} id="buyer-id-hint">\{buyerNeedsId \? copy\['grp\.buyerIdHintRc'\]/);
+  for (const id of ['buyer.vatId', 'buyer.legalRegistrationId']) {
+    const field = workspace.match(new RegExp(`<Field id="${id.replace('.', '\\.')}"[^\\n]*/>`))?.[0] ?? '';
+    assert.match(field, /optionalMark describedById="buyer-id-hint"/, id);
+    assert.doesNotMatch(field, /\brequired\b/, id);
+  }
+  for (const locale of locales) {
+    assert.match(copy['grp.buyerId'][locale], locale === 'de' ? /bei Reverse Charge mindestens eine/ : /at least one with Reverse Charge/);
+    assert.match(copy['grp.buyerIdHintRc'][locale], /BT-48[\s\S]*BT-47/);
+  }
 });
 
 test('help separates the external rule, the Orkaid profile restriction, the user\'s responsibility and what is not verified', () => {
@@ -393,4 +437,19 @@ test('scope note: Kleinunternehmer and Reverse Charge are available, the rest st
   assert.equal(scopeLists.now.de.length, scopeLists.now.en.length);
   assert.equal(scopeLists.core.de.length, scopeLists.core.en.length);
   assert.equal(scopeLists.out.de.length, scopeLists.out.en.length);
+});
+
+// Four different things stay apart: what the interface supports, the combination the frozen profile rejects, application
+// features that do not exist, and the statutory eligibility the tool does not determine.
+test('scope note keeps supported, profile-unsupported, missing-feature and not-determined-eligibility statements in their own places', () => {
+  for (const locale of locales) {
+    const now = scopeLists.now[locale].join(' | ');
+    assert.doesNotMatch(now, /nicht mit|not combinable|Einschränkung|restriction|Kleinunternehmer[^|]*(?:zusammen mit|together with)/i, `now (${locale})`);
+    assert.doesNotMatch(now, /prüft weder|checks neither|§ 13b UStG noch|nor the applicability/, `now (${locale})`);
+    const out = scopeLists.out[locale].join(' | ');
+    assert.match(out, locale === 'de' ? /Kleinunternehmer \(§ 19 UStG\) zusammen mit 19 %, 7 % oder Reverse Charge in einer Rechnung/ : /Kleinunternehmer \(§ 19 UStG\) together with 19%, 7% or Reverse Charge in one invoice/);
+    assert.doesNotMatch(scopeLists.tool[locale].join(' | '), /Kleinunternehmer|Reverse Charge|§ 19|§ 13b/);
+    assert.doesNotMatch(scopeLists.core[locale].join(' | '), /§ 19|§ 13b/);
+    assert.match(copy['scope.disclaimer'][locale], locale === 'de' ? /prüft weder die Voraussetzungen des § 19 UStG noch die Anwendbarkeit des § 13b UStG/ : /checks neither the conditions of § 19 UStG nor the applicability of § 13b UStG/);
+  }
 });

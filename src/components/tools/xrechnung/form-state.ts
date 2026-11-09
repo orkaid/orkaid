@@ -35,10 +35,9 @@ export type VatRegime = 'regular' | 'kleinunternehmer';
 export type FormState = { fields: Record<FieldId, string>; lines: LineForm[]; supplyMode: SupplyMode; leitwegCheck: boolean; vatRegime: VatRegime };
 
 export function emptyLine(previous?: LineForm): LineForm {
-  // A new line repeats the unit and a standard rate the user already chose on the previous line; nothing else. Reverse Charge
-  // is a treatment the user states line by line, so it is never carried over.
-  const rate = previous?.vatRate === 'reverse-charge' ? '' : (previous?.vatRate ?? '');
-  return { name: '', unitCode: previous?.unitCode ?? '', quantity: '', unitPrice: '', vatRate: rate };
+  // A new line repeats only the unit the user chose on the previous line. Its VAT treatment is never preselected or taken from
+  // another line (MDR-44): the user states it line by line.
+  return { name: '', unitCode: previous?.unitCode ?? '', quantity: '', unitPrice: '', vatRate: '' };
 }
 
 export function emptyFormState(): FormState {
