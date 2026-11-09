@@ -1,10 +1,10 @@
 <script lang="ts">
   import { formatLocalizedDecimal } from '../../../lib/domain/xrechnung/number-notation.ts';
   import type { InvoiceTotals } from '../../../lib/domain/xrechnung/invoice.ts';
-  import { copy, describeError, fill, openCountText } from '../../../i18n/xrechnung.ts';
+  import { copy, describeError, fill, openCountText, vatBucketLabel } from '../../../i18n/xrechnung.ts';
   import type { Locale } from '../../../i18n/ui.ts';
   import Glyph from './Glyph.svelte';
-  import { SECTION_IDS, type DiagnosticItem, type ErrorKind, type ExportFormat, type SectionId } from './form-adapter.ts';
+  import { SECTION_IDS, vatBucketKey, type DiagnosticItem, type ErrorKind, type ExportFormat, type SectionId } from './form-adapter.ts';
 
   export type RailStatus = 'pristine' | 'incomplete' | 'invalid' | 'local';
   type Props = {
@@ -48,8 +48,8 @@
     <h2 id="rail-amounts">{copy['rail.amounts'][locale]} <span class="tag">{calculated ? copy['rail.calculated'][locale] : copy['rail.preview'][locale]}</span></h2>
     {#if totals}
       <dl class="amounts">
-        {#each totals.vatBreakdown as bucket (bucket.rate)}
-          <div class="row sub"><dt>{fill(copy['rail.vatLine'][locale], { rate: bucket.rate, base: money(bucket.taxableAmount) })}</dt><dd>{money(bucket.taxAmount)}</dd></div>
+        {#each totals.vatBreakdown as bucket (vatBucketKey(bucket))}
+          <div class="row sub"><dt>{vatBucketLabel(bucket, money(bucket.taxableAmount), locale)}</dt><dd>{money(bucket.taxAmount)}</dd></div>
         {/each}
         <div class="row"><dt>{copy['rail.net'][locale]}</dt><dd>{money(totals.totalWithoutVat)}</dd></div>
         <div class="row"><dt>{copy['rail.vat'][locale]}</dt><dd>{money(totals.totalVat)}</dd></div>

@@ -2,6 +2,7 @@
 // Leistungsdatum); a view never mixes the two languages. Error texts are keyed by the domain's own diagnostic codes.
 
 import type { DocumentErrorCode } from '../lib/domain/xrechnung/document.ts';
+import type { VatBreakdown } from '../lib/domain/xrechnung/invoice.ts';
 import type { Locale } from './ui.ts';
 
 export type Msg = { readonly de: string; readonly en: string };
@@ -58,6 +59,31 @@ export const copy = {
     'USt-IdNr. oder Steuernummer ist erforderlich. Ohne USt-IdNr. wird zusätzlich eine Kennung oder Registernummer benötigt.',
     'A VAT ID or a tax number is required. Without a VAT ID, an identifier or registration number is needed as well.',
   ),
+  'grp.buyerId': m('Kennung des Käufers (bei Reverse Charge mindestens eine)', 'Buyer identification (at least one with Reverse Charge)'),
+  'grp.buyerIdHint': m(
+    'Optional, solange keine Position Reverse Charge ist. Die beiden Angaben sind unabhängig voneinander; keine wird aus der anderen abgeleitet.',
+    'Optional as long as no line is Reverse Charge. The two entries are independent of each other; neither is derived from the other.',
+  ),
+  'grp.buyerIdHintRc': m(
+    'Mindestens eine Position ist Reverse Charge: USt-IdNr. des Käufers (BT-48) oder Registernummer (BT-47) ist erforderlich, eine der beiden genügt. Keine wird aus der anderen abgeleitet.',
+    'At least one line is Reverse Charge: the buyer’s VAT ID (BT-48) or legal registration ID (BT-47) is required; one of the two is enough. Neither is derived from the other.',
+  ),
+  'vatRegime.legend': m('Umsatzsteuerliche Behandlung der Rechnung', 'VAT treatment of the invoice'),
+  'vatRegime.regular': m('Reguläre Besteuerung / Reverse Charge', 'Regular taxation / Reverse Charge'),
+  'vatRegime.kleinunternehmer': m('Kleinunternehmer (§ 19 UStG)', 'Kleinunternehmer (§ 19 UStG)'),
+  'vatRegime.hint': m(
+    'Ihre Auswahl für die ganze Rechnung. Das Werkzeug prüft weder, ob § 19 UStG auf Sie zutrifft, noch ob § 13b UStG auf eine Leistung anzuwenden ist. Die Vorauswahl „Reguläre Besteuerung / Reverse Charge“ setzt nur den bisherigen Ablauf fort und stellt keine Feststellung Ihres Steuerstatus dar. Kleinunternehmer lässt sich in diesem Werkzeug nicht mit 19 %, 7 % oder Reverse Charge in einer Rechnung mischen.',
+    'Your choice for the whole invoice. The tool does not check whether § 19 UStG applies to you or whether § 13b UStG applies to a supply. The preselected “Regular taxation / Reverse Charge” only continues the previous workflow and is not a determination of your tax status. In this tool Kleinunternehmer cannot be mixed with 19 %, 7 % or Reverse Charge in one invoice.',
+  ),
+  'vatRegime.kuSellerHint': m(
+    'Verkäuferkennung: Es gelten zwei getrennte Bedingungen, beide müssen erfüllt sein. (1) USt-IdNr. (BT-31) oder Steuernummer (BT-32). (2) USt-IdNr. (BT-31), Registernummer (BT-30) oder Kennung (BT-29). BT-31 allein erfüllt beide; BT-32 allein nur die erste; BT-29 oder BT-30 allein nur die zweite. Das Werkzeug gibt keine Empfehlung für Verkäufer, die nur eine Steuernummer haben.',
+    'Seller identification: two separate conditions apply and both must be met. (1) VAT ID (BT-31) or tax number (BT-32). (2) VAT ID (BT-31), legal registration ID (BT-30) or identifier (BT-29). BT-31 alone meets both; BT-32 alone only the first; BT-29 or BT-30 alone only the second. The tool gives no recommendation for a seller who holds only a tax number.',
+  ),
+  'vat.reverseCharge': m('Reverse Charge (§ 13b UStG)', 'Reverse Charge (§ 13b UStG)'),
+  'vat.fixedKu': m('Ohne USt-Ausweis (Kleinunternehmer)', 'No VAT shown (Kleinunternehmer)'),
+  'reason.title': m('Feste Texte im XML (nicht editierbar)', 'Fixed texts in the XML (not editable)'),
+  'reason.ku': m('Wird als BT-120 und als BT-33 ausgegeben; BT-121 wird nicht verwendet.', 'Written as BT-120 and as BT-33; BT-121 is not used.'),
+  'reason.rc': m('Wird als BT-120 ausgegeben; BT-121 wird nicht verwendet.', 'Written as BT-120; BT-121 is not used.'),
   'grp.sellerId': m('Weitere Kennung des Verkäufers', 'Further seller identification'),
   'grp.supply': m('Zeitpunkt der Leistung', 'Time of supply'),
   'grp.supplyHint': m(
@@ -109,7 +135,7 @@ export const copy = {
   'f.lines.unitCode': m('Einheit', 'Unit'),
   'f.lines.quantity': m('Menge', 'Quantity'),
   'f.lines.unitPrice': m('Einzelpreis (netto)', 'Unit price (net)'),
-  'f.lines.vat.rate': m('USt-Satz', 'VAT rate'),
+  'f.lines.vat.rate': m('USt-Behandlung', 'VAT treatment'),
   'f.lines.net': m('Netto', 'Net'),
   'f.meansCode': m('Zahlungsart', 'Payment means'),
   'f.iban': m('IBAN', 'IBAN'),
@@ -121,6 +147,8 @@ export const copy = {
   'f.note': m('Hinweistext', 'Note'),
   vat19: m('19 %', '19 %'),
   vat7: m('7 %', '7 %'),
+  'rail.vatKu': m('Kleinunternehmer (§ 19 UStG), Bemessungsgrundlage {base}', 'Kleinunternehmer (§ 19 UStG), taxable amount {base}'),
+  'rail.vatRc': m('Reverse Charge (§ 13b UStG), Bemessungsgrundlage {base}', 'Reverse Charge (§ 13b UStG), taxable amount {base}'),
 
   means30: m('30 – Überweisung', '30 – Credit transfer'),
   means58: m('58 – SEPA-Überweisung', '58 – SEPA credit transfer'),
@@ -216,6 +244,12 @@ export const copy = {
 } as const satisfies Record<string, Msg>;
 
 export type CopyKey = keyof typeof copy;
+
+/** Caption of one VAT bucket of the summary rail: by treatment, so Kleinunternehmer (E) and Reverse Charge (AE) are never shown as "0 %". */
+export function vatBucketLabel(bucket: Pick<VatBreakdown, 'treatment' | 'rate'>, base: string, locale: Locale): string {
+  const key = bucket.treatment === 'kleinunternehmer' ? 'rail.vatKu' : bucket.treatment === 'reverse-charge' ? 'rail.vatRc' : 'rail.vatLine';
+  return fill(copy[key][locale], { rate: bucket.rate, base });
+}
 export const t = (key: CopyKey, locale: Locale, values: Record<string, string | number> = {}): string => fill(copy[key][locale], values);
 
 export const unitLabels: Readonly<Record<string, Msg>> = {
@@ -267,6 +301,7 @@ export const LABEL_KEYS: Readonly<Record<string, CopyKey>> = {
   'seller.sellerIdentifiers[0]': 'f.sellerIdentifier',
   'buyer.name': 'f.name', 'buyer.address.street': 'f.street', 'buyer.address.postCode': 'f.postCode', 'buyer.address.city': 'f.city',
   'buyer.electronicAddress.schemeId': 'f.schemeId', 'buyer.electronicAddress.value': 'f.addressValue', 'buyer.vatId': 'f.vatId',
+  'buyer.legalRegistrationId': 'f.legalRegistrationId',
   'payment.means.code': 'f.meansCode', 'payment.means.account.id.value': 'f.iban', 'payment.means.account.name': 'f.accountName',
   'payment.means.account.bic': 'f.bic', 'payment.dueDate': 'f.dueDate', 'payment.termsText': 'f.termsText',
   'notes[0].text': 'f.note',
@@ -341,7 +376,10 @@ export const errorMessages: Readonly<Record<DocumentErrorCode, Msg>> = {
     'Der Verkäufer braucht eine USt-IdNr. oder eine Steuernummer.',
     'The seller needs a VAT ID or a tax number.',
   ),
-  missing_buyer_identifier: notReachable,
+  missing_buyer_identifier: m(
+    'Bei einer Reverse-Charge-Position braucht der Käufer mindestens eine Kennung: USt-IdNr. (BT-48) oder Registernummer (BT-47).',
+    'With a Reverse Charge line the buyer needs at least one identification: VAT ID (BT-48) or legal registration ID (BT-47).',
+  ),
   unsupported_mixed_vat_treatments: notReachable,
   internal_inconsistency: m('Interner Fehler.', 'Internal error.'),
   // Monetary codes (invoice.ts)
@@ -359,7 +397,7 @@ export const errorMessages: Readonly<Record<DocumentErrorCode, Msg>> = {
   unsupported_currency: outside,
   unsupported_vat_treatment: outside,
   unsupported_vat_category: outside,
-  unsupported_vat_rate: m('{field}: nur 19 % und 7 % werden unterstützt. Bitte wählen.', '{field}: only 19 % and 7 % are supported. Please choose.'),
+  unsupported_vat_rate: m('{field}: Bitte 19 %, 7 % oder Reverse Charge wählen. Eine Vorauswahl gibt es nicht.', '{field}: please choose 19 %, 7 % or Reverse Charge. There is no preselection.'),
 };
 
 /** Text of one diagnostic for the page locale. `{sep}` and `{example}` name the German input notation, the same on both routes. */
@@ -372,12 +410,12 @@ export function describeError(code: DocumentErrorCode, path: string, locale: Loc
 /** Compact scope note (MDR-32 obligation at M3). Mirrors the domain README "Supported and not supported"; tool limits are not legal prohibitions. */
 export const scopeLists: Record<'now' | 'core' | 'out' | 'tool', { readonly de: readonly string[]; readonly en: readonly string[] }> = {
   now: {
-    de: ['Rechnung Typ 380', 'Deutsches Inlandsprofil (Verkäufer und Käufer in Deutschland), Währung EUR', 'Umsatzsteuer: Normalsatz 19 % und ermäßigter Satz 7 %', 'Zahlung per Überweisung (Code 30 oder 58) mit IBAN', 'Projekt-, Vertrags- und Bestellreferenz (BT-11, BT-12, BT-13), jeweils optional', 'Leistungsdatum (BT-72) oder Abrechnungszeitraum (BG-14), genau eines von beiden', 'Optionale Leitweg-ID-Prüfung der Käuferreferenz (nur Aufbau und Prüfziffern)', 'Prüfung im Browser gegen die Regeln dieses Werkzeugs und Export als UBL- oder CII-XML'],
-    en: ['Invoice type 380', 'German domestic profile (seller and buyer in Germany), currency EUR', 'VAT: standard rate 19% and reduced rate 7%', 'Payment by credit transfer (code 30 or 58) with an IBAN', 'Project, contract and purchase order references (BT-11, BT-12, BT-13), each optional', 'Date of supply (BT-72) or invoicing period (BG-14), exactly one of the two', 'Optional Leitweg-ID check of the buyer reference (structure and check digits only)', 'Check in the browser against this tool’s rules and export as UBL or CII XML'],
+    de: ['Rechnung Typ 380', 'Deutsches Inlandsprofil (Verkäufer und Käufer in Deutschland), Währung EUR', 'Umsatzsteuer: Normalsatz 19 % und ermäßigter Satz 7 %', 'Reverse Charge (§ 13b UStG) je Position, auch zusammen mit 19 % und 7 % in einer Rechnung', 'Kleinunternehmer (§ 19 UStG) für die ganze Rechnung; nicht mit anderen Behandlungen kombinierbar (Einschränkung dieses Profils). Das Werkzeug prüft weder die Voraussetzungen des § 19 UStG noch die Anwendbarkeit des § 13b UStG', 'Zahlung per Überweisung (Code 30 oder 58) mit IBAN', 'Projekt-, Vertrags- und Bestellreferenz (BT-11, BT-12, BT-13), jeweils optional', 'Leistungsdatum (BT-72) oder Abrechnungszeitraum (BG-14), genau eines von beiden', 'Optionale Leitweg-ID-Prüfung der Käuferreferenz (nur Aufbau und Prüfziffern)', 'Prüfung im Browser gegen die Regeln dieses Werkzeugs und Export als UBL- oder CII-XML'],
+    en: ['Invoice type 380', 'German domestic profile (seller and buyer in Germany), currency EUR', 'VAT: standard rate 19% and reduced rate 7%', 'Reverse Charge (§ 13b UStG) per line, also together with 19% and 7% in one invoice', 'Kleinunternehmer (§ 19 UStG) for the whole invoice; not combinable with other treatments (a restriction of this profile). The tool checks neither the conditions of § 19 UStG nor the applicability of § 13b UStG', 'Payment by credit transfer (code 30 or 58) with an IBAN', 'Project, contract and purchase order references (BT-11, BT-12, BT-13), each optional', 'Date of supply (BT-72) or invoicing period (BG-14), exactly one of the two', 'Optional Leitweg-ID check of the buyer reference (structure and check digits only)', 'Check in the browser against this tool’s rules and export as UBL or CII XML'],
   },
   core: {
-    de: ['Gutschrift 381 (nur bestätigte Verrechnung)', 'Kleinunternehmer-Behandlung', 'Reverse Charge, auch zusammen mit Normalsatz in einer Rechnung', 'Strukturiertes Skonto'],
-    en: ['Credit note 381 (confirmed clearing only)', 'Kleinunternehmer treatment', 'Reverse charge, also combined with standard rate in one invoice', 'Structured Skonto'],
+    de: ['Gutschrift 381 (nur bestätigte Verrechnung)', 'Strukturiertes Skonto'],
+    en: ['Credit note 381 (confirmed clearing only)', 'Structured Skonto'],
   },
   out: {
     de: ['Andere Dokumenttypen als 380 und 381 (zum Beispiel 384, 389)', 'Andere Währungen als EUR; Beteiligte außerhalb Deutschlands', 'Andere Steuerkategorien, Steuersätze oder Steuerbehandlungen als im Profil', 'Andere Zahlungsarten als Überweisung (30, 58); Erstattung einer Gutschrift per Überweisung', 'Nachlässe und Zuschläge, Anzahlungen, Teil- und Ratenrechnungen, Anhänge, negative Mengen und Preise'],

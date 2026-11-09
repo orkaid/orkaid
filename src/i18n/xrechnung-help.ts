@@ -39,6 +39,9 @@ export type HelpEntry = {
 
 const README = 'src/lib/domain/xrechnung/README.md';
 const DOC = 'src/lib/domain/xrechnung/document.ts';
+const INV = 'src/lib/domain/xrechnung/invoice.ts';
+// Wording of the statutory titles and the § 14a Abs. 5 phrase read on gesetze-im-internet.de on 2026-11-09 (the pages carry no Stand date).
+const USTG = 'UStG § 19 „Besteuerung der Kleinunternehmer“, § 13b „Leistungsempfänger als Steuerschuldner“, § 14a Abs. 5 (gesetze-im-internet.de, gelesen 2026-11-09)';
 
 export const helpEntries = {
   buyerReference: {
@@ -183,14 +186,14 @@ export const helpEntries = {
       enter: 'Tragen Sie die Steuernummer ein, wenn keine USt-IdNr. angegeben wird.', status: 'conditional',
       condition: 'USt-IdNr. oder Steuernummer ist erforderlich (mindestens eine).', format: 'Freier Text; über die allgemeinen Textregeln hinaus wird kein Format geprüft.',
       external: ['BT-31 oder BT-32 ist erforderlich (BR-S-02, BR-DE-16).'],
-      profile: ['BT-32 allein erfüllt die Verkäuferkennung nach BR-CO-26 nicht: zusätzlich ist BT-29, BT-30 oder BT-31 erforderlich.'],
+      profile: ['BT-32 allein erfüllt die zweite Gruppe (BR-CO-26: BT-29, BT-30 oder BT-31) nicht; zusätzlich ist BT-29, BT-30 oder BT-31 erforderlich. Für Verkäufer, die nur eine Steuernummer haben, gibt das Werkzeug keine Empfehlung.'],
     },
     en: {
       title: 'Seller tax number', short: 'The seller’s tax number, as an alternative to the VAT ID.',
       enter: 'Enter the tax number when no VAT ID is given.', status: 'conditional',
       condition: 'A VAT ID or a tax number is required (at least one).', format: 'Free text; no format is checked beyond the general text rules.',
       external: ['BT-31 or BT-32 is required (BR-S-02, BR-DE-16).'],
-      profile: ['BT-32 alone does not satisfy the seller identification of BR-CO-26: BT-29, BT-30 or BT-31 is also required.'],
+      profile: ['BT-32 alone does not satisfy the second group (BR-CO-26: BT-29, BT-30 or BT-31); BT-29, BT-30 or BT-31 is also required. The tool gives no recommendation for a seller who holds only a tax number.'],
     },
   },
   sellerIdentification: {
@@ -201,7 +204,7 @@ export const helpEntries = {
       enter: 'Tragen Sie eine Registernummer oder eine sonstige Kennung des Verkäufers ein.', status: 'conditional',
       condition: 'Mindestens eines von USt-IdNr. (BT-31), Registernummer (BT-30) oder Kennung (BT-29) ist erforderlich.', format: 'Freier Text, ohne Schema.',
       external: ['BR-CO-26: mindestens eines von BT-29, BT-30, BT-31.'],
-      profile: ['Dieses Werkzeug kennt kein Schema für diese Kennungen.'],
+      profile: ['Dieses Werkzeug kennt kein Schema für diese Kennungen. BT-29 oder BT-30 allein erfüllt die erste Gruppe (BT-31 oder BT-32) nicht.'],
       unverified: ['Was ein Verkäufer ohne USt-IdNr. und ohne Registernummer hier eintragen soll, ist durch die ausgewerteten Quellen nicht geklärt. Das Werkzeug gibt dafür keine Empfehlung.'],
     },
     en: {
@@ -209,7 +212,7 @@ export const helpEntries = {
       enter: 'Enter a legal registration ID or another identifier of the seller.', status: 'conditional',
       condition: 'At least one of VAT ID (BT-31), legal registration ID (BT-30) or identifier (BT-29) is required.', format: 'Free text, without a scheme.',
       external: ['BR-CO-26: at least one of BT-29, BT-30, BT-31.'],
-      profile: ['This tool has no scheme for these identifiers.'],
+      profile: ['This tool has no scheme for these identifiers. BT-29 or BT-30 alone does not satisfy the first group (BT-31 or BT-32).'],
       unverified: ['What a seller with neither a VAT ID nor a registration number should enter here is not settled by the sources consulted. The tool gives no recommendation.'],
     },
   },
@@ -280,17 +283,82 @@ export const helpEntries = {
     },
   },
   vatRate: {
-    bt: 'BT-152', mistakes: ['unsupported_vat_rate', 'missing_field'],
-    sources: [`${README} — Implemented profile (standard VAT 19 % and 7 %)`],
+    bt: 'BT-151 / BT-152', mistakes: ['unsupported_vat_rate', 'missing_field'],
+    sources: [`${README} — Implemented profile (standard VAT 19 % and 7 %; reverse charge)`, `${INV} — InvoiceLineVat`, USTG],
     de: {
-      title: 'USt-Satz', short: 'Steuersatz der Position: 19 % oder 7 %.',
-      enter: 'Wählen Sie den Steuersatz. Es wird keiner vorausgewählt.', status: 'required', format: 'Auswahl: 19 % oder 7 %.',
-      profile: ['Dieses Werkzeug unterstützt in dieser Ausbaustufe nur den Regelsteuersatz (19 %) und den ermäßigten Satz (7 %). Es prüft nicht, welcher Satz für Ihre Leistung zutrifft.'],
+      title: 'USt-Behandlung der Position', short: 'Ihre Wahl je Position: 19 %, 7 % oder Reverse Charge (§ 13b UStG).',
+      enter: 'Wählen Sie je Position die Behandlung. Es wird keine vorausgewählt. Bei „Kleinunternehmer“ (Auswahl darüber) gibt es keine Wahl je Position.', status: 'required', format: 'Auswahl: 19 %, 7 % oder Reverse Charge.',
+      external: ['Reverse Charge wird als Steuerkategorie AE mit dem Satz 0 übertragen. Führt der Unternehmer eine Leistung im Sinne des § 13b Abs. 2 UStG aus, für die der Leistungsempfänger nach § 13b Abs. 5 UStG die Steuer schuldet, ist er zur Ausstellung einer Rechnung mit der Angabe „Steuerschuldnerschaft des Leistungsempfängers“ verpflichtet (§ 14a Abs. 5 UStG).'],
+      profile: ['Dieses Profil kennt 19 %, 7 % und Reverse Charge. Jede nichtleere Auswahl davon darf in einer Rechnung zusammen vorkommen. Kleinunternehmer lässt sich nicht damit mischen. Der Text zu Reverse Charge ist fest und nicht editierbar.'],
+      unverified: ['Das Werkzeug prüft nicht, welcher Satz für Ihre Leistung zutrifft und ob § 13b UStG auf sie anzuwenden ist. Diese Entscheidung und ihre Verantwortung liegen bei Ihnen.'],
     },
     en: {
-      title: 'VAT rate', short: 'VAT rate of the line: 19 % or 7 %.',
-      enter: 'Choose the rate. None is preselected.', status: 'required', format: 'Choose 19 % or 7 %.',
-      profile: ['In this stage the tool supports only the standard rate (19 %) and the reduced rate (7 %). It does not check which rate applies to your supply.'],
+      title: 'VAT treatment of the line', short: 'Your choice per line: 19 %, 7 % or Reverse Charge (§ 13b UStG).',
+      enter: 'Choose the treatment per line. None is preselected. With “Kleinunternehmer” (the choice above) there is no choice per line.', status: 'required', format: 'Choose 19 %, 7 % or Reverse Charge.',
+      external: ['Reverse Charge is transmitted as tax category AE with rate 0. Where the supplier performs a supply within the meaning of § 13b(2) UStG for which the recipient owes the tax under § 13b(5) UStG, the supplier must issue an invoice with the statement “Steuerschuldnerschaft des Leistungsempfängers” (§ 14a(5) UStG).'],
+      profile: ['This profile knows 19 %, 7 % and Reverse Charge. Any nonempty selection of them may appear together in one invoice. Kleinunternehmer cannot be mixed with them. The Reverse Charge text is fixed and not editable.'],
+      unverified: ['The tool does not check which rate applies to your supply or whether § 13b UStG applies to it. That decision and its responsibility are yours.'],
+    },
+  },
+  vatRegime: {
+    bt: 'BT-151 / BT-152 / BT-120 / BT-33', fieldId: 'vatRegime.regular', sources: [`${README} — Implemented profile (Kleinunternehmer; reverse charge)`, `${INV} — KLEINUNTERNEHMER_EXEMPTION_TEXT, REVERSE_CHARGE_TEXT`, `${DOC} — readSeller, readBuyer`, USTG],
+    de: {
+      title: 'Umsatzsteuerliche Behandlung der Rechnung', short: 'Ihre Auswahl für die ganze Rechnung: „Reguläre Besteuerung / Reverse Charge“ oder „Kleinunternehmer (§ 19 UStG)“.',
+      enter: 'Bei „Reguläre Besteuerung / Reverse Charge“ wählen Sie je Position 19 %, 7 % oder Reverse Charge. Bei „Kleinunternehmer (§ 19 UStG)“ erhalten alle Positionen die Kategorie E mit dem Satz 0 und es gibt keine Wahl je Position. Eingaben je Position bleiben beim Wechsel im Formular, werden aber in dieser Einstellung nicht verwendet.', status: 'required',
+      format: 'Auswahl: eine von zwei. Vorausgewählt ist „Reguläre Besteuerung / Reverse Charge“ nur, damit der bisherige Ablauf unverändert bleibt.',
+      external: [
+        'Gesetzliche Titel: § 19 UStG „Besteuerung der Kleinunternehmer“, § 13b UStG „Leistungsempfänger als Steuerschuldner“. Für eine Leistung im Sinne des § 13b Abs. 2 UStG, für die der Leistungsempfänger nach § 13b Abs. 5 UStG die Steuer schuldet, verlangt § 14a Abs. 5 UStG die Angabe „Steuerschuldnerschaft des Leistungsempfängers“.',
+        'Kleinunternehmer: Kategorie E, Satz 0, der Verkäufer braucht BT-31 oder BT-32 (BR-E-02, BR-DE-16). Außerdem gilt BR-CO-26: BT-29, BT-30 oder BT-31.',
+        'Reverse Charge: Kategorie AE, Satz 0; der Käufer braucht BT-47 oder BT-48 (BR-AE-02).',
+      ],
+      profile: [
+        'Die feste Begründung steht nicht zur Bearbeitung offen. Kleinunternehmer: derselbe Text als BT-120 und als BT-33, ohne BT-121. Reverse Charge: „Steuerschuldnerschaft des Leistungsempfängers“ als BT-120, ohne BT-121. Beide Texte sind unter den Positionen angezeigt.',
+        'Kleinunternehmer lässt sich in diesem Profil nicht mit 19 %, 7 % oder Reverse Charge in einer Rechnung mischen; das ist eine Einschränkung dieses Werkzeugs, keine Aussage zum Recht.',
+        'Verkäuferkennung (beide Gruppen müssen erfüllt sein): (BT-31 oder BT-32) und (BT-29, BT-30 oder BT-31). BT-31 allein erfüllt beide Gruppen. BT-32 allein erfüllt die zweite Gruppe nicht. BT-29 oder BT-30 allein erfüllt die erste Gruppe nicht. BT-32 zusammen mit BT-29 oder BT-30 erfüllt beide. Für Verkäufer, die nur eine Steuernummer haben, gibt das Werkzeug keine Empfehlung.',
+      ],
+      unverified: [
+        'Das Werkzeug prüft nicht, ob § 19 UStG auf Sie zutrifft, und nicht, ob § 13b UStG auf eine Leistung anzuwenden ist. Es wählt nichts für Sie aus und bestätigt keines von beiden. Dass ein Validator das XML annimmt, belegt weder das eine noch das andere.',
+        'Ob die festen Texte rechtlich ausreichen, ist nicht geklärt; das Werkzeug gibt den Text wieder, den die Spezifikation bzw. das Gesetz nennt.',
+      ],
+    },
+    en: {
+      title: 'VAT treatment of the invoice', short: 'Your choice for the whole invoice: “Regular taxation / Reverse Charge” or “Kleinunternehmer (§ 19 UStG)”.',
+      enter: 'With “Regular taxation / Reverse Charge” you choose 19 %, 7 % or Reverse Charge per line. With “Kleinunternehmer (§ 19 UStG)” every line gets category E with rate 0 and there is no choice per line. Per-line entries stay in the form when you switch but are not used in this setting.', status: 'required',
+      format: 'Choose one of two. “Regular taxation / Reverse Charge” is preselected only so that the previous workflow stays unchanged.',
+      external: [
+        'Statutory titles: § 19 UStG “Besteuerung der Kleinunternehmer”, § 13b UStG “Leistungsempfänger als Steuerschuldner”. For a supply within the meaning of § 13b(2) UStG for which the recipient owes the tax under § 13b(5) UStG, § 14a(5) UStG requires the statement “Steuerschuldnerschaft des Leistungsempfängers”.',
+        'Kleinunternehmer: category E, rate 0; the seller needs BT-31 or BT-32 (BR-E-02, BR-DE-16). BR-CO-26 also applies: BT-29, BT-30 or BT-31.',
+        'Reverse Charge: category AE, rate 0; the buyer needs BT-47 or BT-48 (BR-AE-02).',
+      ],
+      profile: [
+        'The fixed reason is not open to editing. Kleinunternehmer: the same text as BT-120 and as BT-33, without BT-121. Reverse Charge: “Steuerschuldnerschaft des Leistungsempfängers” as BT-120, without BT-121. Both texts are shown below the lines.',
+        'In this profile Kleinunternehmer cannot be mixed with 19 %, 7 % or Reverse Charge in one invoice; that is a restriction of this tool, not a statement about the law.',
+        'Seller identification (both groups must be met): (BT-31 or BT-32) and (BT-29, BT-30 or BT-31). BT-31 alone meets both groups. BT-32 alone does not satisfy the second group. BT-29 or BT-30 alone does not satisfy the first group. BT-32 together with BT-29 or BT-30 meets both. The tool gives no recommendation for a seller who holds only a tax number.',
+      ],
+      unverified: [
+        'The tool does not check whether § 19 UStG applies to you and does not check whether § 13b UStG applies to a supply. It selects nothing for you and confirms neither. That a validator accepts the XML shows neither.',
+        'Whether the fixed texts are legally sufficient is not established; the tool reproduces the text that the specification or the statute names.',
+      ],
+    },
+  },
+  buyerIdentification: {
+    bt: 'BT-47 / BT-48', fieldId: 'buyer.vatId', mistakes: ['missing_buyer_identifier', 'invalid_vat_id', 'invalid_text', 'text_too_long'],
+    sources: [`${DOC} — readBuyer (BR-AE-02)`, `${README} — Implemented profile (reverse charge)`],
+    de: {
+      title: 'Kennung des Käufers', short: 'USt-IdNr. des Käufers (BT-48) und Registernummer des Käufers (BT-47), zwei unabhängige Angaben.',
+      enter: 'Tragen Sie ein, was Ihnen vorliegt. Das Werkzeug übernimmt keinen Wert aus dem anderen Feld und denkt sich keine Kennung aus.', status: 'conditional',
+      condition: 'Ist mindestens eine Position Reverse Charge, ist mindestens eine der beiden Angaben erforderlich. Sonst sind beide optional.', format: 'USt-IdNr.: „DE“ und genau 9 Ziffern. Registernummer: freier Text ohne Leerzeichen am Anfang oder Ende, ohne Schema.', valid: 'DE987654321',
+      external: ['BR-AE-02: bei Reverse Charge ist BT-47 oder BT-48 erforderlich.'],
+      profile: ['Dieses Profil akzeptiert für BT-48 nur „DE“ plus 9 Ziffern. Wenn alle Positionen 19 % oder 7 % sind, fordert es keine der beiden Angaben.'],
+      unverified: ['Ob für Ihren Fall die Angabe einer USt-IdNr. des Käufers nach UStG verlangt wird, wird nicht geprüft und hier nicht wiedergegeben.'],
+    },
+    en: {
+      title: 'Buyer identification', short: 'The buyer’s VAT ID (BT-48) and the buyer’s legal registration ID (BT-47), two independent entries.',
+      enter: 'Enter what you have. The tool copies no value from the other field and invents no identifier.', status: 'conditional',
+      condition: 'If at least one line is Reverse Charge, at least one of the two entries is required. Otherwise both are optional.', format: 'VAT ID: “DE” and exactly 9 digits. Legal registration ID: free text with no spaces at the start or end, no scheme.', valid: 'DE987654321',
+      external: ['BR-AE-02: with Reverse Charge, BT-47 or BT-48 is required.'],
+      profile: ['For BT-48 this profile accepts only “DE” followed by 9 digits. When every line is 19 % or 7 % it requires neither entry.'],
+      unverified: ['Whether the UStG requires the buyer’s VAT ID in your case is not checked and not restated here.'],
     },
   },
   paymentMeans: {
@@ -397,22 +465,24 @@ export const helpEntries = {
   'sec.buyer': {
     bt: 'BG-7', fieldId: 'buyer.name', sources: [`${README} — Implemented profile`, `${DOC} — readBuyer`],
     de: {
-      title: 'Käufer (Rechnungsempfänger)', short: 'Angaben zum Rechnungsempfänger.', enter: 'Name, Anschrift und elektronische Adresse; die USt-IdNr. ist optional.', status: 'required',
+      title: 'Käufer (Rechnungsempfänger)', short: 'Angaben zum Rechnungsempfänger.', enter: 'Name, Anschrift und elektronische Adresse; USt-IdNr. und Registernummer sind optional, bei Reverse Charge ist eine der beiden erforderlich.', status: 'required',
       fields: [
         { name: 'Name', status: 'required', format: 'Text' },
         { name: 'Anschrift (Land: DE)', status: 'required', format: 'Straße, PLZ, Ort' },
         { name: 'Elektronische Adresse', status: 'required', format: 'Schema und Adresse' },
-        { name: 'USt-IdNr.', status: 'optional', format: 'DE + 9 Ziffern' },
+        { name: 'USt-IdNr. (BT-48)', status: 'conditional', format: 'DE + 9 Ziffern' },
+        { name: 'Registernummer (BT-47)', status: 'conditional', format: 'Text (bei Reverse Charge mindestens eine der beiden Kennungen)' },
       ],
       profile: ['Der Käufer muss in Deutschland sitzen (Profil dieses Werkzeugs). Die Käuferreferenz (BT-10) steht bei den Rechnungsdaten.'],
     },
     en: {
-      title: 'Buyer (invoice recipient)', short: 'Details of the invoice recipient.', enter: 'Name, address and electronic address; the VAT ID is optional.', status: 'required',
+      title: 'Buyer (invoice recipient)', short: 'Details of the invoice recipient.', enter: 'Name, address and electronic address; VAT ID and legal registration ID are optional, with Reverse Charge one of the two is required.', status: 'required',
       fields: [
         { name: 'Name', status: 'required', format: 'Text' },
         { name: 'Address (country: DE)', status: 'required', format: 'Street, post code, city' },
         { name: 'Electronic address', status: 'required', format: 'Scheme and address' },
-        { name: 'VAT ID', status: 'optional', format: 'DE + 9 digits' },
+        { name: 'VAT ID (BT-48)', status: 'conditional', format: 'DE + 9 digits' },
+        { name: 'Legal registration ID (BT-47)', status: 'conditional', format: 'Text (with Reverse Charge at least one of the two identifications)' },
       ],
       profile: ['The buyer must be located in Germany (profile of this tool). The buyer reference (BT-10) is part of the invoice details.'],
     },
@@ -420,24 +490,24 @@ export const helpEntries = {
   'sec.lines': {
     bt: 'BG-25', fieldId: 'lines[0].name', sources: [`${README} — Implemented profile`],
     de: {
-      title: 'Rechnungspositionen', short: 'Mindestens eine Position mit Menge, Einzelpreis und Steuersatz.', enter: 'Je Position: Beschreibung, Einheit, Menge, Netto-Einzelpreis, USt-Satz.', status: 'required',
+      title: 'Rechnungspositionen', short: 'Mindestens eine Position mit Menge, Einzelpreis und USt-Behandlung.', enter: 'Zuerst die Behandlung der Rechnung wählen, dann je Position: Beschreibung, Einheit, Menge, Netto-Einzelpreis und (außer bei Kleinunternehmer) 19 %, 7 % oder Reverse Charge.', status: 'required',
       fields: [
         { name: 'Beschreibung', status: 'required', format: 'Text' },
         { name: 'Einheit', status: 'required', format: 'Auswahl' },
         { name: 'Menge', status: 'required', format: 'Zahl' },
         { name: 'Einzelpreis (netto)', status: 'required', format: 'Zahl' },
-        { name: 'USt-Satz', status: 'required', format: '19 % oder 7 %' },
+        { name: 'USt-Behandlung', status: 'required', format: '19 %, 7 % oder Reverse Charge; bei Kleinunternehmer fest' },
       ],
       profile: ['Beträge werden ausschließlich vom Domänenmodell berechnet; der Nettobetrag je Position ist eine Anzeige.'],
     },
     en: {
-      title: 'Invoice lines', short: 'At least one line with quantity, unit price and VAT rate.', enter: 'Per line: description, unit, quantity, net unit price, VAT rate.', status: 'required',
+      title: 'Invoice lines', short: 'At least one line with quantity, unit price and VAT treatment.', enter: 'First choose the treatment of the invoice, then per line: description, unit, quantity, net unit price and (except with Kleinunternehmer) 19 %, 7 % or Reverse Charge.', status: 'required',
       fields: [
         { name: 'Description', status: 'required', format: 'Text' },
         { name: 'Unit', status: 'required', format: 'Choice' },
         { name: 'Quantity', status: 'required', format: 'Number' },
         { name: 'Unit price (net)', status: 'required', format: 'Number' },
-        { name: 'VAT rate', status: 'required', format: '19 % or 7 %' },
+        { name: 'VAT treatment', status: 'required', format: '19 %, 7 % or Reverse Charge; fixed with Kleinunternehmer' },
       ],
       profile: ['Amounts are calculated only by the domain model; the net amount per line is a display.'],
     },

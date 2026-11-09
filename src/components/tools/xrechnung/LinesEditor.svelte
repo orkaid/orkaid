@@ -5,7 +5,7 @@
   import { copy, fill, unitLabels } from '../../../i18n/xrechnung.ts';
   import type { Locale } from '../../../i18n/ui.ts';
   import Field from './Field.svelte';
-  import { emptyLine, type LineForm } from './form-state.ts';
+  import { emptyLine, type LineForm, type VatRegime } from './form-state.ts';
 
   type Props = {
     lines: LineForm[];
@@ -15,11 +15,17 @@
     touch: (id: string) => void;
     onmore: (id: 'unitCode' | 'quantityPrice' | 'vatRate', trigger: HTMLElement) => void;
     groupError: string | undefined;
+    /** While `kleinunternehmer` every line is E/0 and shows fixed text instead of a choice; the lines' own choices stay untouched. */
+    regime: VatRegime;
   };
-  let { lines = $bindable(), locale, totals, errorFor, touch, onmore, groupError }: Props = $props();
+  let { lines = $bindable(), locale, totals, errorFor, touch, onmore, groupError, regime }: Props = $props();
 
   const unitOptions = UNIT_CODES.map((code) => ({ value: code, label: `${unitLabels[code]?.[locale] ?? code} (${code})` }));
-  const vatOptions = [{ value: '19', label: copy.vat19[locale] }, { value: '7', label: copy.vat7[locale] }];
+  const vatOptions = [
+    { value: '19', label: copy.vat19[locale] },
+    { value: '7', label: copy.vat7[locale] },
+    { value: 'reverse-charge', label: copy['vat.reverseCharge'][locale] },
+  ];
 
   function add() {
     lines.push(emptyLine(lines[lines.length - 1]));
@@ -51,8 +57,14 @@
       <div class="c-qty"><Field id={`lines[${i}].quantity`} {locale} label={copy['f.lines.quantity'][locale]} required inputmode="decimal" describedById="lines-number-hint" bind:value={line.quantity} helpId="quantityPrice" error={errorFor(`lines[${i}].quantity`)} onblur={() => touch(`lines[${i}].quantity`)} onmore={(el) => onmore('quantityPrice', el)} /></div>
       <div class="c-unit"><Field id={`lines[${i}].unitCode`} {locale} label={copy['f.lines.unitCode'][locale]} required kind="select" options={unitOptions} bind:value={line.unitCode} helpId="unitCode" error={errorFor(`lines[${i}].unitCode`)} onblur={() => touch(`lines[${i}].unitCode`)} onmore={(el) => onmore('unitCode', el)} /></div>
       <div class="c-price"><Field id={`lines[${i}].unitPrice`} {locale} label={copy['f.lines.unitPrice'][locale]} required inputmode="decimal" describedById="lines-number-hint" bind:value={line.unitPrice} helpId="quantityPrice" error={errorFor(`lines[${i}].unitPrice`)} onblur={() => touch(`lines[${i}].unitPrice`)} onmore={(el) => onmore('quantityPrice', el)} /></div>
-      <div class="c-vat"><Field id={`lines[${i}].vat.rate`} {locale} label={copy['f.lines.vat.rate'][locale]} required kind="select" options={vatOptions} bind:value={line.vatRate} helpId="vatRate" error={errorFor(`lines[${i}].vat.rate`)} onblur={() => touch(`lines[${i}].vat.rate`)} onmore={(el) => onmore('vatRate', el)} /></div>
-      <div class="c-net"><span class="net-label">{copy['f.lines.net'][locale]}</span><output class="net" for={`lines[${i}].quantity lines[${i}].unitPrice lines[${i}].vat.rate`}>{net(i)}</output></div>
+      <div class="c-vat">
+        {#if regime === 'kleinunternehmer'}
+          <span class="net-label">{copy['f.lines.vat.rate'][locale]}</span><span class="fixed-vat">{copy['vat.fixedKu'][locale]}</span>
+        {:else}
+          <Field id={`lines[${i}].vat.rate`} {locale} label={copy['f.lines.vat.rate'][locale]} required kind="select" options={vatOptions} bind:value={line.vatRate} helpId="vatRate" error={errorFor(`lines[${i}].vat.rate`)} onblur={() => touch(`lines[${i}].vat.rate`)} onmore={(el) => onmore('vatRate', el)} />
+        {/if}
+      </div>
+      <div class="c-net"><span class="net-label">{copy['f.lines.net'][locale]}</span><output class="net" for={regime === 'kleinunternehmer' ? `lines[${i}].quantity lines[${i}].unitPrice` : `lines[${i}].quantity lines[${i}].unitPrice lines[${i}].vat.rate`}>{net(i)}</output></div>
       <div class="c-remove">
         {#if lines.length > 1}
           <button type="button" class="remove" aria-label={fill(copy.removeLine[locale], { n: i + 1 })} onclick={() => remove(i)}>×</button>
@@ -75,6 +87,8 @@
   .c-name { grid-column: 1 / -1; }
   .c-net { display: flex; flex-direction: column; gap: 0.25rem; }
   .net-label { font: 500 0.8125rem/1.3 var(--sans); }
+  .c-vat { display: flex; flex-direction: column; gap: 0.25rem; }
+  .fixed-vat { font: 400 0.9375rem/1.4 var(--sans); }
   .net { font: 500 0.9375rem/1.4 var(--mono); font-variant-numeric: tabular-nums; }
   .c-remove { display: flex; align-items: flex-end; }
   .remove, .add { font: 500 0.875rem var(--sans); color: var(--ink); background: var(--paper); border: 1px solid var(--ink); cursor: pointer; }
@@ -82,13 +96,14 @@
   .add { align-self: flex-start; padding: 0.4rem 0.75rem; min-height: 2.25rem; }
   .group-error { margin: 0; color: var(--danger); font: 500 0.8125rem var(--sans); }
   @container (min-width: 51rem) {
-    .head, .row { display: grid; grid-template-columns: 1.75rem minmax(10rem, 1fr) 5.5rem 7rem 8rem 5.5rem 7rem 2.25rem; gap: 0.5rem; align-items: start; }
+    .head, .row { display: grid; grid-template-columns: 1.75rem minmax(8rem, 1fr) 5.5rem 7rem 8rem 8rem 7rem 2.25rem; gap: 0.5rem; align-items: start; }
     .head { padding-block-end: 0.25rem; font: 500 0.75rem/1.3 var(--mono); letter-spacing: 0.04em; color: var(--muted); }
     .head > :nth-child(7) { justify-self: end; }
     .num { display: block; padding-block-start: 0.5rem; font: 400 0.8125rem var(--mono); color: var(--muted); }
     .c-name { grid-column: auto; }
     .c-net { padding-block-start: 0; }
     .net-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .fixed-vat { padding-block-start: 0.45rem; }
     .net { display: block; padding-block-start: 0.45rem; text-align: right; }
     .c-remove { align-items: flex-start; }
     .row :global(.label-row) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }

@@ -56,7 +56,10 @@ test('scope note: four groups in both languages with equal structure; capabiliti
     assert.equal(scopeLists[key].de.length, scopeLists[key].en.length, key);
   }
   const core = scopeLists.core.en.join(' | ');
-  for (const needle of ['381', 'Kleinunternehmer', 'Reverse charge', 'Skonto']) assert.match(core, new RegExp(needle), needle);
+  // Slice 3 (MDR-44) moved Kleinunternehmer and Reverse Charge from the domain core to "available"; 381 and Skonto remain core.
+  for (const needle of ['381', 'Skonto']) assert.match(core, new RegExp(needle), needle);
+  for (const needle of ['Kleinunternehmer', 'Reverse Charge']) assert.doesNotMatch(core, new RegExp(needle, 'i'), needle);
+  for (const needle of ['Kleinunternehmer', 'Reverse Charge']) assert.match(scopeLists.now.en.join(' | '), new RegExp(needle), needle);
   const out = scopeLists.out.en.join(' | ');
   // A capability of the frozen domain must never be listed as unsupported.
   for (const needle of ['Kleinunternehmer', 'Reverse charge', 'Skonto', 'Leitweg', 'BG-14']) assert.doesNotMatch(out, new RegExp(needle, 'i'), needle);

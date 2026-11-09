@@ -4,10 +4,12 @@
 
 import { serializeCiiInvoice } from '../../../lib/domain/xrechnung/cii.ts';
 import { buildInvoice, type DocumentErrorCode, type DocumentOptions, type Invoice } from '../../../lib/domain/xrechnung/document.ts';
-import { calculateInvoiceTotals, type InvoiceTotals } from '../../../lib/domain/xrechnung/invoice.ts';
+import {
+  calculateInvoiceTotals, KLEINUNTERNEHMER_EXEMPTION_TEXT, REVERSE_CHARGE_TEXT, type InvoiceTotals, type VatBreakdown,
+} from '../../../lib/domain/xrechnung/invoice.ts';
 import { serializeUblInvoice } from '../../../lib/domain/xrechnung/ubl.ts';
 import { dateInput, decimalInput } from './input-format.ts';
-import type { FieldId, FormState } from './form-state.ts';
+import type { FieldId, FormState, LineForm } from './form-state.ts';
 
 export type SectionId = 'document' | 'seller' | 'buyer' | 'lines' | 'payment' | 'notes';
 export const SECTION_IDS: readonly SectionId[] = ['document', 'seller', 'buyer', 'lines', 'payment', 'notes'];
@@ -55,6 +57,36 @@ const put = (target: Record<string, unknown>, key: string, value: string, conver
 const putDate = (target: Record<string, unknown>, key: string, value: string): void => put(target, key, value, dateInput);
 const putDecimal = (target: Record<string, unknown>, key: string, value: string): void => put(target, key, value, decimalInput);
 
+/**
+ * The one place a line's VAT value for the domain is decided, for the full document and for the totals preview alike (MDR-44).
+ * The document regime wins: in Kleinunternehmer mode every line is E/0 and the line's own choice is not read. In the regular
+ * regime 'reverse-charge' is AE/0 and anything else is the standard treatment with the rate as typed ('' sends none, so the
+ * domain still answers `unsupported_vat_rate`; nothing is chosen or normalized here). Which compositions are supported,
+ * and every amount, stay the domain's decision.
+ */
+export function lineVat(state: Pick<FormState, 'vatRegime'>, line: Pick<LineForm, 'vatRate'>): Record<string, unknown> {
+  if (state.vatRegime === 'kleinunternehmer') return { treatment: 'kleinunternehmer', category: 'E', rate: '0' };
+  if (line.vatRate === 'reverse-charge') return { treatment: 'reverse-charge', category: 'AE', rate: '0' };
+  const vat: Record<string, unknown> = { treatment: 'standard', category: 'S' };
+  put(vat, 'rate', line.vatRate);
+  return vat;
+}
+
+/** True when an active line is Reverse Charge: only then is BT-47 or BT-48 of the buyer required (BR-AE-02). */
+export function hasReverseCharge(state: FormState): boolean {
+  return state.vatRegime === 'regular' && state.lines.some((line) => line.vatRate === 'reverse-charge');
+}
+
+/** The fixed, non-editable texts the domain writes for the active treatments, with the business terms that carry them. */
+export type FixedReason = { readonly treatment: 'kleinunternehmer' | 'reverse-charge'; readonly text: string; readonly terms: readonly string[] };
+export function activeFixedReasons(state: FormState): readonly FixedReason[] {
+  if (state.vatRegime === 'kleinunternehmer') return [{ treatment: 'kleinunternehmer', text: KLEINUNTERNEHMER_EXEMPTION_TEXT, terms: ['BT-120', 'BT-33'] }];
+  return hasReverseCharge(state) ? [{ treatment: 'reverse-charge', text: REVERSE_CHARGE_TEXT, terms: ['BT-120'] }] : [];
+}
+
+/** A VAT bucket is identified by treatment and rate, never by the rate alone (E and AE are both rate 0). */
+export const vatBucketKey = (bucket: Pick<VatBreakdown, 'treatment' | 'rate'>): string => `${bucket.treatment}:${bucket.rate}`;
+
 /** The domain input for an invoice 380. Objects are always present so a diagnostic names the field, not its parent. */
 export function buildDocumentInput(state: FormState): Record<string, unknown> {
   const f = state.fields;
@@ -71,6 +103,8 @@ export function buildDocumentInput(state: FormState): Record<string, unknown> {
     put(electronicAddress, 'value', f[`${side}.electronicAddress.value`]);
     p.electronicAddress = electronicAddress;
     put(p, 'vatId', f[`${side}.vatId`]);
+    // BT-47: the buyer's own slot, sent as typed and never derived from BT-48 (the seller's BT-30 is set separately below).
+    if (side === 'buyer') put(p, 'legalRegistrationId', f['buyer.legalRegistrationId']);
     return p;
   };
   const seller = party('seller');
@@ -122,9 +156,7 @@ export function buildDocumentInput(state: FormState): Record<string, unknown> {
     put(out, 'unitCode', line.unitCode);
     putDecimal(out, 'quantity', line.quantity);
     putDecimal(out, 'unitPrice', line.unitPrice);
-    const vat: Record<string, unknown> = { treatment: 'standard', category: 'S' };
-    put(vat, 'rate', line.vatRate);
-    out.vat = vat;
+    out.vat = lineVat(state, line);
     return out;
   });
   return input;
@@ -142,9 +174,7 @@ export function buildMonetaryInput(state: FormState): Record<string, unknown> {
       const out: Record<string, unknown> = {};
       putDecimal(out, 'quantity', line.quantity);
       putDecimal(out, 'unitPrice', line.unitPrice);
-      const vat: Record<string, unknown> = { treatment: 'standard', category: 'S' };
-      put(vat, 'rate', line.vatRate);
-      out.vat = vat;
+      out.vat = lineVat(state, line);
       return out;
     }),
   };

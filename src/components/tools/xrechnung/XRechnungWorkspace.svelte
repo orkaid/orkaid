@@ -10,7 +10,7 @@
   import LinesEditor from './LinesEditor.svelte';
   import ScopeNote from './ScopeNote.svelte';
   import SummaryRail, { type RailStatus } from './SummaryRail.svelte';
-  import { checkForm, countByKind, exportXml, previewTotals, type DiagnosticItem, type ExportFormat, type SectionId } from './form-adapter.ts';
+  import { activeFixedReasons, checkForm, countByKind, exportXml, hasReverseCharge, previewTotals, type DiagnosticItem, type ExportFormat, type SectionId } from './form-adapter.ts';
   import { emptyFormState } from './form-state.ts';
 
   let { locale }: { locale: Locale } = $props();
@@ -133,6 +133,8 @@
     { value: '0088', label: copy.scheme0088[locale] },
   ];
   const f = form.fields;
+  const reasons = $derived(activeFixedReasons(form));
+  const buyerNeedsId = $derived(hasReverseCharge(form));
 </script>
 
 {#snippet head(section: SectionId, helpId: HelpId | undefined)}
@@ -242,14 +244,45 @@
           <dl class="fixed span"><div><dt>{copy.country[locale]}</dt><dd>{copy.fixedDE[locale]}</dd></div></dl>
           <Field id="buyer.electronicAddress.schemeId" {locale} label={copy['f.schemeId'][locale]} required kind="select" options={schemeOptions} bind:value={f['buyer.electronicAddress.schemeId']} helpId="electronicAddress" hint={copy.schemeHint[locale]} error={errorFor('buyer.electronicAddress.schemeId')} onblur={() => touch('buyer.electronicAddress.schemeId')} onmore={(el) => openHelp('electronicAddress', el)} />
           <Field id="buyer.electronicAddress.value" {locale} label={copy['f.addressValue'][locale]} required bind:value={f['buyer.electronicAddress.value']} error={errorFor('buyer.electronicAddress.value')} onblur={() => touch('buyer.electronicAddress.value')} />
-          <div class="span"><Field id="buyer.vatId" {locale} label={copy['f.vatId'][locale]} optionalMark bind:value={f['buyer.vatId']} error={errorFor('buyer.vatId')} onblur={() => touch('buyer.vatId')} /></div>
+          <fieldset class="group span" aria-describedby="buyer-id-hint">
+            <legend>{copy['grp.buyerId'][locale]}</legend>
+            <p class="group-hint" id="buyer-id-hint">{buyerNeedsId ? copy['grp.buyerIdHintRc'][locale] : copy['grp.buyerIdHint'][locale]}</p>
+            {#if groupError('missing_buyer_identifier', 'buyer')}<p class="group-error" role="alert"><Glyph kind="error" /> {groupError('missing_buyer_identifier', 'buyer')}</p>{/if}
+            <div class="two">
+              <Field id="buyer.vatId" {locale} label={copy['f.vatId'][locale]} optionalMark bind:value={f['buyer.vatId']} helpId="buyerIdentification" error={errorFor('buyer.vatId')} onblur={() => touch('buyer.vatId')} onmore={(el) => openHelp('buyerIdentification', el)} />
+              <Field id="buyer.legalRegistrationId" {locale} label={copy['f.legalRegistrationId'][locale]} optionalMark bind:value={f['buyer.legalRegistrationId']} error={errorFor('buyer.legalRegistrationId')} onblur={() => touch('buyer.legalRegistrationId')} />
+            </div>
+          </fieldset>
         </div>
       </section>
     </div>
 
     <section aria-labelledby="h-lines" id="section-lines">
       {@render head('lines', 'sec.lines')}
-      <LinesEditor bind:lines={form.lines} {locale} totals={totals} {errorFor} {touch} onmore={(id, el) => openHelp(id, el)} groupError={groupError('no_lines', 'lines')} />
+      <fieldset class="group regime" aria-describedby="vat-regime-hint">
+        <legend>{copy['vatRegime.legend'][locale]}</legend>
+        <p class="group-hint" id="vat-regime-hint">{copy['vatRegime.hint'][locale]}</p>
+        <div class="choices">
+          <label class="choice"><input id="vatRegime.regular" type="radio" name="vatRegime" value="regular" bind:group={form.vatRegime} /> {copy['vatRegime.regular'][locale]}</label>
+          <label class="choice"><input id="vatRegime.kleinunternehmer" type="radio" name="vatRegime" value="kleinunternehmer" bind:group={form.vatRegime} /> {copy['vatRegime.kleinunternehmer'][locale]}</label>
+          <button type="button" class="sec-help" aria-label={fill(copy.helpFor[locale], { field: copy['vatRegime.legend'][locale] })} onclick={(event) => openHelp('vatRegime', event.currentTarget)}>?</button>
+        </div>
+        {#if form.vatRegime === 'kleinunternehmer'}<p class="group-hint">{copy['vatRegime.kuSellerHint'][locale]}</p>{/if}
+      </fieldset>
+      <LinesEditor bind:lines={form.lines} {locale} totals={totals} {errorFor} {touch} onmore={(id, el) => openHelp(id, el)} groupError={groupError('no_lines', 'lines')} regime={form.vatRegime} />
+      {#if reasons.length > 0}
+        <section class="reasons" aria-labelledby="reasons-title">
+          <h3 id="reasons-title">{copy['reason.title'][locale]}</h3>
+          <dl>
+            {#each reasons as reason (reason.treatment)}
+              <div>
+                <dt>{reason.treatment === 'kleinunternehmer' ? copy['vatRegime.kleinunternehmer'][locale] : copy['vat.reverseCharge'][locale]}</dt>
+                <dd><q lang="de">{reason.text}</q> <span class="reason-terms">{reason.treatment === 'kleinunternehmer' ? copy['reason.ku'][locale] : copy['reason.rc'][locale]}</span></dd>
+              </div>
+            {/each}
+          </dl>
+        </section>
+      {/if}
     </section>
 
     <section aria-labelledby="h-payment" id="section-payment">
@@ -318,7 +351,16 @@
   @media (pointer: coarse) { .leitweg .sec-help { inline-size: 2.75rem; block-size: 2.75rem; } }
   .group { margin: 0; padding: 0.5rem 0.75rem 0.75rem; border: 1px solid var(--rule); min-width: 0; }
   .group legend { padding-inline: 0.25rem; font: 500 0.8125rem/1.3 var(--sans); }
-  .group-hint { margin: 0 0 0.5rem; color: var(--muted); font-size: 0.8125rem; }
+  .group-hint { margin: 0 0 0.5rem; color: var(--muted); font-size: 0.8125rem; max-inline-size: 70ch; }
+  .regime { margin-block-end: 0.75rem; }
+  .regime .choices { align-items: center; margin-bottom: 0; }
+  .reasons { margin-block-start: 0.75rem; border-top: 0; padding-block-start: 0; }
+  .reasons h3 { margin: 0 0 0.25rem; font: 500 0.8125rem/1.3 var(--sans); }
+  .reasons dl { margin: 0; }
+  .reasons dl div { padding-block: 0.25rem; border-top: 1px solid var(--rule); }
+  .reasons dt { font: 500 0.8125rem var(--sans); }
+  .reasons dd { margin: 0; font: 400 0.9375rem/1.5 var(--sans); }
+  .reason-terms { color: var(--muted); font-size: 0.8125rem; }
   .group-error { display: flex; gap: 0.375rem; margin: 0 0 0.5rem; color: var(--danger); font: 500 0.8125rem var(--sans); }
   .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: 0.75rem; align-items: start; }
   .rail { min-width: 0; }
