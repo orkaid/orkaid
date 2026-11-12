@@ -26,10 +26,13 @@
     /** Lines were inserted or removed at `index`: the caller forgets what it knew about the rows from there on. */
     onshift: (index: number) => void;
     onmore: (id: 'unitCode' | 'quantityPrice' | 'vatRate', trigger: HTMLElement) => void;
-    groupError: string | undefined;
+    /** Diagnostics about the line table as a whole: no line, or an amount over all lines at the tool's ceiling. */
+    groupErrors: readonly string[];
+    /** Diagnostics about one line as a whole, for example its calculated net at the tool's ceiling. */
+    lineErrors: (index: number) => readonly string[];
     regime: VatRegime;
   };
-  let { lines = $bindable(), locale, totals, calculated, netFor, totalsNote, errorFor, isMissing, touch, onshift, onmore, groupError, regime }: Props = $props();
+  let { lines = $bindable(), locale, totals, calculated, netFor, totalsNote, errorFor, isMissing, touch, onshift, onmore, groupErrors, lineErrors, regime }: Props = $props();
 
   const unitOptions = UNIT_CODES.map((code) => ({ value: code, label: `${unitLabels[code]?.[locale] ?? code} (${code})` }));
   const vatOptions = [
@@ -68,8 +71,23 @@
   const open = (i: number) => COLS.filter(([field]) => errorFor(id(i, field)) !== undefined && isMissing(id(i, field))).map(([, key]) => L(key));
   const wrong = (i: number) => COLS.filter(([field]) => errorFor(id(i, field)) !== undefined && !isMissing(id(i, field))).map(([field]) => ({ field, text: errorFor(id(i, field)) ?? '' }));
   const mark = (i: number, field: string) => (errorFor(id(i, field)) === undefined ? '' : isMissing(id(i, field)) ? 'miss' : 'bad');
+  // A diagnostic about the whole line belongs to the values its amount is computed from.
+  const wholeLine = (i: number, field: string) => (field === 'quantity' || field === 'unitPrice') && lineErrors(i).length > 0;
   const described = (i: number, field: string, numeric = false) =>
-    [numeric ? 'lines-number-hint' : '', mark(i, field) === 'miss' ? `lines[${i}]-open` : '', mark(i, field) === 'bad' ? `${id(i, field)}-error` : ''].filter(Boolean).join(' ') || undefined;
+    [numeric ? 'lines-number-hint' : '', mark(i, field) === 'miss' ? `lines[${i}]-open` : '', mark(i, field) === 'bad' ? `${id(i, field)}-error` : '', wholeLine(i, field) ? `lines[${i}]-line-error` : ''].filter(Boolean).join(' ') || undefined;
+  // The description is one line of text for the domain (BT-153), shown wrapped (MDR-47): Enter goes on to the quantity of the
+  // same line, Shift+Enter and other modified Enter do nothing, and no keyboard or input-method path inserts a line break.
+  // While an input-method composition is being confirmed nothing is intercepted. Pasted text is never changed here.
+  function descriptionKey(event: KeyboardEvent, i: number): void {
+    if (event.key !== 'Enter' || event.isComposing || event.keyCode === 229) return;
+    event.preventDefault();
+    if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return;
+    touch(id(i, 'name'));
+    document.getElementById(id(i, 'quantity'))?.focus();
+  }
+  function noLineBreak(event: InputEvent): void {
+    if (event.inputType === 'insertLineBreak' || event.inputType === 'insertParagraph') event.preventDefault();
+  }
   const help = [
     { id: 'quantityPrice', label: `${L('f.lines.quantity')} / ${L('f.lines.unitPrice')}` },
     { id: 'unitCode', label: L('f.lines.unitCode') },
@@ -78,7 +96,7 @@
 </script>
 
 <div class="lines">
-  {#if groupError}<p class="group-error" role="alert"><Glyph kind="error" /> {groupError}</p>{/if}
+  {#each groupErrors as text, n (n)}<p class="group-error" role="alert"><Glyph kind="error" /> {text}</p>{/each}
   <div class="strip">
     <p class="number-hint" id="lines-number-hint">{copy['lines.numberHint'][locale]}</p>
     <p class="col-help">
@@ -96,17 +114,18 @@
     {@const missing = open(i)}
     {@const invalid = wrong(i)}
     {@const value = net(i)}
-    <fieldset class="row" class:has-errors={invalid.length > 0} class:has-open={missing.length > 0}>
+    {@const whole = lineErrors(i)}
+    <fieldset class="row" class:has-errors={invalid.length > 0 || whole.length > 0} class:has-open={missing.length > 0}>
       <legend>{fill(copy.lineLegend[locale], { n: i + 1 })}</legend>
       <span class="num" aria-hidden="true">{i + 1}</span>
       <div class={`c c-name ${mark(i, 'name')}`} class:empty={line.name === ''}>
         <label for={id(i, 'name')}>{L('f.lines.name')}</label>
-        <!-- A text area so that a long description wraps and stays readable on the document; Enter keeps its native meaning here. -->
-        <textarea id={id(i, 'name')} rows="1" bind:value={line.name} placeholder={L('f.lines.name')} autocomplete="off" spellcheck="false" aria-required="true" aria-invalid={mark(i, 'name') !== ''} aria-describedby={described(i, 'name')} onblur={() => touch(id(i, 'name'))}></textarea>
+        <!-- A text area so that a long description wraps and stays readable on the document; Enter goes on to the quantity. -->
+        <textarea id={id(i, 'name')} rows="1" enterkeyhint="next" onkeydown={(event) => descriptionKey(event, i)} onbeforeinput={noLineBreak} bind:value={line.name} placeholder={L('f.lines.name')} autocomplete="off" spellcheck="false" aria-required="true" aria-invalid={mark(i, 'name') !== ''} aria-describedby={described(i, 'name')} onblur={() => touch(id(i, 'name'))}></textarea>
       </div>
       <div class={`c c-qty ${mark(i, 'quantity')}`} class:empty={line.quantity === ''}>
         <label for={id(i, 'quantity')}>{L('f.lines.quantity')}</label>
-        <input id={id(i, 'quantity')} class="n" type="text" inputmode="decimal" bind:value={line.quantity} autocomplete="off" spellcheck="false" aria-required="true" aria-invalid={mark(i, 'quantity') !== ''} aria-describedby={described(i, 'quantity', true)} onblur={() => touch(id(i, 'quantity'))} />
+        <input id={id(i, 'quantity')} class="n" type="text" inputmode="decimal" bind:value={line.quantity} autocomplete="off" spellcheck="false" aria-required="true" aria-invalid={mark(i, 'quantity') !== '' || whole.length > 0} aria-describedby={described(i, 'quantity', true)} onblur={() => touch(id(i, 'quantity'))} />
       </div>
       <div class={`c c-unit ${mark(i, 'unitCode')}`} class:empty={line.unitCode === ''}>
         <label for={id(i, 'unitCode')}>{L('f.lines.unitCode')}</label>
@@ -117,7 +136,7 @@
       </div>
       <div class={`c c-price ${mark(i, 'unitPrice')}`} class:empty={line.unitPrice === ''}>
         <label for={id(i, 'unitPrice')}>{L('f.lines.unitPrice')}</label>
-        <input id={id(i, 'unitPrice')} class="n" type="text" inputmode="decimal" bind:value={line.unitPrice} autocomplete="off" spellcheck="false" aria-required="true" aria-invalid={mark(i, 'unitPrice') !== ''} aria-describedby={described(i, 'unitPrice', true)} onblur={() => touch(id(i, 'unitPrice'))} />
+        <input id={id(i, 'unitPrice')} class="n" type="text" inputmode="decimal" bind:value={line.unitPrice} autocomplete="off" spellcheck="false" aria-required="true" aria-invalid={mark(i, 'unitPrice') !== '' || whole.length > 0} aria-describedby={described(i, 'unitPrice', true)} onblur={() => touch(id(i, 'unitPrice'))} />
       </div>
       <div class={`c c-vat ${regime === 'kleinunternehmer' ? '' : mark(i, 'vat.rate')}`} class:empty={regime !== 'kleinunternehmer' && line.vatRate === ''}>
         {#if regime === 'kleinunternehmer'}
@@ -139,8 +158,9 @@
       <div class="c-remove">
         {#if lines.length > 1}<button type="button" class="remove" aria-label={fill(copy.removeLine[locale], { n: i + 1 })} onclick={() => remove(i)}>×</button>{/if}
       </div>
-      {#if missing.length > 0 || invalid.length > 0}
+      {#if missing.length > 0 || invalid.length > 0 || whole.length > 0}
         <div class="row-notes">
+          {#if whole.length > 0}<div id={`lines[${i}]-line-error`}>{#each whole as text, n (n)}<p class="row-err"><Glyph kind="error" /> <span>{text}</span></p>{/each}</div>{/if}
           {#each invalid as entry (entry.field)}<p class="row-err" id={`${id(i, entry.field)}-error`}><Glyph kind="error" /> <span>{entry.text}</span></p>{/each}
           {#if missing.length > 0}<p class="row-open" id={`lines[${i}]-open`}><Glyph kind="incomplete" /> <span>{fill(copy['sheet.lineOpen'][locale], { list: missing.join(', ') })}</span></p>{/if}
         </div>
@@ -240,7 +260,8 @@
   :global(.blk:not(.on)) .c-name { padding-inline-end: 0; }
   input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 
-  @container lines (min-width: 46rem) {
+  /* The wide table needs its tracks (49.75rem) and six 0.5rem gaps: 52.75rem. Narrower containers keep the stacked rows. */
+  @container lines (min-width: 52.75rem) {
     .head, .row { display: grid; grid-template-columns: 1.75rem 5.5rem 9rem 10rem minmax(13.5rem, 1fr) 8rem 2rem; column-gap: 0.5rem; }
     .head { padding-block-end: 0.25rem; border-bottom: 1px solid var(--ink); color: var(--muted); font: 500 0.75rem/1.3 var(--mono); letter-spacing: 0.04em; }
     .head span { grid-row: 2; padding-inline: 0.4rem; white-space: nowrap; }

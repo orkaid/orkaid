@@ -3,7 +3,7 @@
   // worked in shows the tools of editing, a resting block reads as the document. Every amount and diagnostic is the domain's.
   import { tick, type ComponentProps, type Snippet } from 'svelte';
   import { formatLocalizedDecimal } from '../../../lib/domain/xrechnung/number-notation.ts';
-  import { copy, describeError, fill, openCountText } from '../../../i18n/xrechnung.ts';
+  import { copy, describeError, fill, labelFor, openCountText } from '../../../i18n/xrechnung.ts';
   import type { HelpId } from '../../../i18n/xrechnung-help.ts';
   import type { Locale } from '../../../i18n/ui.ts';
   import Field from './Field.svelte';
@@ -14,6 +14,7 @@
   import { activeFixedReasons, checkForm, countByKind, exportXml, fieldValues, hasReverseCharge, previewTotals, sectionOf, type DiagnosticItem, type ExportFormat, type SectionId } from './form-adapter.ts';
   import { emptyFormState, FIELD_IDS, type FieldId } from './form-state.ts';
   import { returnTarget } from './focus-return.ts';
+  import { navigationTarget, placementOf } from './diagnostic-placement.ts';
 
   type Status = 'pristine' | 'incomplete' | 'invalid' | 'local';
   type SectionState = { id: SectionId; kind: 'ok' | 'error' | 'incomplete' | 'pending'; text: string };
@@ -58,13 +59,16 @@
   const itemText = (item: DiagnosticItem): string =>
     item.kind === 'internal' ? fill(copy['diag.internal'][locale], { code: item.code })
     : item.kind === 'missing' && item.fieldId === item.path && item.code !== 'unsupported_vat_rate' ? describeError('missing_field', item.path, locale)
+    // The domain refuses a hard line break in a single-line text: say so, not only "control characters". The text stays as typed.
+    : item.code === 'invalid_text' && /[\r\n]/.test(values[item.path] ?? '') ? fill(copy['sheet.lineBreak'][locale], { field: labelFor(item.path, locale) })
+    : item.code === 'calculated_amount_limit' ? `${describeError(item.code, item.path, locale)} ${copy[item.path === 'lines' ? 'sheet.limitAllLines' : 'sheet.limitLine'][locale]}`
     : describeError(item.code, item.path, locale);
   // A message appears once its field was left, or after an explicit check, which marks every open path of that moment.
   // A line added afterwards is therefore not marked before the user has touched it; the counts are always live.
   const shown = $derived.by(() => {
     const map: Record<string, { text: string; missing: boolean }> = {};
     for (const item of items) {
-      if (item.fieldId !== item.path || item.kind === 'internal') continue;
+      if (placementOf(item).at !== 'field') continue;
       if (touched[item.path]) map[item.path] = { text: itemText(item), missing: item.kind === 'missing' };
     }
     return map;
@@ -79,6 +83,14 @@
     const item = items.find((entry) => entry.code === code && entry.path === path);
     return item ? describeError(item.code, item.path, locale) : undefined;
   };
+  const lineTouched = (prefix: string): boolean => Object.keys(touched).some((key) => touched[key] === true && key.startsWith(prefix));
+  /** Diagnostics about one line as a whole (for example its calculated net at the tool's ceiling), once the line was worked in. */
+  const lineErrors = (index: number): string[] =>
+    items.filter((item) => { const place = placementOf(item); return place.at === 'line' && place.line === index && (touched[item.path] === true || lineTouched(`lines[${index}].`)); }).map(itemText);
+  /** Diagnostics about the line table as a whole: no line at all, or an amount over all lines at the tool's ceiling. */
+  const linesErrors = $derived(items.filter((item) => placementOf(item).at === 'lines' && (touched[item.path] === true || lineTouched('lines['))).map(itemText));
+  /** Diagnostics with no field, group or line of their own: always listed on the document, never dropped. */
+  const documentIssues = $derived(items.filter((item) => placementOf(item).at === 'document'));
   const hasValues = (section: SectionId): boolean => Object.entries(values).some(([path, value]) => value !== '' && sectionOf(path) === section);
   // Quiet until the user has begun a section: a neutral count instead of a warning nobody has earned yet.
   const sectionState = (section: SectionId): SectionState => {
@@ -97,7 +109,7 @@
     return single.ok && single.totals.lines[0] ? formatLocalizedDecimal(single.totals.lines[0].netAmount, 'de') : undefined;
   };
   const totalsNote = $derived.by(() => {
-    const blocking = [...new Set(items.flatMap((item) => { const hit = /^lines\[(\d+)\]\.(quantity|unitPrice|vat\.rate)$/.exec(item.path); return hit ? [Number(hit[1]) + 1] : []; }))];
+    const blocking = [...new Set(items.flatMap((item) => { const hit = /^lines\[(\d+)\](?:\.(?:quantity|unitPrice|vat\.rate))?$/.exec(item.path); return hit ? [Number(hit[1]) + 1] : []; }))];
     if (blocking.length === 0) return copy['rail.noAmounts'][locale];
     return fill((blocking.length === 1 ? copy['sheet.linesBlockingOne'] : copy['sheet.linesBlockingMany'])[locale], { list: blocking.join(', ') });
   });
@@ -117,7 +129,7 @@
     const within = line ? Number(line[1]) * 10 + ['name', 'quantity', 'unitCode', 'unitPrice', 'vat.rate'].indexOf(line[2] ?? '') : (FIELD_IDS as readonly string[]).indexOf(id);
     return SHEET.indexOf(sectionOf(id) as SectionId) * 10000 + within;
   };
-  const openPoints = $derived([...new Set(items.flatMap((item) => (item.fieldId === undefined ? [] : [item.fieldId])))].sort((a, b) => rank(a) - rank(b)));
+  const openPoints = $derived([...new Set(items.flatMap((item) => { const id = navigationTarget(item); return id === undefined ? [] : [id]; }))].sort((a, b) => rank(a) - rank(b)));
 
   /** A section the user has worked in shows what it still needs once they move on. An untouched one stays quiet. */
   function settle(section: SectionId | undefined): void {
@@ -178,9 +190,40 @@
   function nextOpen(from: string | undefined = cursor): void {
     const points = openPoints.filter((id) => id !== from);
     const target = points.find((id) => from === undefined || rank(id) > rank(from)) ?? points[0] ?? openPoints[0];
-    if (target === undefined) { announcement = copy['sheet.allDone'][locale]; closeBlock(); statusEl?.focus(); return; }
+    if (target === undefined) {
+      // "All done" only when the domain reports nothing. Diagnostics without a field to go to are shown, with focus on their list.
+      if (openTotal > 0) { void showResults().then(() => document.getElementById('sheet-issues')?.focus()); return; }
+      announcement = copy['sheet.allDone'][locale]; closeBlock(); statusEl?.focus(); return;
+    }
     void goTo(target);
   }
+  /** The footer's "Next: …" action: the next block becomes the one being worked in, then its first visible control takes focus. */
+  async function nextBlock(section: SectionId): Promise<void> {
+    await activate(section);
+    await tick();
+    const controls = [...document.querySelectorAll<HTMLElement>(`#section-${section} :is(input, select, textarea)`)];
+    (controls.find(usable) ?? document.getElementById(`h-${section}`))?.focus();
+  }
+  // The wide bar and the narrow-screen bar show different controls. When the layout switches and the command that held focus is
+  // hidden, focus goes to its visible counterpart (the menu button, or the check action); focus that moved elsewhere stays.
+  $effect(() => {
+    let last: HTMLElement | null = null;
+    const remember = (event: FocusEvent): void => { last = event.target instanceof HTMLElement ? event.target : null; };
+    const narrow = matchMedia('(max-width: 47.99rem)');
+    const retire = (): void => {
+      void tick().then(() => {
+        const was = last;
+        const active = document.activeElement;
+        if (was === null || was.closest('.bar') === null) return;
+        if (!(active === null || active === document.body || (active === was && !usable(was)))) return;
+        const counterpart = was.id === 'bar-menu' ? document.querySelector<HTMLElement>('.bar-actions .act.check') : document.getElementById('bar-menu');
+        returnTarget([counterpart, statusEl ?? null], usable)?.focus();
+      });
+    };
+    document.addEventListener('focusin', remember);
+    narrow.addEventListener('change', retire);
+    return () => { document.removeEventListener('focusin', remember); narrow.removeEventListener('change', retire); };
+  });
   async function showResults(): Promise<void> {
     checked = true;
     for (const item of items) touched[item.path] = true;
@@ -332,7 +375,7 @@
     </div>
     {#if form.vatRegime === 'kleinunternehmer'}<p class="group-hint">{copy['vatRegime.kuSellerHint'][locale]}</p>{/if}
   </fieldset>
-  <LinesEditor bind:lines={form.lines} {locale} {totals} calculated={result.ok} {netFor} {totalsNote} {errorFor} {isMissing} {touch} onshift={shiftLines} onmore={(id, el) => openHelp(id, el)} groupError={groupError('no_lines', 'lines')} regime={form.vatRegime} />
+  <LinesEditor bind:lines={form.lines} {locale} {totals} calculated={result.ok} {netFor} {totalsNote} {errorFor} {isMissing} {touch} onshift={shiftLines} onmore={(id, el) => openHelp(id, el)} groupErrors={linesErrors} {lineErrors} regime={form.vatRegime} />
   {#if reasons.length > 0}
     <section class="reasons" aria-labelledby="reasons-title">
       <h3 id="reasons-title">{copy['reason.title'][locale]}</h3>
@@ -387,8 +430,8 @@
     {#if on}
       <div class="blk-foot">
         <button type="button" class="btn" onclick={() => closeBlock(true)}>{copy['sheet.done'][locale]}</button>
-        {#if nextId}<button type="button" class="btn" onclick={() => { const first = document.querySelector<HTMLElement>(`#section-${nextId} :is(input, select, textarea)`); first?.focus(); }}>{fill(copy['sheet.nextBlock'][locale], { section: copy[`sheet.short_${nextId}`][locale] })} <span aria-hidden="true">→</span></button>{/if}
-        <span class="keys">{copy['sheet.keys'][locale]}</span>
+        {#if nextId}<button type="button" class="btn" onclick={() => void nextBlock(nextId)}>{fill(copy['sheet.nextBlock'][locale], { section: copy[`sheet.short_${nextId}`][locale] })} <span aria-hidden="true">→</span></button>{/if}
+        <span class="keys">{copy[id === 'lines' ? 'sheet.keysLines' : 'sheet.keys'][locale]}</span>
       </div>
     {/if}
   </section>
@@ -399,10 +442,10 @@
     <div class="bar-main">
       <p class={`bar-status ${status}`} tabindex="-1" bind:this={statusEl}><Glyph kind={statusGlyph} /> <strong>{statusLine}</strong></p>
       <p class="bar-gross"><span class="lbl">{copy['rail.gross'][locale]} · {totals ? (result.ok ? copy['rail.calculated'][locale] : copy['rail.preview'][locale]) : copy['sheet.totalsNone'][locale]}</span> <span class="amt">{totals ? money(totals.totalWithVat) : '—'}</span></p>
-      <button type="button" class="act next" aria-disabled={openPoints.length === 0} onclick={() => nextOpen()}>
-        {#if openPoints.length === 0}{copy['sheet.allDone'][locale]}
+      <button type="button" class="act next" aria-disabled={openTotal === 0} onclick={() => nextOpen()}>
+        {#if openTotal === 0}{copy['sheet.allDone'][locale]}
         {:else if status === 'pristine'}{copy['sheet.begin'][locale]} <span aria-hidden="true">→</span>
-        {:else}<span class="long">{copy['sheet.nextOpen'][locale]}</span><span class="short">{copy['sheet.nextShort'][locale]}</span>&nbsp;({openPoints.length}) <span aria-hidden="true">→</span>{/if}
+        {:else}<span class="long">{copy['sheet.nextOpen'][locale]}</span><span class="short">{copy['sheet.nextShort'][locale]}</span>&nbsp;({openPoints.length > 0 ? openPoints.length : openTotal}) <span aria-hidden="true">→</span>{/if}
       </button>
       <button type="button" class="act menu" id="bar-menu" aria-expanded={menu} aria-controls="bar-more" onclick={() => (menu = !menu)}>{copy['sheet.menu'][locale]} <span aria-hidden="true">{menu ? '▾' : '▴'}</span></button>
     </div>
@@ -424,7 +467,6 @@
       {#if lastExport && changedSinceExport}<p class="bar-note"><Glyph kind="info" /> {copy['status.changed'][locale]}</p>{/if}
       {#if exportFailure}<p class="bar-note danger"><Glyph kind="error" /> {fill(copy['diag.internal'][locale], { code: exportFailure })}</p>{/if}
       {#if truncated}<p class="bar-note">{copy['diag.truncated'][locale]}</p>{/if}
-      {#each items.filter((item) => item.section === 'general') as item (item.code)}<p class="bar-note danger"><Glyph kind="error" /> {itemText(item)}</p>{/each}
     </div>
   </div>
 
@@ -436,6 +478,12 @@
       <p class="sheet-meta">{copy['sheet.sheetMeta'][locale]}</p>
     </header>
     {#if status === 'pristine'}<p class="intro">{copy['sheet.intro'][locale]}</p>{/if}
+    {#if documentIssues.length > 0}
+      <section class="sheet-issues" id="sheet-issues" tabindex="-1" aria-labelledby="sheet-issues-title">
+        <h2 id="sheet-issues-title">{copy['sheet.documentIssues'][locale]}</h2>
+        <ul>{#each documentIssues as item, n (`${item.code}|${item.path}|${n}`)}<li><Glyph kind="error" /> <span>{itemText(item)}</span></li>{/each}</ul>
+      </section>
+    {/if}
     <div class="sheet-grid">
       {@render block('seller', 'sec.seller', bodySeller)}
       {@render block('document', undefined, bodyDocument)}
@@ -494,6 +542,9 @@
   .stamp.incomplete { background: var(--highlight); }
   .stamp.invalid { border-color: var(--danger); color: var(--danger); }
   .stamp.local { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .sheet-issues { margin: 0.875rem 0 0; padding: 0.5rem 0.75rem; max-inline-size: 70ch; border-inline-start: 3px solid var(--danger); }
+  .sheet-issues ul { display: flex; flex-direction: column; gap: 0.25rem; margin: 0.25rem 0 0; padding: 0; list-style: none; }
+  .sheet-issues li { display: flex; gap: 0.5rem; color: var(--danger); font: 500 0.875rem/1.4 var(--sans); }
   .intro { margin: 0.875rem 0 0; padding: 0.5rem 0.75rem; max-inline-size: 70ch; border-inline-start: 3px solid var(--accent); font-size: 0.9375rem; }
   .sheet-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 3rem; }
 

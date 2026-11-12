@@ -288,6 +288,15 @@ export const copy = {
     'This sheet is your invoice. Click any entry to write it – or use “Start the invoice” and Enter to go from point to point.',
   ),
   'sheet.keys': m('Enter: nächster offener Punkt · F1: Hilfe zum Feld · Esc: Abschnitt schließen', 'Enter: next open point · F1: help for the field · Esc: close section'),
+  // The line cells have no F1 shortcut; their help is the column-help links above the table (reachable with Tab).
+  'sheet.keysLines': m('Enter: nächster offener Punkt, in der Beschreibung: weiter zur Menge · Hilfe: Links über der Tabelle · Esc: Abschnitt schließen', 'Enter: next open point, in a description: on to the quantity · Help: links above the table · Esc: close section'),
+  'sheet.lineBreak': m(
+    '{field}: Ein Zeilenumbruch ist hier nicht möglich. Entfernen Sie den Umbruch, damit der Text in einer Zeile steht; der Text wird nicht automatisch verändert.',
+    '{field}: a line break is not possible here. Remove the line break so that the text is on one line; the text is not changed automatically.',
+  ),
+  'sheet.limitLine': m('Verringern Sie Menge oder Einzelpreis (netto) dieser Position.', 'Reduce the quantity or the unit price (net) of this line.'),
+  'sheet.limitAllLines': m('Das betrifft die Beträge über alle Positionen; verringern Sie Mengen oder Einzelpreise.', 'This concerns the amounts over all lines; reduce quantities or unit prices.'),
+  'sheet.documentIssues': m('Zu korrigieren', 'To correct'),
   'sheet.short_seller': m('Verkäufer', 'Seller'),
   'sheet.short_document': m('Rechnungsdaten', 'Details'),
   'sheet.short_buyer': m('Käufer', 'Buyer'),
