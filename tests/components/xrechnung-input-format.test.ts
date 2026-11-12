@@ -264,7 +264,14 @@ test('all five date fields get the calendar from the one shared field component,
   assert.match(field, /textFromNativeDate/); // the shared conversion, built on germanDateFromIso
   assert.match(field, /showPicker/);
   const workspace = readFileSync(new URL('../../src/components/tools/xrechnung/XRechnungWorkspace.svelte', import.meta.url), 'utf8');
-  const dateFields = [...workspace.matchAll(/<Field id="([^"]+)"[^>]*kind="date"/g)].map((match) => match[1]);
+  // A date field is rendered either through the workspace's `fld` snippet (which renders the shared Field) or as a literal Field.
+  assert.match(workspace, /\{#snippet fld\([^)]*\)\}\s*<Field \{id\}/);
+  const dateFields = [
+    ...[...workspace.matchAll(/\{@render fld\('([^']+)', '[^']+', \{[^}]*kind: 'date'/g)].map((match) => match[1]),
+    ...[...workspace.matchAll(/<Field id="([^"]+)"[^>]*kind="date"/g)].map((match) => match[1]),
+  ];
+  // The shared Field renders the calendar button for every date field, named with the field's own label.
+  assert.match(field, /\{:else if kind === 'date'\}[\s\S]*?<button type="button" class="cal"[^>]*aria-label=\{fill\(copy\['date\.calendar'\]\[locale\], \{ field: label \}\)\}/);
   assert.deepEqual(dateFields.sort(), ['deliveryDate', 'invoicingPeriod.endDate', 'invoicingPeriod.startDate', 'issueDate', 'payment.dueDate']);
   for (const locale of ['de', 'en'] as const) {
     const names = dateFields.map((id) => fill(copy['date.calendar'][locale], { field: labelFor(id ?? '', locale) }));

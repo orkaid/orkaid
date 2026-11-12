@@ -101,10 +101,21 @@ test('the drawer counts an inline "more" as usable only while its field help tog
   assert.match(closed, /returnTarget\(\[trigger, byId\(fieldContext\), byId\(entry\?\.fieldId\)\], usable\)/);
 });
 
-test('closing the inline help on a layout change moves focus inside it to the field control before it is removed', () => {
+test('focus is never left on, or lost from, help that is hidden or removed, including when a block comes to rest', () => {
+  // MDR-46: the Rechnungsblatt hides a resting block's help (and its "more"), hints and help toggles with the block's class.
   const field = read('Field.svelte');
-  const observer = field.slice(field.indexOf('new ResizeObserver'), field.indexOf('observer.observe'));
-  const move = observer.indexOf('document.getElementById(id)?.focus()');
-  assert.ok(move > 0 && move < observer.indexOf('hintOpen = false'), 'focus moves before the help (and its "more") is removed');
-  assert.match(observer, /getElementById\(`\$\{id\}-help`\)\?\.contains\(document\.activeElement\)/);
+  assert.match(field, /:global\(\.blk:not\(\.on\)\) \.help,/);
+  assert.match(field, /:global\(\.blk:not\(\.on\)\) \.inline-help \{ display: none; \}/);
+  const workspace = read('XRechnungWorkspace.svelte');
+  const close = workspace.slice(workspace.indexOf('function closeBlock'), workspace.indexOf('const calm'));
+  // Whether focus is inside the block is read before the block is set to rest; the move happens once it has rendered.
+  assert.match(close, /const inside = focused !== null && document\.getElementById\(`section-\$\{section\}`\)\?\.contains\(focused\) === true;/);
+  assert.ok(close.indexOf('const inside') < close.indexOf('open = undefined'), 'focus is located before the block rests');
+  assert.match(close, /if \(focusHeading \|\| inside\) \{\s*void tick\(\)\.then\(/);
+  // Focus that was lost (gone to the body, or still on an element that is no longer rendered) goes to the block heading.
+  assert.match(close, /const lost = active === null \|\| active === document\.body \|\| \(active === focused && focused !== null && !usable\(focused\)\);/);
+  assert.match(close, /else if \(lost\) returnTarget\(\[focused, heading\], usable\)\?\.focus\(\);/);
+  assert.match(workspace, /const usable = \(element: HTMLElement\): boolean => element\.isConnected && element\.getClientRects\(\)\.length > 0;/);
+  // Every way a block comes to rest either runs this guard or moves focus itself.
+  assert.doesNotMatch(workspace.replace(close, ''), /open = undefined;(?![^\n]*statusEl)(?![\s\S]{0,80}statusEl\?\.focus\(\))/);
 });

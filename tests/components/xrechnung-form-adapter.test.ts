@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -132,8 +132,12 @@ test('totals are displayed in German notation on both routes, without changing t
   assert.ok(preview.ok);
   assert.equal(formatLocalizedDecimal(preview.totals.totalWithoutVat, 'de'), '975,00');
   assert.equal(formatLocalizedDecimal({ units: 123456789n, scale: 2 }, 'de'), '1.234.567,89');
-  for (const file of ['SummaryRail.svelte', 'LinesEditor.svelte', 'XRechnungWorkspace.svelte']) {
-    const source = readFileSync(new URL(`../../src/components/tools/xrechnung/${file}`, import.meta.url), 'utf8');
+  // Every component that formats an amount is checked (MDR-46 retired the summary rail; the sheet and its totals remain).
+  const directory = new URL('../../src/components/tools/xrechnung/', import.meta.url);
+  const formatting = readdirSync(directory).filter((file) => file.endsWith('.svelte') && readFileSync(new URL(file, directory), 'utf8').includes('formatLocalizedDecimal('));
+  assert.deepEqual(formatting, ['LinesEditor.svelte', 'XRechnungWorkspace.svelte']);
+  for (const file of formatting) {
+    const source = readFileSync(new URL(file, directory), 'utf8');
     assert.doesNotMatch(source, /formatLocalizedDecimal\([^)]*locale\)/, file);
     assert.match(source, /formatLocalizedDecimal\([^)]*'de'\)/, file);
   }

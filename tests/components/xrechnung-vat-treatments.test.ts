@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -358,17 +358,29 @@ test('the Reverse Charge help restates § 14a Abs. 5 UStG no wider than its word
   }
 });
 
-test('the summary rail itself keys VAT buckets by treatment and rate and captions them by treatment', () => {
-  const source = readFileSync(new URL('../../src/components/tools/xrechnung/SummaryRail.svelte', import.meta.url), 'utf8');
-  assert.match(source, /\{#each totals\.vatBreakdown as bucket \(vatBucketKey\(bucket\)\)\}/);
-  assert.match(source, /vatBucketLabel\(bucket,/);
-  assert.doesNotMatch(source, /\(bucket\.rate\)/);
-  assert.doesNotMatch(source, /rail\.vatLine/);
+test('the totals on the document key VAT buckets by treatment and rate and caption them by treatment', () => {
+  // MDR-46 retired the summary rail; the same assertions apply to every component that presents the VAT breakdown.
+  const directory = new URL('../../src/components/tools/xrechnung/', import.meta.url);
+  const presenting = readdirSync(directory).filter((file) => file.endsWith('.svelte') && readFileSync(new URL(file, directory), 'utf8').includes('vatBreakdown'));
+  assert.deepEqual(presenting, ['LinesEditor.svelte']);
+  for (const file of presenting) {
+    const source = readFileSync(new URL(file, directory), 'utf8');
+    assert.match(source, /\{#each totals\.vatBreakdown as bucket \(vatBucketKey\(bucket\)\)\}/, file);
+    assert.match(source, /vatBucketLabel\(bucket,/, file);
+    assert.doesNotMatch(source, /\(bucket\.rate\)/, file);
+    assert.doesNotMatch(source, /rail\.vatLine/, file);
+  }
 });
 
 test('the lines editor shows fixed text instead of a choice in Kleinunternehmer mode and offers Reverse Charge in the regular regime', () => {
   const source = readFileSync(new URL('../../src/components/tools/xrechnung/LinesEditor.svelte', import.meta.url), 'utf8');
-  assert.match(source, /\{#if regime === 'kleinunternehmer'\}[\s\S]*?vat\.fixedKu[\s\S]*?\{:else\}[\s\S]*?kind="select" options=\{vatOptions\}/);
+  assert.match(source, /\{#if regime === 'kleinunternehmer'\}[\s\S]*?vat\.fixedKu[\s\S]*?\{:else\}[\s\S]*?<select id=\{id\(i, 'vat\.rate'\)\}[\s\S]*?\{#each vatOptions as option/);
+  // The Kleinunternehmer branch is fixed text only: it holds no control that could carry a line treatment.
+  const kuStart = source.indexOf("{#if regime === 'kleinunternehmer'}");
+  assert.doesNotMatch(source.slice(kuStart, source.indexOf('{:else}', kuStart)), /<(select|input|textarea|Field)\b/);
+  // The regular regime offers exactly 19 %, 7 % and Reverse Charge.
+  const options = /const vatOptions = \[([\s\S]*?)\];/.exec(source)?.[1] ?? '';
+  assert.deepEqual([...options.matchAll(/value: '([^']+)'/g)].map((match) => match[1]), ['19', '7', 'reverse-charge']);
   assert.match(source, /value: 'reverse-charge', label: copy\['vat\.reverseCharge'\]\[locale\]/);
   const workspace = readFileSync(new URL('../../src/components/tools/xrechnung/XRechnungWorkspace.svelte', import.meta.url), 'utf8');
   assert.match(workspace, /name="vatRegime" value="regular" bind:group=\{form\.vatRegime\}/);
