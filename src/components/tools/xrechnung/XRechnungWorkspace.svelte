@@ -14,7 +14,7 @@
   import { activeFixedReasons, checkForm, countByKind, exportXml, fieldValues, hasReverseCharge, previewTotals, sectionOf, type DiagnosticItem, type ExportFormat, type SectionId } from './form-adapter.ts';
   import { emptyFormState, FIELD_IDS, type FieldId } from './form-state.ts';
   import { returnTarget } from './focus-return.ts';
-  import { navigationTarget, placementOf } from './diagnostic-placement.ts';
+  import { lineBreakRefused, navigationTarget, placementOf } from './diagnostic-placement.ts';
 
   type Status = 'pristine' | 'incomplete' | 'invalid' | 'local';
   type SectionState = { id: SectionId; kind: 'ok' | 'error' | 'incomplete' | 'pending'; text: string };
@@ -59,8 +59,8 @@
   const itemText = (item: DiagnosticItem): string =>
     item.kind === 'internal' ? fill(copy['diag.internal'][locale], { code: item.code })
     : item.kind === 'missing' && item.fieldId === item.path && item.code !== 'unsupported_vat_rate' ? describeError('missing_field', item.path, locale)
-    // The domain refuses a hard line break in a single-line text: say so, not only "control characters". The text stays as typed.
-    : item.code === 'invalid_text' && /[\r\n]/.test(values[item.path] ?? '') ? fill(copy['sheet.lineBreak'][locale], { field: labelFor(item.path, locale) })
+    // A line description refuses a hard line break: say so, not only "control characters". The text stays as typed.
+    : lineBreakRefused(item, values[item.path] ?? '') ? fill(copy['sheet.lineBreak'][locale], { field: labelFor(item.path, locale) })
     : item.code === 'calculated_amount_limit' ? `${describeError(item.code, item.path, locale)} ${copy[item.path === 'lines' ? 'sheet.limitAllLines' : 'sheet.limitLine'][locale]}`
     : describeError(item.code, item.path, locale);
   // A message appears once its field was left, or after an explicit check, which marks every open path of that moment.

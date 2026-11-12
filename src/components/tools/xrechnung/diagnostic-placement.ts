@@ -37,3 +37,11 @@ export function navigationTarget(item: DiagnosticItem): string | undefined {
   if (place.at === 'line') return `lines[${place.line}].quantity`;
   return item.fieldId;
 }
+
+/**
+ * True when the line-break explanation is the right one for an `invalid_text`: only a line description, which is one line
+ * (MDR-47), refuses every CR/LF. Payment terms and notes admit an internal LF, so there a break is never named as the cause.
+ */
+export function lineBreakRefused(item: DiagnosticItem, value: string): boolean {
+  return item.code === 'invalid_text' && /^lines\[\d+\]\.name$/.test(item.path) && /[\r\n]/.test(value);
+}

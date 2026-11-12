@@ -4,10 +4,10 @@ import assert from 'node:assert/strict';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 
-import { navigationTarget, placementOf } from '../../src/components/tools/xrechnung/diagnostic-placement.ts';
+import { lineBreakRefused, navigationTarget, placementOf } from '../../src/components/tools/xrechnung/diagnostic-placement.ts';
 import { checkForm, previewTotals, type DiagnosticItem } from '../../src/components/tools/xrechnung/form-adapter.ts';
 import { emptyFormState, emptyLine } from '../../src/components/tools/xrechnung/form-state.ts';
-import { copy } from '../../src/i18n/xrechnung.ts';
+import { copy, errorMessages } from '../../src/i18n/xrechnung.ts';
 import { formatLocalizedDecimal } from '../../src/lib/domain/xrechnung/number-notation.ts';
 
 const directory = new URL('../../src/components/tools/xrechnung/', import.meta.url);
@@ -173,13 +173,33 @@ test('a hard line break gets a line-break message, the ceiling a correction hint
     assert.match(copy['sheet.keys'][locale], /F1/);
   }
   const workspace = read('XRechnungWorkspace.svelte');
-  assert.match(workspace, /item\.code === 'invalid_text' && \/\[\\r\\n\]\/\.test\(values\[item\.path\] \?\? ''\) \? fill\(copy\['sheet\.lineBreak'\]/);
+  assert.match(workspace, /: lineBreakRefused\(item, values\[item\.path\] \?\? ''\) \? fill\(copy\['sheet\.lineBreak'\]/);
   assert.match(workspace, /copy\[id === 'lines' \? 'sheet\.keysLines' : 'sheet\.keys'\]/);
   // The text itself is never changed: the frozen domain still rejects it and the export stays refused.
   const state = validOneLine('1', '10');
   state.lines[0]!.name = 'Wartung\nOktober';
   assert.deepEqual(itemsOf(state).map((item) => `${item.code}@${item.path}`), ['invalid_text@lines[0].name']);
   assert.equal(state.lines[0]!.name, 'Wartung\nOktober');
+});
+
+// Re-review of 5daa72d, R01: payment terms (BT-20) and notes (BT-22) admit an internal LF, so a break there is never named.
+test('the line-break explanation is given only where a line break is the refused part', () => {
+  const state = validOneLine('1', '10');
+  state.lines[0]!.name = 'Wartung\nOktober';
+  const [description] = itemsOf(state);
+  assert.ok(description && lineBreakRefused(description, state.lines[0]!.name));
+  for (const path of ['payment.termsText', 'notes[0].text'] as const) {
+    const at = (value: string) => { const s = validOneLine('1', '10'); s.fields[path] = value; return itemsOf(s).filter((item) => item.path === path); };
+    assert.deepEqual(at('Zahlbar in 30 Tagen.\nVielen Dank.'), [], `${path}: an internal LF is valid`);
+    const padded = at('Zahlbar in 30 Tagen.\nVielen Dank. ');
+    assert.deepEqual(padded.map((item) => item.code), ['invalid_text'], `${path}: LF plus a final space is refused`);
+    assert.equal(lineBreakRefused(padded[0]!, 'Zahlbar in 30 Tagen.\nVielen Dank. '), false, `${path}: the refusal is not put on the LF`);
+    assert.deepEqual(at('Zahlbar in 30 Tagen. Vielen Dank. ').map((item) => item.code), ['invalid_text'], `${path}: removing only the LF does not cure it`);
+    const carriage = at('Zahlbar in 30 Tagen.\r\nVielen Dank.');
+    assert.equal(lineBreakRefused(carriage[0]!, 'Zahlbar in 30 Tagen.\r\nVielen Dank.'), false, `${path}: a CR gets the general text message`);
+  }
+  // The general message names what is refused there: spaces at the start or end, and control characters.
+  for (const locale of locales) assert.match(errorMessages.invalid_text[locale], locale === 'de' ? /Leerzeichen am Anfang oder Ende/ : /spaces at the start or end/);
 });
 
 test('Enter in a line description goes on to the quantity; modified Enter, line-break insertion and composition are handled', () => {

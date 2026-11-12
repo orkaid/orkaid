@@ -154,7 +154,7 @@ function expect(name: string, ok: boolean, detail: unknown): void {
   (ok ? passes : failures).push(`${ok ? 'PASS' : 'FAIL'} ${name}${ok ? '' : ` — ${JSON.stringify(detail)}`}`);
 }
 const ROUTES = [{ locale: 'de', path: '/tools/xrechnung/' }, { locale: 'en', path: '/en/tools/xrechnung/' }] as const;
-const DICT = { de: { limit: 'Grenze dieses Werkzeugs', lineBreak: 'Zeilenumbruch', allDone: 'Keine offenen Punkte' }, en: { limit: 'tool’s limit', lineBreak: 'line break', allDone: 'No open points' } } as const;
+const DICT = { de: { limit: 'Grenze dieses Werkzeugs', lineBreak: 'Zeilenumbruch', allDone: 'Keine offenen Punkte', padding: 'Leerzeichen am Anfang oder Ende' }, en: { limit: 'tool’s limit', lineBreak: 'line break', allDone: 'No open points', padding: 'spaces at the start or end' } } as const;
 
 for (const { locale, path } of ROUTES) {
   const d = DICT[locale];
@@ -236,6 +236,26 @@ for (const { locale, path } of ROUTES) {
   await page(`(window.__set('lines[0].name', 'Wartung\\nOktober'), window.__wait(100))`);
   const pasted = await page<{ value: string; error: string }>(`({ value: document.getElementById('lines[0].name').value, error: [...document.querySelectorAll('#section-lines .row-err')].map((p) => p.textContent).join(' ') })`);
   expect(`${locale} F03 a pasted line break is kept as typed and explained`, pasted.value === 'Wartung\nOktober' && pasted.error.includes(d.lineBreak), pasted);
+
+  // R01: payment terms (BT-20) and notes (BT-22) admit an internal LF; a refusal there is never put on the line break.
+  await open(path);
+  await page(`window.__fill([['Leistung', 'C62', '1', '10', '19']])`);
+  const description = await page<{ ubl: string | null }>(`(window.__set('lines[0].name', 'Wartung\\nOktober'), document.querySelector('.bar-actions .act.check').click(), window.__wait(150)).then(() => ({ ubl: document.querySelector('.bar-actions .act.primary').getAttribute('aria-disabled') }))`);
+  expect(`${locale} R01 a line break in a description: export refused`, description.ubl === 'true', description);
+  await page(`window.__set('lines[0].name', 'Wartung Oktober')`);
+  for (const id of ['payment.termsText', 'notes[0].text']) {
+    const probe = (value: string) => page<{ value: string; error: string | null; ubl: string | null }>(`(window.__set(${JSON.stringify(id)}, ${JSON.stringify(value)}), document.querySelector('.bar-actions .act.check').click(), window.__wait(150)).then(() => ({
+      value: document.getElementById(${JSON.stringify(id)}).value, error: document.getElementById(${JSON.stringify(id + '-error')})?.textContent ?? null, ubl: document.querySelector('.bar-actions .act.primary').getAttribute('aria-disabled') }))`);
+    const valid = await probe('Zahlbar in 30 Tagen.\nVielen Dank.');
+    expect(`${locale} R01 ${id}: an internal LF is accepted`, valid.error === null && valid.ubl === 'false' && valid.value.includes('\n'), valid);
+    const padded = await probe('Zahlbar in 30 Tagen.\nVielen Dank. ');
+    expect(`${locale} R01 ${id}: LF plus a final space names the spaces, not the break; export refused`, padded.error?.includes(d.padding) === true && !padded.error.includes(d.lineBreak) && padded.ubl === 'true' && padded.value.endsWith(' '), padded);
+    const unpadded = await probe('Zahlbar in 30 Tagen.\nVielen Dank.');
+    expect(`${locale} R01 ${id}: removing only the space cures it, the LF kept`, unpadded.error === null && unpadded.ubl === 'false' && unpadded.value === 'Zahlbar in 30 Tagen.\nVielen Dank.', unpadded);
+    const flattened = await probe('Zahlbar in 30 Tagen. Vielen Dank. ');
+    expect(`${locale} R01 ${id}: removing only the LF does not cure it and nothing mentions a break`, flattened.error?.includes(d.padding) === true && !flattened.error.includes(d.lineBreak) && flattened.ubl === 'true', flattened);
+    await page(`window.__set(${JSON.stringify(id)}, '')`);
+  }
 
   // F04: every "Next: …" footer action activates the next block and focuses a visible control there (real Enter).
   await open(path);
