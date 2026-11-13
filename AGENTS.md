@@ -74,9 +74,9 @@ Reuse concepts intentionally. Every dependency, abstraction, config, and service
 
 Current bootstrap baseline:
 
-- Astro `7.3.3`
+- Astro `7.4.7`
 - Svelte `5.57.0`
-- `@astrojs/svelte` `9.0.1`
+- `@astrojs/svelte` `9.1.2`
 - `@astrojs/sitemap` `3.7.4`
 - TypeScript `6.0.3`
 - Node `24.20.0`

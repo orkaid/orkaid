@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import { buildDocumentInput, checkForm, exportXml } from '../../src/components/tools/xrechnung/form-adapter.ts';
@@ -184,9 +186,15 @@ test('help no longer says the date or the Leitweg-ID check cannot be used, and h
 });
 
 test('frozen domain, serializers and golden fixtures are unchanged since the freeze commit', (t) => {
+  // The dependency manifests are pinned to the approved security baseline (MDR-48); any other change to them fails here.
+  const APPROVED_MANIFESTS = {
+    'package.json': '73ba9cff4c6499699dab85edc14e4fabf21d86314fe653ce5f9ffc4ad3e8321e',
+    'package-lock.json': 'f0ca371a0d8f7b37cae54d1a9366bc9cbff7c20d413055cbfc2eaf7129c19408',
+  };
+  for (const [file, sha256] of Object.entries(APPROVED_MANIFESTS)) assert.equal(createHash('sha256').update(readFileSync(file)).digest('hex'), sha256, `${file} differs from the approved dependency baseline`);
   const FREEZE = '52d62c89d6039b56edbaab79f3390fdfdd99f663';
   try { execFileSync('git', ['cat-file', '-e', `${FREEZE}^{commit}`], { stdio: 'ignore' }); } catch { return t.skip('freeze commit not available in this checkout'); }
-  const diff = execFileSync('git', ['diff', '--stat', FREEZE, '--', 'src/lib', 'tests/fixtures', 'tests/domain', 'package.json', 'package-lock.json'], { encoding: 'utf8' });
+  const diff = execFileSync('git', ['diff', '--stat', FREEZE, '--', 'src/lib', 'tests/fixtures', 'tests/domain'], { encoding: 'utf8' });
   // The only permitted difference is the README status paragraph changed before M3 (e1be000).
   const files = diff.split('\n').filter((line) => line.includes('|')).map((line) => line.split('|')[0]?.trim());
   assert.deepEqual(files, ['src/lib/domain/xrechnung/README.md']);
