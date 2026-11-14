@@ -369,6 +369,84 @@ for (const { locale, path } of ROUTES) {
     expect(`${locale} CN ${width}px forward to 381 again: BT-25 restored, confirmation withdrawn, export refused`, again.checked === '381' && bg3Value === 'RE-2026-0042' && again.confirmChecked === false && ublAgain === 'true', { again, bg3Value, ublAgain });
   }
   await viewport(1366);
+
+  // SK: structured Skonto tiers on a 380, in the payment block. Real key presses for adding, moving, removing, undoing and
+  // navigating; values are entered by script. Diagnostics stand at the tier control; on a 381 the editor is gone.
+  const SK = (i: number, field: 'days' | 'percent') => `payment.skonto[${i}].${field}`;
+  const ubl = () => page<string | null>(`document.querySelector('.bar-actions .act.primary').getAttribute('aria-disabled')`);
+  for (const [width, mobile] of [[1366, false], [390, true]] as const) {
+    await viewport(width, mobile);
+    await open(path);
+    await page(`window.__fill([['Beratung', 'HUR', '2', '95,00', '19']])`);
+    await page(`(document.getElementById('payment.dueDate').focus(), window.__wait(120))`);
+    const empty = await page<{ group: boolean; tiers: number; add: boolean }>(`({ group: !!document.querySelector('#section-payment .skonto'), tiers: document.querySelectorAll('#section-payment .tier').length, add: !!document.querySelector('#section-payment .tiers .add') })`);
+    expect(`${locale} SK ${width}px the Skonto group is in the payment block, with no tier and an add action`, empty.group && empty.tiers === 0 && empty.add, empty);
+    await page(`document.querySelector('#section-payment .tiers .add').focus()`);
+    await press('Enter');
+    const added = await active();
+    expect(`${locale} SK ${width}px Enter on add focuses the new tier's Days`, added.id === SK(0, 'days') && added.visible, added);
+    await page(`(window.__set(${JSON.stringify(SK(0, 'days'))}, '14'), window.__set(${JSON.stringify(SK(0, 'percent'))}, '2,5'), document.getElementById(${JSON.stringify(SK(0, 'days'))}).focus())`);
+    await press('Tab');
+    const toPercent = await active();
+    await press('Tab');
+    const toRemove = await active();
+    expect(`${locale} SK ${width}px Tab: Days → Percent → remove`, toPercent.id === SK(0, 'percent') && toRemove.tag === 'BUTTON' && toRemove.cls.includes('remove'), { toPercent, toRemove });
+    const label = await page<string>(`document.querySelector('label[for="${SK(0, 'percent')}"]').textContent`);
+    expect(`${locale} SK ${width}px the label names the tier`, label.includes(locale === 'de' ? 'Skontostufe 1' : 'Discount tier 1') && label.includes(locale === 'de' ? 'Prozent' : 'Percent'), label);
+    expect(`${locale} SK ${width}px one valid tier: export ready`, (await ubl()) === 'false', await ubl());
+
+    // A second tier with fewer days: the order diagnostic stands at that tier's Days, navigation goes there, export is refused.
+    await page(`document.querySelector('#section-payment .tiers .add').focus()`);
+    await press('Enter');
+    expect(`${locale} SK ${width}px a second add focuses tier 2 Days`, (await active()).id === SK(1, 'days'), await active());
+    await page(`(window.__set(${JSON.stringify(SK(1, 'days'))}, '10'), window.__set(${JSON.stringify(SK(1, 'percent'))}, '1'), window.__wait(80))`);
+    const order = await page<{ error: string | null; invalid: string | null; describedBy: string | null }>(`({ error: document.getElementById(${JSON.stringify(SK(1, 'days') + '-error')})?.textContent ?? null, invalid: document.getElementById(${JSON.stringify(SK(1, 'days'))}).getAttribute('aria-invalid'), describedBy: document.getElementById(${JSON.stringify(SK(1, 'days'))}).getAttribute('aria-describedby') })`);
+    expect(`${locale} SK ${width}px decreasing days: the error stands at tier 2 Days, tied to it, export refused`, order.error?.includes(locale === 'de' ? 'Skontostufe 2: Tage' : 'Discount tier 2: Days') === true && order.invalid === 'true' && order.describedBy?.includes(`${SK(1, 'days')}-error`) === true && (await ubl()) === 'true', order);
+    await page(`document.querySelector('.act.next').focus()`);
+    await press('Enter');
+    const navigated = await active();
+    expect(`${locale} SK ${width}px next open point: tier 2 Days`, navigated.id === SK(1, 'days') && navigated.visible, navigated);
+    await page(`(window.__set(${JSON.stringify(SK(1, 'days'))}, '30'), window.__wait(80))`);
+    expect(`${locale} SK ${width}px corrected order: export ready`, (await ubl()) === 'false', await ubl());
+
+    // Remove tier 2 by keyboard: focus moves to undo; undo restores it at its place with its values and focuses its Days.
+    await page(`document.querySelector('#section-payment .tier:nth-of-type(2) .remove').focus()`);
+    await press('Enter');
+    const toUndo = await active();
+    const afterRemove = await page<number>(`document.querySelectorAll('#section-payment .tier').length`);
+    expect(`${locale} SK ${width}px Enter on remove: one tier left, focus on undo`, afterRemove === 1 && toUndo.id === 'skonto-undo' && toUndo.visible, { afterRemove, toUndo });
+    await press('Enter');
+    const restored = await page<{ active: string; days: string; percent: string; count: number }>(`({ active: document.activeElement.id, days: document.getElementById(${JSON.stringify(SK(1, 'days'))})?.value, percent: document.getElementById(${JSON.stringify(SK(1, 'percent'))})?.value, count: document.querySelectorAll('#section-payment .tier').length })`);
+    expect(`${locale} SK ${width}px Enter on undo: tier 2 back with its values, focus on its Days`, restored.count === 2 && restored.active === SK(1, 'days') && restored.days === '30' && restored.percent === '1', restored);
+    const overflow = await page<number>(`document.documentElement.scrollWidth - document.documentElement.clientWidth`);
+    expect(`${locale} SK ${width}px no horizontal overflow with tiers`, overflow <= 0, overflow);
+
+    // An empty added tier is reported missing at its own fields after a check, and blocks export.
+    await page(`document.querySelector('#section-payment .tiers .add').click()`);
+    await page(`document.querySelector('.bar-actions .act.check').click(), window.__wait(150)`);
+    const emptyTier = await page<{ days: string | null; percent: string | null }>(`({ days: document.getElementById(${JSON.stringify(SK(2, 'days') + '-error')})?.textContent ?? null, percent: document.getElementById(${JSON.stringify(SK(2, 'percent') + '-error')})?.textContent ?? null })`);
+    expect(`${locale} SK ${width}px an empty tier: both fields reported at the tier, export refused`, emptyTier.days !== null && emptyTier.percent !== null && (await ubl()) === 'true', emptyTier);
+    await page(`document.querySelector('#section-payment .tier:nth-of-type(3) .remove').click()`);
+
+    // Credit note: the editor leaves, a note says why, no Skonto control remains, focus stays on the radio; back on 380 the tiers return.
+    await page(`document.getElementById('documentType.380').focus()`);
+    await press('ArrowRight');
+    await sleep(150);
+    const cn = await page<{ controls: string[]; note: boolean; overflow: number }>(`({ controls: [...document.querySelectorAll('[id^="payment.skonto"]')].map((e) => e.id), note: !!document.querySelector('.skonto-cn'), overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth })`);
+    const cnFocus = await active();
+    expect(`${locale} SK ${width}px on 381: no Skonto control, the note is shown, focus stays on the radio`, cn.controls.length === 0 && cn.note && cnFocus.id === 'documentType.381' && cn.overflow <= 0, { cn, cnFocus });
+    await press('ArrowLeft');
+    await sleep(150);
+    const back = await page<string[]>(`[${JSON.stringify(SK(0, 'days'))}, ${JSON.stringify(SK(0, 'percent'))}, ${JSON.stringify(SK(1, 'days'))}, ${JSON.stringify(SK(1, 'percent'))}].map((id) => document.getElementById(id)?.value ?? '?')`);
+    expect(`${locale} SK ${width}px back on 380: the tiers return as typed; export ready`, JSON.stringify(back) === JSON.stringify(['14', '2,5', '30', '1']) && (await ubl()) === 'false', back);
+
+    // Ten tiers: no add action any more, the limit is stated.
+    for (let i = 2; i < 10; i++) await page(`(document.querySelector('#section-payment .tiers .add').click(), window.__wait(20))`);
+    const full = await page<{ count: number; add: boolean; limit: string | null }>(`({ count: document.querySelectorAll('#section-payment .tier').length, add: !!document.querySelector('#section-payment .tiers .add'), limit: document.querySelector('#section-payment .tiers .limit')?.textContent ?? null })`);
+    expect(`${locale} SK ${width}px ten tiers: no add action, the limit is stated`, full.count === 10 && !full.add && full.limit?.includes('10') === true, full);
+    expect(`${locale} SK ${width}px the tenth add moved focus to tier 10 Days`, (await active()).id === SK(9, 'days'), await active());
+  }
+  await viewport(1366);
 }
 
 expect('no console error, page exception or CSP report', pageErrors.length === 0, pageErrors);
