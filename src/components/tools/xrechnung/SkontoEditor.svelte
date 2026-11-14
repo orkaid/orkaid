@@ -17,8 +17,10 @@
     onshift: (index: number) => void;
     /** The group's explanation, tied to every tier control. */
     describedById: string;
+    /** F1 in a tier field opens the Skonto help; focus returns to `trigger` when it closes. */
+    onhelp: (trigger: HTMLElement) => void;
   };
-  let { tiers = $bindable(), locale, errorFor, isMissing, touch, onshift, describedById }: Props = $props();
+  let { tiers = $bindable(), locale, errorFor, isMissing, touch, onshift, describedById, onhelp }: Props = $props();
 
   const FIELDS = [['days', 'f.skontoDays', 'numeric'], ['percent', 'f.skontoPercent', 'decimal']] as const;
   const id = (i: number, field: string) => `payment.skonto[${i}].${field}`;
@@ -45,6 +47,11 @@
     focusDays(removed.index);
     removed = undefined;
   }
+  function helpKey(event: KeyboardEvent): void {
+    if (event.key !== 'F1' || !(event.currentTarget instanceof HTMLElement)) return;
+    event.preventDefault();
+    onhelp(event.currentTarget);
+  }
   const mark = (fid: string) => (errorFor(fid) === undefined ? '' : isMissing(fid) ? 'miss' : 'bad');
 </script>
 
@@ -58,7 +65,7 @@
         <div class={`c c-${field} ${mark(fid)}`} class:empty={tier[field] === ''}>
           <label for={fid}><span class="sr">{tierName(i)}: </span>{copy[key][locale]}</label>
           <span class="ctl">
-            <input id={fid} type="text" inputmode={mode} bind:value={tier[field]} autocomplete="off" spellcheck="false" aria-invalid={mark(fid) !== ''} aria-describedby={mark(fid) === '' ? describedById : `${describedById} ${fid}-error`} onblur={() => touch(fid)} />
+            <input id={fid} type="text" inputmode={mode} bind:value={tier[field]} autocomplete="off" spellcheck="false" aria-keyshortcuts="F1" onkeydown={helpKey} aria-invalid={mark(fid) !== ''} aria-describedby={mark(fid) === '' ? describedById : `${describedById} ${fid}-error`} onblur={() => touch(fid)} />
             {#if field === 'percent'}<span class="unit" aria-hidden="true">%</span>{/if}
           </span>
         </div>
@@ -84,9 +91,10 @@
   legend, .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .tier { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.375rem 0.75rem; padding-block: 0.5rem; border-top: 1px solid var(--rule); }
   .num { flex: 0 0 8.5rem; align-self: center; font: 500 0.75rem/1.3 var(--mono); letter-spacing: 0.02em; }
-  .c { display: flex; flex-direction: column; gap: 0.125rem; min-width: 0; }
+  /* The gap clears the global focus outline (width plus offset) so it never crosses the label above the field. */
+  .c { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
   label { color: var(--ink); font: 500 0.8125rem/1.3 var(--sans); }
-  .ctl { display: flex; align-items: center; gap: 0.25rem; }
+  .ctl { display: flex; align-items: center; gap: 0.5rem; }
   input {
     inline-size: 6.5rem; min-height: 2rem; padding: 0.2rem 0.4rem; margin: 0; background: var(--paper); color: var(--ink); text-align: end;
     border: 1px solid var(--muted); border-radius: 0; font: 400 0.9375rem/1.4 var(--mono); font-variant-numeric: tabular-nums;

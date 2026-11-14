@@ -445,8 +445,49 @@ for (const { locale, path } of ROUTES) {
     const full = await page<{ count: number; add: boolean; limit: string | null }>(`({ count: document.querySelectorAll('#section-payment .tier').length, add: !!document.querySelector('#section-payment .tiers .add'), limit: document.querySelector('#section-payment .tiers .limit')?.textContent ?? null })`);
     expect(`${locale} SK ${width}px ten tiers: no add action, the limit is stated`, full.count === 10 && !full.add && full.limit?.includes('10') === true, full);
     expect(`${locale} SK ${width}px the tenth add moved focus to tier 10 Days`, (await active()).id === SK(9, 'days'), await active());
+    // SK-NB-01: the focus outline of a tier field (width plus offset) stays clear of its label.
+    for (const fid of [SK(0, 'days'), SK(0, 'percent'), SK(1, 'days')]) {
+      const gap = await page<{ label: number; outlineTop: number; outline: string }>(`(() => { const el = document.getElementById(${JSON.stringify(fid)}); el.focus(); const cs = getComputedStyle(el);
+        return { label: document.querySelector('label[for="${fid}"]').getBoundingClientRect().bottom, outlineTop: el.getBoundingClientRect().top - parseFloat(cs.outlineWidth) - parseFloat(cs.outlineOffset), outline: cs.outlineStyle + ' ' + cs.outlineWidth }; })()`);
+      expect(`${locale} SK ${width}px ${fid}: focus outline clear of its label, outline kept`, gap.outlineTop >= gap.label && gap.outline.startsWith('solid') && gap.outline.endsWith('3px'), gap);
+    }
+    // ... and clear of the "%" sign beside the Percent field.
+    const unit = await page<{ outlineRight: number; unitLeft: number }>(`(() => { const el = document.getElementById(${JSON.stringify(SK(0, 'percent'))}); el.focus(); const cs = getComputedStyle(el);
+      return { outlineRight: el.getBoundingClientRect().right + parseFloat(cs.outlineWidth) + parseFloat(cs.outlineOffset), unitLeft: el.parentElement.querySelector('.unit').getBoundingClientRect().left }; })()`);
+    expect(`${locale} SK ${width}px Percent focus outline clear of the % sign`, unit.outlineRight <= unit.unitLeft, unit);
+    // SK-NB-03: a real F1 in Days and in Percent (also on tier 2) opens the Skonto help; Escape closes it and focus returns.
+    for (const fid of [SK(0, 'days'), SK(0, 'percent'), SK(1, 'percent')]) {
+      await page(`(document.getElementById(${JSON.stringify(fid)}).focus(), window.__wait(60))`);
+      await press('F1');
+      const opened = await page<{ open: boolean; title: string | null }>(`({ open: !!document.querySelector('dialog.drawer[open]'), title: document.getElementById('help-title')?.textContent ?? null })`);
+      expect(`${locale} SK ${width}px F1 in ${fid} opens the Skonto help`, opened.open && opened.title?.includes(locale === 'de' ? 'Skonto (strukturiert)' : 'Early-payment discount') === true, opened);
+      await press('Escape');
+      const closed = await page<{ open: boolean; active: string }>(`({ open: !!document.querySelector('dialog.drawer[open]'), active: document.activeElement.id })`);
+      expect(`${locale} SK ${width}px Escape closes the help and returns focus to ${fid}`, !closed.open && closed.active === fid, closed);
+    }
+    // F1 elsewhere keeps its own behaviour: it toggles the field's inline help, no drawer.
+    await page(`(document.getElementById('payment.dueDate').focus(), window.__wait(60))`);
+    await press('F1');
+    const inline = await page<{ expanded: string | null; drawer: boolean }>(`({ expanded: document.querySelector('[aria-controls="payment.dueDate-help"]').getAttribute('aria-expanded'), drawer: !!document.querySelector('dialog.drawer[open]') })`);
+    expect(`${locale} SK ${width}px F1 in the due date still toggles its inline help, no drawer`, inline.expanded === 'true' && !inline.drawer, inline);
+    await press('F1');
+    // SK-NB-04: the rendered Skonto help gives the two-digit limit and the percent example; the quantity help keeps six.
+    await page(`(document.querySelector('#section-payment .skonto .sec-help').click(), window.__wait(150))`);
+    const mistakes = await page<string[]>(`[...document.querySelectorAll('dialog.drawer[open] section')].filter((s) => /Häufige Fehler|Common mistakes/.test(s.querySelector('h3')?.textContent ?? '')).flatMap((s) => [...s.querySelectorAll('li')].map((li) => li.textContent.trim()))`);
+    const mistakeText = mistakes.join(' | ');
+    expect(`${locale} SK ${width}px rendered Skonto help: two fractional digits, percent example, no six`, mistakeText.includes(locale === 'de' ? 'höchstens 2 Nachkommastellen' : 'at most 2 fractional digits') && mistakeText.includes('2,5') && !/\b6\b/.test(mistakeText), mistakes);
+    await page(`(document.querySelector('dialog.drawer[open] .close').click(), window.__wait(100))`);
   }
   await viewport(1366);
+
+  // SK-OBS-01 / SK-NB-04: the scope note lead names no count and two groups are shown; the quantity help keeps six digits.
+  await open(path);
+  const scope = await page<{ lead: string; groups: number }>(`(() => { const d = [...document.querySelectorAll('.scope details')][1]; d.open = true; return { lead: d.querySelector('.lead').textContent, groups: d.querySelectorAll('h3').length }; })()`);
+  expect(`${locale} SK scope note: lead without a count, two groups shown`, scope.groups === 2 && !/\b(Drei|Three|Zwei|Two)\b/.test(scope.lead), scope);
+  await page(`(document.getElementById('lines[0].quantity').focus(), window.__wait(80), [...document.querySelectorAll('.help-link')].find((b) => /Menge|Quantity/.test(b.textContent)).click(), window.__wait(150))`);
+  const qtyHelp = await page<string>(`[...document.querySelectorAll('dialog.drawer[open] li')].map((li) => li.textContent).join(' | ')`);
+  expect(`${locale} SK quantity/unit price help keeps the six-digit limit`, qtyHelp.includes(locale === 'de' ? 'höchstens 6 Nachkommastellen' : 'at most 6 fractional digits'), qtyHelp.slice(0, 300));
+  await page(`document.querySelector('dialog.drawer[open] .close')?.click()`);
 }
 
 expect('no console error, page exception or CSP report', pageErrors.length === 0, pageErrors);

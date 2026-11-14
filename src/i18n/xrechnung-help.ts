@@ -32,6 +32,8 @@ export type HelpEntry = {
   readonly fieldId?: string;
   /** Diagnostics this field can produce; their texts become the "common mistakes". */
   readonly mistakes?: readonly DocumentErrorCode[];
+  /** The field whose wording the common mistakes use when it is not `fieldId` (a code whose limit depends on the field). */
+  readonly mistakesFieldId?: string;
   readonly sources: readonly [string, ...string[]];
   readonly de: HelpText;
   readonly en: HelpText;
@@ -436,7 +438,7 @@ export const helpEntries = {
     },
   },
   skonto: {
-    bt: 'BT-20 (Skonto)', fieldId: 'payment.skonto[0].days',
+    bt: 'BT-20 (Skonto)', fieldId: 'payment.skonto[0].days', mistakesFieldId: 'payment.skonto[0].percent',
     mistakes: ['unsupported_skonto_days', 'unsupported_skonto_tier_order', 'unsupported_skonto_percent', 'fraction_digits_limit', 'invalid_decimal', 'missing_field'],
     sources: [`${README} — Structured Skonto in BT-20`, `${DOC} — readSkonto, paymentTermsText`],
     de: {

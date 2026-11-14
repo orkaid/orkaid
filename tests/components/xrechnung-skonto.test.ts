@@ -225,3 +225,40 @@ test('Skonto copy and help keep the claims bounded: no entitlement, no computed 
     assert.doesNotMatch(text, /Anspruch besteht|garantiert|entitled to|guarantee|akzeptiert|recipient accepts/i);
   }
 });
+
+// ---- remediation after the independent review (SK-NB-03, SK-NB-04, SK-OBS-01); the rendered checks are in the browser harness
+
+test('the Skonto help words its common mistakes for the Percent field: two digits, the percent example; other help keeps six', () => {
+  const drawer = readFileSync(new URL('../../src/components/tools/xrechnung/HelpDrawer.svelte', import.meta.url), 'utf8');
+  // What the drawer renders for each mistake: the entry's mistakes field, else its jump field.
+  assert.match(drawer, /describeError\(code, entry\.mistakesFieldId \?\? entry\.fieldId \?\? '', locale, text\.title\)/);
+  const skonto = helpEntries.skonto;
+  assert.equal(skonto.fieldId, 'payment.skonto[0].days');
+  assert.equal(skonto.mistakesFieldId, 'payment.skonto[0].percent');
+  const quantity = helpEntries.quantityPrice;
+  for (const locale of locales) {
+    const rendered = skonto.mistakes.map((code) => describeError(code, skonto.mistakesFieldId, locale, skonto[locale].title)).join(' | ');
+    assert.match(rendered, locale === 'de' ? /höchstens 2 Nachkommastellen/ : /at most 2 fractional digits/);
+    assert.doesNotMatch(rendered, /\b6\b/);
+    assert.match(rendered, /2,5/);
+    assert.doesNotMatch(rendered, /12,50/);
+    const qty = quantity.mistakes.map((code) => describeError(code, '', locale, quantity[locale].title)).join(' | ');
+    assert.match(qty, locale === 'de' ? /höchstens 6 Nachkommastellen/ : /at most 6 fractional digits/);
+  }
+  // Every other help entry renders exactly as before: none sets a mistakes field of its own.
+  for (const [id, entry] of Object.entries(helpEntries)) if (id !== 'skonto') assert.equal('mistakesFieldId' in entry, false, id);
+});
+
+test('F1 in a tier field opens the Skonto help through the workspace drawer; no listener outside the tier inputs', () => {
+  const editor = readFileSync(new URL('../../src/components/tools/xrechnung/SkontoEditor.svelte', import.meta.url), 'utf8');
+  const workspace = readFileSync(new URL('../../src/components/tools/xrechnung/XRechnungWorkspace.svelte', import.meta.url), 'utf8');
+  assert.match(editor, /aria-keyshortcuts="F1" onkeydown=\{helpKey\}/);
+  assert.doesNotMatch(editor, /addEventListener|aria-live|role="status"/);
+  assert.match(workspace, /onhelp=\{\(el\) => openHelp\('skonto', el\)\}/);
+});
+
+test('the scope note lead names no count of reason groups, so it stays true when an empty group is hidden', () => {
+  for (const locale of locales) assert.doesNotMatch(copy['sheet.scopeCannotLead'][locale], /\b(Drei|Zwei|Vier|Three|Two|Four|\d+)\b/i);
+  const note = readFileSync(new URL('../../src/components/tools/xrechnung/ScopeNote.svelte', import.meta.url), 'utf8');
+  assert.match(note, /cannot\.filter\(\(group\) => scopeLists\[group\.key\]\[locale\]\.length > 0\)/);
+});

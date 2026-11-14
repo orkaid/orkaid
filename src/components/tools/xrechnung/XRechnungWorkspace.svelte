@@ -468,7 +468,7 @@
         <button type="button" class="sec-help" aria-label={fill(copy.helpFor[locale], { field: copy['grp.skonto'][locale] })} onclick={(event) => openHelp('skonto', event.currentTarget)}>?</button>
       </div>
       {@render alert(groupError('unsupported_skonto_tier_count', 'payment.skonto', skontoIds))}
-      <SkontoEditor bind:tiers={form.skonto} {locale} {errorFor} {isMissing} {touch} onshift={shiftSkonto} describedById="skonto-hint" />
+      <SkontoEditor bind:tiers={form.skonto} {locale} {errorFor} {isMissing} {touch} onshift={shiftSkonto} describedById="skonto-hint" onhelp={(el) => openHelp('skonto', el)} />
     </fieldset>
   {/if}
 {/snippet}

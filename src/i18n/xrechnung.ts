@@ -327,8 +327,8 @@ export const copy = {
   'sheet.scopeCan': m('Was dieses Werkzeug derzeit kann', 'What this tool can currently do'),
   'sheet.scopeCannot': m('Was noch nicht möglich ist', 'What is not possible yet'),
   'sheet.scopeCannotLead': m(
-    'Drei verschiedene Gründe – keiner davon ist eine Aussage über das Recht:',
-    'Three different reasons – none of them is a statement about the law:',
+    'Aus verschiedenen Gründen – keiner davon ist eine Aussage über das Recht:',
+    'For different reasons – none of them is a statement about the law:',
   ),
   'sheet.scopeBuilt': m('Fachlich vorbereitet, in der Oberfläche noch nicht bedienbar', 'Prepared in the calculation core, not yet operable in the interface'),
   'sheet.scopeOut': m('Außerhalb des Profils dieses Werkzeugs', 'Outside this tool’s profile'),

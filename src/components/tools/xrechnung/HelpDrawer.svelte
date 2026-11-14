@@ -100,7 +100,7 @@
       {#if entry.mistakes && entry.mistakes.length > 0}
         <section>
           <h3>{copy['help.mistakes'][locale]}</h3>
-          <ul>{#each entry.mistakes as code (code)}<li>{describeError(code, entry.fieldId ?? '', locale, text.title)}</li>{/each}</ul>
+          <ul>{#each entry.mistakes as code (code)}<li>{describeError(code, entry.mistakesFieldId ?? entry.fieldId ?? '', locale, text.title)}</li>{/each}</ul>
         </section>
       {/if}
       {#if text.external}
