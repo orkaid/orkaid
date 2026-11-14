@@ -66,3 +66,19 @@ export const UNPARSABLE = '?';
 
 export const decimalInput = (text: string): string => canonicalDecimal(text) ?? UNPARSABLE;
 export const dateInput = (text: string): string => canonicalDate(text) ?? UNPARSABLE;
+
+/**
+ * Days of a Skonto tier: the domain reads a JSON number (an integer from 1 to 365), not text. Only ASCII digits, at most nine of
+ * them, become the integer they denote, so the result is always a finite safe integer; the domain alone decides the range. Any
+ * other text (a comma, a sign, a space, a letter, too many digits) is never rounded, trimmed or truncated into a day count: it
+ * becomes `UNPARSABLE_DAYS`, a finite non-integer the domain answers with `unsupported_skonto_days`. Never NaN or Infinity.
+ */
+export const UNPARSABLE_DAYS = 0.5;
+const DAY_COUNT = /^[0-9]{1,9}$/;
+export function dayCountInput(text: string): number {
+  if (!DAY_COUNT.test(text)) return UNPARSABLE_DAYS;
+  // Digit by digit, as for the other converters: no number parsing API. Nine digits stay far below 2^53, so this is exact.
+  let days = 0;
+  for (const digit of text) days = days * 10 + (digit.charCodeAt(0) - 48);
+  return days;
+}

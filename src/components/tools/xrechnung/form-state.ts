@@ -40,9 +40,15 @@ export type VatRegime = 'regular' | 'kleinunternehmer';
  * preselected, and `selectDocumentType` clears it on every change of type.
  */
 export type DocumentType = '380' | '381';
+/**
+ * One structured Skonto tier as typed (Days, Percent). The tiers belong to an invoice 380 only: on a 381 they stay here, unused,
+ * and are never sent. An added tier stays until the user removes it, empty or not; tiers are kept in the order entered.
+ */
+export type SkontoTierForm = { days: string; percent: string };
+export const MAX_SKONTO_TIERS = 10;
 export type FormState = {
   fields: Record<FieldId, string>; lines: LineForm[]; supplyMode: SupplyMode; leitwegCheck: boolean; vatRegime: VatRegime;
-  documentType: DocumentType; clearingConfirmed: boolean;
+  documentType: DocumentType; clearingConfirmed: boolean; skonto: SkontoTierForm[];
 };
 
 export function emptyLine(previous?: LineForm): LineForm {
@@ -53,7 +59,7 @@ export function emptyLine(previous?: LineForm): LineForm {
 
 export function emptyFormState(): FormState {
   const fields = Object.fromEntries(FIELD_IDS.map((id) => [id, ''])) as Record<FieldId, string>;
-  return { fields, lines: [emptyLine()], supplyMode: 'date', leitwegCheck: false, vatRegime: 'regular', documentType: '380', clearingConfirmed: false };
+  return { fields, lines: [emptyLine()], supplyMode: 'date', leitwegCheck: false, vatRegime: 'regular', documentType: '380', clearingConfirmed: false, skonto: [] };
 }
 
 /** The one way the document type changes: every change, in either direction, withdraws the clearing confirmation. */

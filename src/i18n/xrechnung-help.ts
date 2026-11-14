@@ -423,16 +423,57 @@ export const helpEntries = {
     de: {
       title: 'Fälligkeit', short: 'Fälligkeitsdatum (BT-9) und/oder Zahlungsbedingungen als Text (BT-20).',
       enter: 'Geben Sie ein Fälligkeitsdatum, Zahlungsbedingungen oder beides an.', status: 'conditional',
-      condition: 'Bei einem Zahlbetrag über null ist mindestens eines von beiden erforderlich.', format: 'Datum als TT.MM.JJJJ, z. B. 05.12.2026. Zahlungsbedingungen: freier Text, Zeilenumbrüche erlaubt, kein „#“.',
+      condition: 'Bei einem Zahlbetrag über null ist mindestens eines erforderlich (bei der Rechnung auch strukturiertes Skonto).', format: 'Datum als TT.MM.JJJJ, z. B. 05.12.2026. Zahlungsbedingungen: freier Text, Zeilenumbrüche erlaubt, kein „#“.',
       external: ['BR-CO-25: bei positivem Zahlbetrag ist BT-9 oder BT-20 erforderlich. Der gepinnte Validator setzt die Regel nicht um; dieses Werkzeug prüft sie nach der Berechnung.'],
-      profile: ['Es gibt keine Voreinstellungen für Zahlungsbedingungen. Strukturiertes Skonto ist in dieser Ausbaustufe nicht bedienbar.'],
+      profile: ['Es gibt keine Voreinstellungen für Zahlungsbedingungen. Bei der Rechnung (380) zählt strukturiertes Skonto ebenfalls als Zahlungsbedingung (BT-20) und genügt allein für BR-CO-25; es steht im Feld darunter.'],
     },
     en: {
       title: 'Payment due', short: 'Due date (BT-9) and/or payment terms as text (BT-20).',
       enter: 'Give a due date, payment terms, or both.', status: 'conditional',
-      condition: 'With an amount due above zero, at least one of the two is required.', format: 'Date as DD.MM.YYYY, e.g. 05.12.2026. Payment terms: free text, line breaks allowed, no “#”.',
+      condition: 'With an amount due above zero, at least one is required (on an invoice, structured Skonto counts too).', format: 'Date as DD.MM.YYYY, e.g. 05.12.2026. Payment terms: free text, line breaks allowed, no “#”.',
       external: ['BR-CO-25: with a positive amount due, BT-9 or BT-20 is required. The pinned validator does not implement this rule; this tool checks it after the calculation.'],
-      profile: ['There are no presets for payment terms. Structured Skonto cannot be used in this stage.'],
+      profile: ['There are no presets for payment terms. On an invoice (380) structured Skonto also counts as payment terms (BT-20) and alone satisfies BR-CO-25; it is entered below.'],
+    },
+  },
+  skonto: {
+    bt: 'BT-20 (Skonto)', fieldId: 'payment.skonto[0].days',
+    mistakes: ['unsupported_skonto_days', 'unsupported_skonto_tier_order', 'unsupported_skonto_percent', 'fraction_digits_limit', 'invalid_decimal', 'missing_field'],
+    sources: [`${README} — Structured Skonto in BT-20`, `${DOC} — readSkonto, paymentTermsText`],
+    de: {
+      title: 'Skonto (strukturiert)', short: 'Skontobedingungen als Stufen aus Tagen und Prozent, im Rechnungsdokument als strukturierte Zahlungsbedingungen (BT-20).',
+      enter: 'Je Stufe die Anzahl Tage und den Prozentsatz. Mehrere Stufen mit aufsteigenden Tagen.', status: 'optional',
+      format: 'Tage: ganze Zahl von 1 bis 365. Prozent: mit Komma, höchstens 2 Nachkommastellen, z. B. 2,5.',
+      external: [
+        'XRechnung 3.0.2 sieht für Skonto strukturierte Angaben in den Zahlungsbedingungen (BT-20) vor. Das Werkzeug schreibt sie aus Ihren Stufen; freier Text steht davor.',
+        'Ohne Basisbetrag bezieht sich der Prozentsatz auf den gesamten Zahlbetrag (BT-115).',
+      ],
+      profile: [
+        'Grenzen dieses Werkzeugs, keine Regeln von XRechnung: 1 bis 10 Stufen, Tage 1 bis 365 und streng aufsteigend, Prozent über 0 und höchstens 100, kein Basisbetrag (BASISBETRAG), nicht bei der Gutschrift (381).',
+        'Das Werkzeug berechnet keinen Skontobetrag, keinen gekürzten Betrag und kein Zahlungsdatum. Die Stufen ändern keinen Rechnungsbetrag. Die Stufen werden nicht sortiert.',
+        'Ob ein Skonto vereinbart ist und in Anspruch genommen werden darf, prüft das Werkzeug nicht; es überträgt nur Ihre Angaben.',
+      ],
+      unverified: [
+        'XRechnung 3.0.2 legt nicht eindeutig fest, ab welchem Zeitpunkt die Tage zählen. Das Werkzeug nimmt keinen Bezugszeitpunkt an.',
+        'Wie Empfänger die Stufen lesen und verarbeiten, ist nicht getestet. Die Prüfung in diesem Werkzeug ist eine eigene lokale Prüfung, keine externe Validierung Ihrer Datei.',
+      ],
+    },
+    en: {
+      title: 'Early-payment discount (Skonto)', short: 'Skonto conditions as tiers of days and percent, carried in the document as structured payment terms (BT-20).',
+      enter: 'For each tier the number of days and the percentage. Several tiers with ascending days.', status: 'optional',
+      format: 'Days: whole number from 1 to 365. Percent: with a comma, at most 2 fractional digits, e.g. 2,5.',
+      external: [
+        'XRechnung 3.0.2 provides structured Skonto entries in the payment terms (BT-20). The tool writes them from your tiers; free text comes first.',
+        'Without a base amount the percentage refers to the whole amount due (BT-115).',
+      ],
+      profile: [
+        'Limits of this tool, not rules of XRechnung: 1 to 10 tiers, days 1 to 365 and strictly ascending, percent above 0 and at most 100, no base amount (BASISBETRAG), not on a credit note (381).',
+        'The tool calculates no discount amount, no reduced amount and no payment date. The tiers change no invoice amount. The tiers are not sorted.',
+        'Whether a discount was agreed and may be taken is not checked by the tool; it only carries your entries.',
+      ],
+      unverified: [
+        'XRechnung 3.0.2 does not unequivocally define from which point the days are counted. The tool assumes no reference point.',
+        'How recipients read and process the tiers has not been tested. The check in this tool is its own local check, not an external validation of your file.',
+      ],
     },
   },
   precedingInvoice: {

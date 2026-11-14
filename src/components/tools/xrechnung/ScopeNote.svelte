@@ -9,6 +9,8 @@
     { key: 'out', title: copy['sheet.scopeOut'] },
     { key: 'tool', title: copy['sheet.scopeTool'] },
   ] as const;
+  // A group with nothing in it is not shown (the "prepared in the core" group is empty once every capability is operable).
+  const groups = cannot.filter((group) => scopeLists[group.key][locale].length > 0);
 </script>
 
 <div class="scope">
@@ -19,7 +21,7 @@
   <details>
     <summary>{copy['sheet.scopeCannot'][locale]}</summary>
     <p class="lead">{copy['sheet.scopeCannotLead'][locale]}</p>
-    {#each cannot as group (group.key)}
+    {#each groups as group (group.key)}
       <h3>{group.title[locale]}</h3>
       <ul>{#each scopeLists[group.key][locale] as item (item)}<li>{item}</li>{/each}</ul>
     {/each}

@@ -15,6 +15,7 @@ const GROUP_CODES: Readonly<Record<string, readonly string[]>> = {
   seller: ['missing_seller_tax_identifier', 'missing_seller_identification'],
   buyer: ['missing_buyer_identifier'],
   payment: ['missing_payment_due_information'],
+  'payment.skonto': ['unsupported_skonto_tier_count', 'unsupported_skonto_on_credit_note'],
 };
 
 export function placementOf(item: DiagnosticItem): Placement {

@@ -52,13 +52,15 @@ test('help drawer waits for its content, then focuses the close button on every 
 
 test('scope note: four groups in both languages with equal structure; capabilities are placed in the right group', () => {
   for (const key of ['now', 'core', 'out', 'tool'] as const) {
-    assert.ok(scopeLists[key].de.length > 0);
+    // The domain-core group is empty once every frozen capability is operable; the scope note then does not show it.
+    if (key !== 'core') assert.ok(scopeLists[key].de.length > 0);
     assert.equal(scopeLists[key].de.length, scopeLists[key].en.length, key);
   }
   const core = scopeLists.core.en.join(' | ');
-  // Slice 3 (MDR-44) moved Kleinunternehmer and Reverse Charge from the domain core to "available", and the credit note slice
-  // (MDR-49) moved 381; Skonto remains core.
-  assert.match(core, /Skonto/);
+  // Slice 3 (MDR-44) moved Kleinunternehmer and Reverse Charge from the domain core to "available", the credit note slice
+  // (MDR-49) moved 381, and the structured Skonto interface slice moved Skonto; the core list is empty.
+  assert.equal(scopeLists.core.en.length, 0);
+  assert.match(scopeLists.now.en.join(' | '), /Skonto/);
   assert.doesNotMatch(core, /381/);
   assert.match(scopeLists.now.en.join(' | '), /381/);
   for (const needle of ['Kleinunternehmer', 'Reverse Charge']) assert.doesNotMatch(core, new RegExp(needle, 'i'), needle);

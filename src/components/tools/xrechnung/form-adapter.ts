@@ -8,7 +8,7 @@ import {
   calculateInvoiceTotals, KLEINUNTERNEHMER_EXEMPTION_TEXT, REVERSE_CHARGE_TEXT, type InvoiceTotals, type VatBreakdown,
 } from '../../../lib/domain/xrechnung/invoice.ts';
 import { serializeUblInvoice } from '../../../lib/domain/xrechnung/ubl.ts';
-import { dateInput, decimalInput } from './input-format.ts';
+import { dateInput, dayCountInput, decimalInput } from './input-format.ts';
 import { CLEARING_CONFIRMATION_ID, CREDIT_TRANSFER_FIELD_IDS, PRECEDING_INVOICE_FIELD_IDS, type FieldId, type FormState, type LineForm } from './form-state.ts';
 
 export type SectionId = 'document' | 'seller' | 'buyer' | 'lines' | 'payment' | 'notes';
@@ -46,6 +46,11 @@ export function fieldValues(state: FormState): Record<string, string> {
   const inactive = state.documentType === '381' ? CREDIT_TRANSFER_FIELD_IDS : PRECEDING_INVOICE_FIELD_IDS;
   for (const id of inactive) delete values[id];
   if (state.documentType === '381') values[CLEARING_CONFIRMATION_ID] = state.clearingConfirmed ? 'confirmed' : '';
+  // Skonto tiers are invoice-only fields: on a 381 they are neither sent nor listed, so none can be placed or navigated to.
+  else state.skonto.forEach((tier, i) => {
+    values[`payment.skonto[${i}].days`] = tier.days;
+    values[`payment.skonto[${i}].percent`] = tier.percent;
+  });
   state.lines.forEach((line, i) => {
     values[`lines[${i}].name`] = line.name;
     values[`lines[${i}].unitCode`] = line.unitCode;
@@ -150,6 +155,16 @@ export function buildDocumentInput(state: FormState): Record<string, unknown> {
     payment = { means };
     putDate(payment, 'dueDate', f['payment.dueDate']);
     put(payment, 'termsText', f['payment.termsText']);
+    // Structured Skonto on a 380 only. No tier: no property at all (never []). Each added tier is sent in the order entered,
+    // empty fields left out so the domain names them; nothing is sorted, merged or dropped here. BT-20 is built by the domain.
+    if (state.skonto.length > 0) {
+      payment.skonto = state.skonto.map((tier) => {
+        const out: Record<string, unknown> = {};
+        if (tier.days !== '') out.days = dayCountInput(tier.days);
+        putDecimal(out, 'percent', tier.percent);
+        return out;
+      });
+    }
   }
 
   const input: Record<string, unknown> = { documentTypeCode: state.documentType, currency: 'EUR' };
@@ -230,6 +245,7 @@ const GROUP_TARGET: Readonly<Record<string, string>> = {
   buyer: 'buyer.vatId',
   payment: 'payment.dueDate',
   'payment.settlement': CLEARING_CONFIRMATION_ID,
+  'payment.skonto': 'payment.skonto[0].days',
   precedingInvoice: 'precedingInvoice.number',
   lines: 'lines[0].name',
 };

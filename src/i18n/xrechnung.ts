@@ -151,6 +151,28 @@ export const copy = {
     'Bei einem offenen Betrag: Fälligkeitsdatum oder Zahlungsbedingungen angeben (mindestens eines).',
     'With an amount due: give a due date or payment terms (at least one).',
   ),
+  // On a 380 a Skonto tier is BT-20 content too, so it also satisfies BR-CO-25.
+  'grp.paymentDueHintSkonto': m(
+    'Bei einem offenen Betrag: Fälligkeitsdatum, Zahlungsbedingungen oder strukturiertes Skonto angeben (mindestens eines).',
+    'With an amount due: give a due date, payment terms or structured Skonto (at least one).',
+  ),
+  'sheet.oneOfPayment': m('eines davon', 'one of these'),
+  'grp.skonto': m('Skonto (strukturiert)', 'Early-payment discount (Skonto)'),
+  'skonto.hint': m(
+    'Optional. Je Stufe Tage und Prozent, Tage aufsteigend, bis zu 10 Stufen. Das Werkzeug berechnet keinen Skontobetrag und kein Zahlungsdatum.',
+    'Optional. Days and percent per tier, days ascending, up to 10 tiers. The tool calculates no discount amount and no payment date.',
+  ),
+  'skonto.tier': m('Skontostufe {n}', 'Discount tier {n}'),
+  'f.skontoDays': m('Tage', 'Days'),
+  'f.skontoPercent': m('Prozent', 'Percent'),
+  'skonto.add': m('Skontostufe hinzufügen', 'Add discount tier'),
+  'skonto.remove': m('Skontostufe {n} entfernen', 'Remove discount tier {n}'),
+  'skonto.undo': m('Skontostufe {n} entfernt – rückgängig machen', 'Discount tier {n} removed – undo'),
+  'skonto.limit': m('10 Stufen erreicht: mehr erlaubt dieses Werkzeug nicht.', '10 tiers reached: this tool allows no more.'),
+  'skonto.cnNote': m(
+    'Strukturiertes Skonto ist für eine Gutschrift (381) in diesem Werkzeug nicht verfügbar. Bei der Rechnung (380) eingetragene Stufen bleiben erhalten, werden hier aber nicht übernommen.',
+    'Structured Skonto is not available for a credit note (381) in this tool. Tiers entered on the invoice (380) are kept but not used here.',
+  ),
 
   'f.invoiceNumber': m('Rechnungsnummer', 'Invoice number'),
   'f.cnNumber': m('Gutschriftnummer', 'Credit note number'),
@@ -396,6 +418,9 @@ const CREDIT_NOTE_LABEL_KEYS: Readonly<Record<string, CopyKey>> = { invoiceNumbe
  * '381' names the credit note's own number and date as such.
  */
 export function labelFor(path: string, locale: Locale, documentType: '380' | '381' = '380'): string {
+  const tier = SKONTO_FIELD.exec(path);
+  if (tier) return `${fill(copy['skonto.tier'][locale], { n: Number(tier[1]) + 1 })}: ${copy[tier[2] === 'days' ? 'f.skontoDays' : 'f.skontoPercent'][locale]}`;
+  if (path === 'payment.skonto') return copy['grp.skonto'][locale];
   const normalized = path.replace(/^lines\[\d+\]/, 'lines');
   const key = (documentType === '381' ? CREDIT_NOTE_LABEL_KEYS[normalized] : undefined) ?? LABEL_KEYS[normalized];
   if (key !== undefined) return copy[key][locale];
@@ -405,6 +430,9 @@ export function labelFor(path: string, locale: Locale, documentType: '380' | '38
   if (path === 'lines') return copy['sec.lines'][locale];
   return path;
 }
+
+/** `payment.skonto[i].days` / `.percent`: a tier field is named with its tier number (counted from 1). */
+export const SKONTO_FIELD = /^payment\.skonto\[(\d+)\]\.(days|percent)$/;
 
 /** Domain path (line indices removed) to label key. A test proves every form field id has one. */
 export const LABEL_KEYS: Readonly<Record<string, CopyKey>> = {
@@ -457,12 +485,22 @@ export const errorMessages: Readonly<Record<DocumentErrorCode, Msg>> = {
   unsupported_payment_means: m('{field}: nur 30 und 58 werden unterstützt.', '{field}: only 30 and 58 are supported.'),
   unsupported_payment_account_scheme: outside,
   unsupported_hash_in_payment_terms: m('{field}: das Zeichen „#“ ist im freien Text nicht zulässig.', '{field}: the character “#” is not allowed in the free text.'),
-  unsupported_skonto_tier_count: notReachable,
-  unsupported_skonto_days: notReachable,
-  unsupported_skonto_tier_order: notReachable,
-  unsupported_skonto_percent: notReachable,
-  unsupported_skonto_base_amount: notReachable,
-  unsupported_skonto_on_credit_note: notReachable,
+  // Structured Skonto (profile limits of this tool, not rules of XRechnung; the pinned validator does not check them).
+  unsupported_skonto_tier_count: m('{field}: höchstens 10 Stufen (Grenze dieses Werkzeugs).', '{field}: at most 10 tiers (a limit of this tool).'),
+  unsupported_skonto_days: m(
+    '{field}: bitte eine ganze Zahl von 1 bis 365 eingeben, nur Ziffern (Grenze dieses Werkzeugs).',
+    '{field}: please enter a whole number from 1 to 365, digits only (a limit of this tool).',
+  ),
+  unsupported_skonto_tier_order: m(
+    '{field}: die Tage müssen größer sein als bei der vorherigen Stufe (Grenze dieses Werkzeugs). Die Stufen werden nicht automatisch sortiert.',
+    '{field}: the days must be greater than on the previous tier (a limit of this tool). Tiers are not sorted automatically.',
+  ),
+  unsupported_skonto_percent: m('{field}: mehr als 0 und höchstens 100 (Grenze dieses Werkzeugs).', '{field}: above 0 and at most 100 (a limit of this tool).'),
+  unsupported_skonto_base_amount: m('{field}: ein Basisbetrag (BASISBETRAG) wird von diesem Werkzeug nicht unterstützt.', '{field}: a base amount (BASISBETRAG) is not supported by this tool.'),
+  unsupported_skonto_on_credit_note: m(
+    'Strukturiertes Skonto ist für eine Gutschrift (381) in diesem Werkzeug nicht verfügbar.',
+    'Structured Skonto is not available for a credit note (381) in this tool.',
+  ),
   invalid_leitweg_id_format: m(
     '{field}: kein Leitweg-ID-Aufbau. Erwartet: Grobadresse (Ziffern, beginnt mit 01–16 oder 99), optional „-“ und Feinadresse (Buchstaben/Ziffern), dann „-“ und zwei Prüfziffern, z. B. 04011000-12345-03. Ist das keine Leitweg-ID, schalten Sie die Prüfung ab.',
     '{field}: not the structure of a Leitweg-ID. Expected: a coarse address (digits, starting 01–16 or 99), optionally “-” and a fine address (letters/digits), then “-” and two check digits, e.g. 04011000-12345-03. If this is not a Leitweg-ID, switch the check off.',
@@ -525,19 +563,24 @@ export const errorMessages: Readonly<Record<DocumentErrorCode, Msg>> = {
 /** Text of one diagnostic for the page locale. `{sep}` and `{example}` name the German input notation, the same on both routes. */
 export function describeError(code: DocumentErrorCode, path: string, locale: Locale, label?: string): string {
   const sep = locale === 'de' ? 'Komma' : 'comma';
-  const example = '12,50';
-  return fill(errorMessages[code][locale], { field: label ?? labelFor(path, locale), sep, example });
+  const skontoPercent = SKONTO_FIELD.exec(path)?.[2] === 'percent';
+  const example = skontoPercent ? '2,5' : '12,50';
+  // The Skonto percentage allows two fractional digits, not the six of quantity and unit price; same code, its own limit.
+  const message = code === 'fraction_digits_limit' && skontoPercent ? skontoPercentDigits : errorMessages[code];
+  return fill(message[locale], { field: label ?? labelFor(path, locale), sep, example });
 }
+const skontoPercentDigits = m('{field}: höchstens 2 Nachkommastellen (ohne nachgestellte Nullen).', '{field}: at most 2 fractional digits (trailing zeros not counted).');
 
 /** Compact scope note (MDR-32 obligation at M3). Mirrors the domain README "Supported and not supported"; tool limits are not legal prohibitions. */
 export const scopeLists: Record<'now' | 'core' | 'out' | 'tool', { readonly de: readonly string[]; readonly en: readonly string[] }> = {
   now: {
-    de: ['Rechnung Typ 380', 'Kaufmännische Gutschrift Typ 381 mit Bezug auf die ursprüngliche Rechnung (Nummer Pflicht, Datum optional), nur mit bestätigter Verrechnung (Code 97)', 'Deutsches Inlandsprofil (Verkäufer und Käufer in Deutschland), Währung EUR', 'Umsatzsteuer: Normalsatz 19 % und ermäßigter Satz 7 %', 'Reverse Charge (§ 13b UStG) je Position, auch zusammen mit 19 % und 7 % in einer Rechnung', 'Kleinunternehmer (§ 19 UStG) für die ganze Rechnung', 'Zahlung der Rechnung per Überweisung (Code 30 oder 58) mit IBAN', 'Projekt-, Vertrags- und Bestellreferenz (BT-11, BT-12, BT-13), jeweils optional', 'Leistungsdatum (BT-72) oder Abrechnungszeitraum (BG-14), genau eines von beiden', 'Optionale Leitweg-ID-Prüfung der Käuferreferenz (nur Aufbau und Prüfziffern)', 'Prüfung im Browser gegen die Regeln dieses Werkzeugs und Export als UBL- oder CII-XML'],
-    en: ['Invoice type 380', 'Credit note type 381 with a reference to the preceding invoice (number required, date optional), settled only by confirmed clearing (code 97)', 'German domestic profile (seller and buyer in Germany), currency EUR', 'VAT: standard rate 19% and reduced rate 7%', 'Reverse Charge (§ 13b UStG) per line, also together with 19% and 7% in one invoice', 'Kleinunternehmer (§ 19 UStG) for the whole invoice', 'Payment of an invoice by credit transfer (code 30 or 58) with an IBAN', 'Project, contract and purchase order references (BT-11, BT-12, BT-13), each optional', 'Date of supply (BT-72) or invoicing period (BG-14), exactly one of the two', 'Optional Leitweg-ID check of the buyer reference (structure and check digits only)', 'Check in the browser against this tool’s rules and export as UBL or CII XML'],
+    de: ['Rechnung Typ 380', 'Kaufmännische Gutschrift Typ 381 mit Bezug auf die ursprüngliche Rechnung (Nummer Pflicht, Datum optional), nur mit bestätigter Verrechnung (Code 97)', 'Deutsches Inlandsprofil (Verkäufer und Käufer in Deutschland), Währung EUR', 'Umsatzsteuer: Normalsatz 19 % und ermäßigter Satz 7 %', 'Reverse Charge (§ 13b UStG) je Position, auch zusammen mit 19 % und 7 % in einer Rechnung', 'Kleinunternehmer (§ 19 UStG) für die ganze Rechnung', 'Zahlung der Rechnung per Überweisung (Code 30 oder 58) mit IBAN', 'Strukturiertes Skonto bei der Rechnung (380): bis zu 10 Stufen mit Tagen und Prozent, ohne Basisbetrag; kein Skontobetrag und kein Zahlungsdatum wird berechnet', 'Projekt-, Vertrags- und Bestellreferenz (BT-11, BT-12, BT-13), jeweils optional', 'Leistungsdatum (BT-72) oder Abrechnungszeitraum (BG-14), genau eines von beiden', 'Optionale Leitweg-ID-Prüfung der Käuferreferenz (nur Aufbau und Prüfziffern)', 'Prüfung im Browser gegen die Regeln dieses Werkzeugs und Export als UBL- oder CII-XML'],
+    en: ['Invoice type 380', 'Credit note type 381 with a reference to the preceding invoice (number required, date optional), settled only by confirmed clearing (code 97)', 'German domestic profile (seller and buyer in Germany), currency EUR', 'VAT: standard rate 19% and reduced rate 7%', 'Reverse Charge (§ 13b UStG) per line, also together with 19% and 7% in one invoice', 'Kleinunternehmer (§ 19 UStG) for the whole invoice', 'Payment of an invoice by credit transfer (code 30 or 58) with an IBAN', 'Structured Skonto on an invoice (380): up to 10 tiers with days and percent, no base amount; no discount amount or payment date is calculated', 'Project, contract and purchase order references (BT-11, BT-12, BT-13), each optional', 'Date of supply (BT-72) or invoicing period (BG-14), exactly one of the two', 'Optional Leitweg-ID check of the buyer reference (structure and check digits only)', 'Check in the browser against this tool’s rules and export as UBL or CII XML'],
   },
+  // Every capability of the frozen contract is now in the interface; the group is not shown while it is empty.
   core: {
-    de: ['Strukturiertes Skonto'],
-    en: ['Structured Skonto'],
+    de: [],
+    en: [],
   },
   out: {
     de: ['Andere Dokumenttypen als 380 und 381, zum Beispiel Rechnungskorrektur (384) oder Selbstfakturierung durch den Käufer (389)', 'Andere Währungen als EUR; Beteiligte außerhalb Deutschlands', 'Andere Steuerkategorien, Steuersätze oder Steuerbehandlungen als im Profil', 'Kleinunternehmer (§ 19 UStG) zusammen mit 19 %, 7 % oder Reverse Charge in einer Rechnung', 'Andere Zahlungsarten als Überweisung (30, 58) bei der Rechnung und Verrechnung (97) bei der Gutschrift; Erstattung einer Gutschrift per Überweisung', 'Nachlässe und Zuschläge, Anzahlungen, Teil- und Ratenrechnungen, Anhänge, negative Mengen und Preise'],

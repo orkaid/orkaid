@@ -169,9 +169,10 @@ test('scope note: the Slice 2 capabilities moved to "available", the rest stays 
     assert.match(now, new RegExp(needle), `now: ${needle}`);
     assert.doesNotMatch(core, new RegExp(needle), `core: ${needle}`);
   }
-  // Slice 3 (MDR-44) moved Kleinunternehmer and Reverse Charge out of the core list, MDR-49 moved 381; Skonto remains.
-  assert.match(core, /Skonto/);
-  assert.doesNotMatch(core, /381/);
+  // Slice 3 (MDR-44) moved Kleinunternehmer and Reverse Charge out of the core list, MDR-49 moved 381, and the structured
+  // Skonto interface slice moved Skonto to "available": the core list is now empty.
+  assert.match(now, /Skonto/);
+  assert.equal(core, '');
   const nowDe = scopeLists.now.de.join(' | ');
   for (const needle of ['BT-11', 'BG-14', 'Leitweg-ID']) assert.match(nowDe, new RegExp(needle), needle);
   assert.equal(scopeLists.now.de.length, scopeLists.now.en.length);

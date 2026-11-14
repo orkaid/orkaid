@@ -11,6 +11,7 @@
   import HelpDrawer from './HelpDrawer.svelte';
   import LinesEditor from './LinesEditor.svelte';
   import ScopeNote from './ScopeNote.svelte';
+  import SkontoEditor from './SkontoEditor.svelte';
   import { activeFixedReasons, checkForm, countByKind, exportXml, fieldValues, hasReverseCharge, previewTotals, sectionOf, type DiagnosticItem, type ExportFormat, type SectionId } from './form-adapter.ts';
   import { CLEARING_CONFIRMATION_ID, emptyFormState, FIELD_IDS, selectDocumentType, type DocumentType, type FieldId } from './form-state.ts';
   import { returnTarget } from './focus-return.ts';
@@ -125,6 +126,9 @@
   function shiftLines(index: number): void {
     for (const key of Object.keys(touched)) { const hit = /^lines\[(\d+)\]/.exec(key); if (hit && Number(hit[1]) >= index) delete touched[key]; }
   }
+  function shiftSkonto(index: number): void {
+    for (const key of Object.keys(touched)) { const hit = /^payment\.skonto\[(\d+)\]/.exec(key); if (hit && Number(hit[1]) >= index) delete touched[key]; }
+  }
 
   $effect(() => {
     const text = status === 'pristine' ? '' : statusLine;
@@ -134,7 +138,11 @@
 
   const rank = (id: string): number => {
     const line = /^lines\[(\d+)\]\.(.+)$/.exec(id);
-    const within = line ? Number(line[1]) * 10 + ['name', 'quantity', 'unitCode', 'unitPrice', 'vat.rate'].indexOf(line[2] ?? '') : (FIELD_IDS as readonly string[]).indexOf(id);
+    // Skonto tiers stand below the payment terms, tier by tier, Days before Percent.
+    const tier = /^payment\.skonto\[(\d+)\]\.(days|percent)$/.exec(id);
+    const within = line ? Number(line[1]) * 10 + ['name', 'quantity', 'unitCode', 'unitPrice', 'vat.rate'].indexOf(line[2] ?? '')
+      : tier ? FIELD_IDS.length + Number(tier[1]) * 2 + (tier[2] === 'days' ? 0 : 1)
+      : (FIELD_IDS as readonly string[]).indexOf(id);
     return SHEET.indexOf(sectionOf(id) as SectionId) * 10000 + within;
   };
   const openPoints = $derived([...new Set(items.flatMap((item) => { const id = navigationTarget(item); return id === undefined ? [] : [id]; }))].sort((a, b) => rank(a) - rank(b)));
@@ -295,6 +303,9 @@
   const reasons = $derived(activeFixedReasons(form));
   const buyerNeedsId = $derived(hasReverseCharge(form));
   const oneOf = copy['sheet.oneOf'][locale];
+  // On a 380 a Skonto tier is a third source of BT-20 for BR-CO-25, so the due-information group names three choices there.
+  const dueMark = $derived(creditNote ? oneOf : copy['sheet.oneOfPayment'][locale]);
+  const skontoIds = $derived(form.skonto.flatMap((_, i) => [`payment.skonto[${i}].days`, `payment.skonto[${i}].percent`]));
 </script>
 
 {#snippet fld(id: FieldId, key: keyof typeof copy, o: FieldOpts = {})}
@@ -441,11 +452,25 @@
   {/if}
   <fieldset class="grp">
     <legend>{copy['grp.paymentDue'][locale]}</legend>
-    <p class="group-hint">{copy['grp.paymentDueHint'][locale]}</p>
-    {@render alert(groupError('missing_payment_due_information', 'payment', ['payment.dueDate', 'payment.termsText']))}
-    {@render fld('payment.dueDate', 'f.dueDate', { optionalMark: true, markText: oneOf, keep: has('missing_payment_due_information'), kind: 'date', helpId: 'paymentDue' })}
-    {@render fld('payment.termsText', 'f.termsText', { optionalMark: true, markText: oneOf, keep: has('missing_payment_due_information'), kind: 'textarea' })}
+    <p class="group-hint">{copy[creditNote ? 'grp.paymentDueHint' : 'grp.paymentDueHintSkonto'][locale]}</p>
+    {@render alert(groupError('missing_payment_due_information', 'payment', ['payment.dueDate', 'payment.termsText', ...(creditNote ? [] : skontoIds)]))}
+    {@render fld('payment.dueDate', 'f.dueDate', { optionalMark: true, markText: dueMark, keep: has('missing_payment_due_information'), kind: 'date', helpId: 'paymentDue' })}
+    {@render fld('payment.termsText', 'f.termsText', { optionalMark: true, markText: dueMark, keep: has('missing_payment_due_information'), kind: 'textarea' })}
   </fieldset>
+  {#if creditNote}
+    <!-- Structured Skonto belongs to a 380: on a 381 the tiers stay in the form, unused, and are never sent. -->
+    <p class="group-hint skonto-cn">{copy['skonto.cnNote'][locale]}</p>
+  {:else}
+    <fieldset class="grp skonto" class:none={form.skonto.length === 0} aria-describedby="skonto-hint">
+      <legend>{copy['grp.skonto'][locale]} <span class="opt">({copy.optional[locale]})</span></legend>
+      <div class="skonto-hint">
+        <p class="group-hint" id="skonto-hint">{copy['skonto.hint'][locale]}</p>
+        <button type="button" class="sec-help" aria-label={fill(copy.helpFor[locale], { field: copy['grp.skonto'][locale] })} onclick={(event) => openHelp('skonto', event.currentTarget)}>?</button>
+      </div>
+      {@render alert(groupError('unsupported_skonto_tier_count', 'payment.skonto', skontoIds))}
+      <SkontoEditor bind:tiers={form.skonto} {locale} {errorFor} {isMissing} {touch} onshift={shiftSkonto} describedById="skonto-hint" />
+    </fieldset>
+  {/if}
 {/snippet}
 
 {#snippet bodyNotes()}
@@ -654,7 +679,13 @@
   .blk:not(.on) .reasons h3,
   .blk:not(.on) .reasons dt,
   .blk:not(.on) .reason-terms,
-  .blk:not(.on) .confirm .group-hint { display: none; }
+  .blk:not(.on) .confirm .group-hint,
+  .blk:not(.on) .skonto-hint,
+  .blk:not(.on) .skonto.none,
+  .blk:not(.on) .skonto-cn,
+  .blk:not(.on) .grp .opt { display: none; }
+  .skonto-hint { display: flex; align-items: flex-start; gap: 0.5rem; }
+  .grp .opt { font-weight: 400; color: var(--muted); }
   .blk:not(.on) .leitweg { color: var(--muted); }
   .reasons { margin-block-start: 0.75rem; }
   .reasons h3 { margin: 0 0 0.25rem; font: 500 0.8125rem/1.3 var(--sans); }
