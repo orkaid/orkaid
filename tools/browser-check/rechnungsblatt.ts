@@ -106,7 +106,10 @@ async function page<T>(expression: string): Promise<T> {
   if (result.exceptionDetails) throw new Error(`page script failed: ${JSON.stringify(result.exceptionDetails).slice(0, 400)}`);
   return result.result.value;
 }
-const KEYS: Record<string, { code: string; keyCode: number; text?: string }> = { Enter: { code: 'Enter', keyCode: 13, text: '\r' }, Tab: { code: 'Tab', keyCode: 9 }, F1: { code: 'F1', keyCode: 112 }, Escape: { code: 'Escape', keyCode: 27 } };
+const KEYS: Record<string, { code: string; keyCode: number; text?: string }> = {
+  Enter: { code: 'Enter', keyCode: 13, text: '\r' }, Tab: { code: 'Tab', keyCode: 9 }, F1: { code: 'F1', keyCode: 112 }, Escape: { code: 'Escape', keyCode: 27 },
+  ArrowRight: { code: 'ArrowRight', keyCode: 39 }, ArrowLeft: { code: 'ArrowLeft', keyCode: 37 }, ' ': { code: 'Space', keyCode: 32, text: ' ' },
+};
 /** A real key press through the browser's input pipeline (not a page-dispatched event). `shift` sets the modifier. */
 async function press(key: keyof typeof KEYS, shift = false): Promise<void> {
   const k = KEYS[key]!;
@@ -154,7 +157,11 @@ function expect(name: string, ok: boolean, detail: unknown): void {
   (ok ? passes : failures).push(`${ok ? 'PASS' : 'FAIL'} ${name}${ok ? '' : ` — ${JSON.stringify(detail)}`}`);
 }
 const ROUTES = [{ locale: 'de', path: '/tools/xrechnung/' }, { locale: 'en', path: '/en/tools/xrechnung/' }] as const;
-const DICT = { de: { limit: 'Grenze dieses Werkzeugs', lineBreak: 'Zeilenumbruch', allDone: 'Keine offenen Punkte', padding: 'Leerzeichen am Anfang oder Ende' }, en: { limit: 'tool’s limit', lineBreak: 'line break', allDone: 'No open points', padding: 'spaces at the start or end' } } as const;
+const DICT = {
+  de: { limit: 'Grenze dieses Werkzeugs', lineBreak: 'Zeilenumbruch', allDone: 'Keine offenen Punkte', padding: 'Leerzeichen am Anfang oder Ende', invoice: 'Rechnung', credit: 'Kaufmännische Gutschrift', confirm: 'Bestätigen Sie die Verrechnung' },
+  en: { limit: 'tool’s limit', lineBreak: 'line break', allDone: 'No open points', padding: 'spaces at the start or end', invoice: 'Invoice', credit: 'Credit note', confirm: 'Confirm the clearing' },
+} as const;
+const CLEARING = 'payment.settlement.reciprocalObligationConfirmed';
 
 for (const { locale, path } of ROUTES) {
   const d = DICT[locale];
@@ -297,6 +304,69 @@ for (const { locale, path } of ROUTES) {
       expect(`${locale} F05 ${width}px ${state}: line table inside its container`, fit.scroll <= fit.lines + 1 && fit.maxRight <= fit.sheetRight + 1 && fit.page <= 0, fit);
       expect(`${locale} F05 ${width}px ${state}: long description fully visible`, fit.description[0] <= fit.description[1] + 1, fit.description);
     }
+  }
+  await viewport(1366);
+
+  // CN: credit note 381 (MDR-49). Real key presses on the native radio group; focus stays on the choice; the fields of the
+  // inactive type are not in the document (so not focusable); the clearing confirmation starts and returns unticked.
+  for (const [width, mobile] of [[1366, false], [390, true]] as const) {
+    await viewport(width, mobile);
+    await open(path);
+    await page(`window.__fill([['Gutschrift Beratung', 'HUR', '2', '95,00', '19']])`);
+    const typeState = () => page<{ checked: string | null; title: string; meta: string; bg3: boolean; means: boolean; confirm: boolean; confirmChecked: boolean | null; live: string; overflow: number }>(`({
+      checked: document.querySelector('input[name="documentType"]:checked')?.value ?? null, title: document.querySelector('.sheet-title').firstChild.textContent.trim(),
+      meta: document.querySelector('.sheet-meta').textContent.trim(), bg3: !!document.getElementById('precedingInvoice.number'),
+      means: !!document.querySelector('[id^="payment.means."]'), confirm: !!document.getElementById(${JSON.stringify(CLEARING)}),
+      confirmChecked: document.getElementById(${JSON.stringify(CLEARING)})?.checked ?? null, live: document.querySelector('[role="status"][aria-live]').textContent,
+      overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth })`);
+    const start = await typeState();
+    expect(`${locale} CN ${width}px initial: invoice 380 selected, no credit note fields`, start.checked === '380' && start.title === d.invoice && !start.bg3 && start.means && !start.confirm, start);
+    await page(`document.getElementById('documentType.380').focus()`);
+    await press('ArrowRight');
+    await sleep(150);
+    const to381 = await typeState();
+    const onRadio = await active();
+    expect(`${locale} CN ${width}px ArrowRight selects 381: title, meta and fields follow`, to381.checked === '381' && to381.title === d.credit && to381.meta.includes('381') && to381.bg3 && !to381.means && to381.confirm, to381);
+    expect(`${locale} CN ${width}px focus stays on the selected radio`, onRadio.id === 'documentType.381' && onRadio.visible, onRadio);
+    expect(`${locale} CN ${width}px the change is announced`, to381.live.includes('381'), to381.live);
+    expect(`${locale} CN ${width}px confirmation starts unticked; no horizontal overflow`, to381.confirmChecked === false && to381.overflow <= 0, to381);
+    await press('Tab');
+    const afterTab = await active();
+    expect(`${locale} CN ${width}px Tab from the type choice lands on a visible control, never on a removed field`, afterTab.visible && !afterTab.id.startsWith('payment.means.'), afterTab);
+    const focusable = await page<string[]>(`[...document.querySelectorAll('input, select, textarea, button, [tabindex]')].filter((e) => e.id.startsWith('payment.means.')).map((e) => e.id)`);
+    expect(`${locale} CN ${width}px no credit-transfer control exists on a 381`, focusable.length === 0, focusable);
+
+    // The unconfirmed 381 is refused; "next open point" goes to BT-25, then to the confirmation; Space ticks it; export opens.
+    await page(`document.querySelector('.bar-actions .act.check').click(), window.__wait(150)`);
+    const refused = await page<{ ubl: string | null; confirmError: string | null; bg3Error: string | null }>(`({ ubl: document.querySelector('.bar-actions .act.primary').getAttribute('aria-disabled'),
+      confirmError: document.getElementById(${JSON.stringify(CLEARING + '-error')})?.textContent ?? null, bg3Error: document.getElementById('precedingInvoice.number-error')?.textContent ?? null })`);
+    expect(`${locale} CN ${width}px unconfirmed and unreferenced 381: export refused, both shown at their controls`, refused.ubl === 'true' && refused.confirmError?.includes(d.confirm) === true && refused.bg3Error !== null, refused);
+    await page(`document.querySelector('.act.next').focus()`);
+    await press('Enter');
+    const toBg3 = await active();
+    expect(`${locale} CN ${width}px next open point: BT-25`, toBg3.id === 'precedingInvoice.number' && toBg3.visible, toBg3);
+    await page(`window.__set('precedingInvoice.number', 'RE-2026-0042')`);
+    await page(`document.querySelector('.act.next').focus()`);
+    await press('Enter');
+    const toConfirm = await active();
+    expect(`${locale} CN ${width}px next open point: the clearing confirmation`, toConfirm.id === CLEARING && toConfirm.visible, toConfirm);
+    await press(' ');
+    const confirmed = await page<{ checked: boolean; ubl: string | null; error: boolean }>(`({ checked: document.getElementById(${JSON.stringify(CLEARING)}).checked, ubl: document.querySelector('.bar-actions .act.primary').getAttribute('aria-disabled'), error: !!document.getElementById(${JSON.stringify(CLEARING + '-error')}) })`);
+    expect(`${locale} CN ${width}px Space ticks the confirmation; the 381 is ready for export`, confirmed.checked && confirmed.ubl === 'false' && !confirmed.error, confirmed);
+
+    // Back to 380 and forward again: values return with their type, the confirmation does not.
+    await page(`document.getElementById('documentType.381').focus()`);
+    await press('ArrowLeft');
+    await sleep(150);
+    const back = await page<{ checked: string | null; iban: string | null; bg3: boolean; ubl: string | null }>(`({ checked: document.querySelector('input[name="documentType"]:checked')?.value ?? null, iban: document.getElementById('payment.means.account.id.value')?.value ?? null, bg3: !!document.getElementById('precedingInvoice.number'), ubl: document.querySelector('.bar-actions .act.primary').getAttribute('aria-disabled') })`);
+    expect(`${locale} CN ${width}px ArrowLeft back to 380: bank details return, BG-3 leaves, the invoice is ready`, back.checked === '380' && back.iban === 'DE89370400440532013000' && !back.bg3 && back.ubl === 'false', back);
+    expect(`${locale} CN ${width}px focus stays on the 380 radio`, (await active()).id === 'documentType.380', await active());
+    await press('ArrowRight');
+    await sleep(150);
+    const again = await typeState();
+    const bg3Value = await page<string | null>(`document.getElementById('precedingInvoice.number')?.value ?? null`);
+    const ublAgain = await page<string | null>(`document.querySelector('.bar-actions .act.primary').getAttribute('aria-disabled')`);
+    expect(`${locale} CN ${width}px forward to 381 again: BT-25 restored, confirmation withdrawn, export refused`, again.checked === '381' && bg3Value === 'RE-2026-0042' && again.confirmChecked === false && ublAgain === 'true', { again, bg3Value, ublAgain });
   }
   await viewport(1366);
 }
