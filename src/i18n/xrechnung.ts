@@ -156,7 +156,7 @@ export const copy = {
     'Bei einem offenen Betrag: Fälligkeitsdatum, Zahlungsbedingungen oder strukturiertes Skonto angeben (mindestens eines).',
     'With an amount due: give a due date, payment terms or structured Skonto (at least one).',
   ),
-  'sheet.oneOfPayment': m('eines davon', 'one of these'),
+  'sheet.oneOfPayment': m('eine Angabe davon', 'one of these'),
   'grp.skonto': m('Skonto (strukturiert)', 'Early-payment discount (Skonto)'),
   'skonto.hint': m(
     'Optional. Je Stufe Tage und Prozent, Tage aufsteigend, bis zu 10 Stufen. Das Werkzeug berechnet keinen Skontobetrag und kein Zahlungsdatum.',
