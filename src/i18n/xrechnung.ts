@@ -16,8 +16,8 @@ export function fill(text: string, values: Record<string, string | number>): str
 export const copy = {
   pageTitle: m('XRechnung-Generator', 'XRechnung generator'),
   pageIntro: m(
-    'Rechnung (Typ 380) im implementierten Profil erfassen und als UBL- oder CII-XML erzeugen. Die Eingaben bleiben in Ihrem Browser.',
-    'Enter an invoice (type 380) in the implemented profile and generate UBL or CII XML. Your input stays in your browser.',
+    'Rechnung (Typ 380) oder kaufmännische Gutschrift (Typ 381) im implementierten Profil erfassen und als UBL- oder CII-XML erzeugen. Die Eingaben bleiben in Ihrem Browser.',
+    'Enter an invoice (type 380) or a credit note (type 381) in the implemented profile and generate UBL or CII XML. Your input stays in your browser.',
   ),
   noscript: m(
     'Dieses Werkzeug rechnet vollständig in Ihrem Browser und benötigt JavaScript. Es werden keine Rechnungsdaten übertragen.',
@@ -291,6 +291,7 @@ export const copy = {
   'help.noExternal': m('Keine zusätzliche externe Regel in den ausgewerteten Quellen.', 'No further external rule in the sources consulted.'),
   // Rechnungsblatt (MDR-46): the document-first workspace.
   'sheet.checkLong': m('Rechnung prüfen', 'Check invoice'),
+  'sheet.cnCheckLong': m('Gutschrift prüfen', 'Check credit note'),
   'sheet.nextOpen': m('Nächster offener Punkt', 'Next open point'),
   'sheet.allDone': m('Keine offenen Punkte', 'No open points'),
   'sheet.oneOf': m('eine von beiden', 'one of the two'),

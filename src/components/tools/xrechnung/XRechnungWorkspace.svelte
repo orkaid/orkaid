@@ -494,7 +494,7 @@
     </div>
     <div class="bar-more" id="bar-more" class:shown={menu}>
       <div class="bar-actions">
-        <button type="button" class="act check" onclick={() => void showResults()}>{copy['sheet.checkLong'][locale]}</button>
+        <button type="button" class="act check" onclick={() => void showResults()}>{copy[creditNote ? 'sheet.cnCheckLong' : 'sheet.checkLong'][locale]}</button>
         <button type="button" class="act primary" aria-disabled={!result.ok} aria-label={copy['export.ubl'][locale]} onclick={() => runExport('ubl')}>UBL 2.1 XML <span aria-hidden="true">↓</span></button>
         <button type="button" class="act primary" aria-disabled={!result.ok} aria-label={copy['export.cii'][locale]} onclick={() => runExport('cii')}>CII XML <span aria-hidden="true">↓</span></button>
       </div>

@@ -244,7 +244,7 @@ test('scope note: 381 is available with its limits; 384, 389 and the refund stay
 // The interface presents a 381 as a commercial credit note only: never as a correction, Storno, refund or recipient acceptance.
 const CN_KEYS = ['doctype.legend', 'doctype.380', 'doctype.381', 'doctype.hint', 'doctype.to381', 'doctype.to380', 'sec.cnDocument', 'sheet.cnTitle', 'sheet.cnMeta',
   'grp.preceding', 'grp.precedingHint', 'precedingDateHint', 'grp.supplyHintCn', 'grp.clearing', 'grp.clearingHint', 'clearing.confirm', 'clearing.note',
-  'f.cnNumber', 'f.cnIssueDate', 'f.precedingNumber', 'f.precedingDate', 'f.clearingConfirmation'] as const;
+  'f.cnNumber', 'f.cnIssueDate', 'f.precedingNumber', 'f.precedingDate', 'f.clearingConfirmation', 'sheet.cnCheckLong', 'pageIntro'] as const;
 const CLAIM = /Storno|storniert|Korrektur|correction|corrected|cancel|Aufhebung|akzeptiert|angenommen|accepted|Erstattung|refund|Steuerberichtigung|tax adjustment/i;
 const NEGATED = /\bnicht\b|\bnot\b|\bkein|\bno\b/i;
 
