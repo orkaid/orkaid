@@ -103,6 +103,49 @@ export const copy = {
     'Optional and off by default. Only the structure and check digits are checked; the text is never changed. Passing does not show that the Leitweg-ID is assigned, works for routing, or that a recipient accepts the invoice.',
   ),
   'lines.numberHint': m('Zahlen mit Komma als Dezimaltrennzeichen, ohne Tausenderpunkt, z. B. 125,50.', 'Numbers with a comma as the decimal separator and no thousands separator, e.g. 125,50.'),
+  // Credit note 381 (MDR-49). Working labels; their statutory wording is not verified (oq-cn-label-statutory-verification).
+  'doctype.legend': m('Dokumenttyp', 'Document type'),
+  'doctype.380': m('Rechnung (380)', 'Invoice (380)'),
+  'doctype.381': m('Kaufmännische Gutschrift (381)', 'Credit note (381)'),
+  'doctype.hint': m(
+    'Ihre Wahl ist der Dokumenttyp (BT-3); er wird nie aus Beträgen abgeleitet. Eingaben des nicht gewählten Typs bleiben im Formular, werden aber nicht verwendet.',
+    'Your choice is the document type (BT-3); it is never derived from amounts. Entries of the type not chosen stay in the form but are not used.',
+  ),
+  'doctype.to381': m(
+    'Kaufmännische Gutschrift (381) gewählt: Bezug auf die ursprüngliche Rechnung und Verrechnung statt Bankverbindung.',
+    'Credit note (381) chosen: reference to the preceding invoice, and clearing instead of bank details.',
+  ),
+  'doctype.to380': m(
+    'Rechnung (380) gewählt: Bankverbindung statt Verrechnung, kein Bezug auf eine ursprüngliche Rechnung.',
+    'Invoice (380) chosen: bank details instead of clearing, no reference to a preceding invoice.',
+  ),
+  'sec.cnDocument': m('Gutschriftdaten', 'Credit note details'),
+  'sheet.cnTitle': m('Kaufmännische Gutschrift', 'Credit note'),
+  'sheet.cnMeta': m('Typ 381 · EUR · Deutschland', 'Type 381 · EUR · Germany'),
+  'sheet.short_cnDocument': m('Gutschriftdaten', 'Details'),
+  'grp.preceding': m('Bezug auf die ursprüngliche Rechnung (BG-3)', 'Preceding invoice (BG-3)'),
+  'grp.precedingHint': m(
+    'Die Nummer ist nach dem Profil dieses Werkzeugs Pflicht, nicht als allgemeine Anforderung von EN 16931. Das Werkzeug ruft die Rechnung nicht ab und prüft weder, ob es sie gibt, noch ob die gutgeschriebenen Beträge zu ihr passen.',
+    'The number is required by this tool’s profile, not as a general requirement of EN 16931. The tool does not retrieve the invoice and checks neither that it exists nor that the credited amounts match it.',
+  ),
+  precedingDateHint: m('Angeben, wenn die Nummer allein die Rechnung nicht eindeutig bezeichnet.', 'Give it when the number alone does not identify the invoice uniquely.'),
+  'grp.supplyHintCn': m(
+    'Bei der Gutschrift: die gutgeschriebene Lieferung oder Leistung, so wie Sie sie angeben; nichts wird aus der ursprünglichen Rechnung übernommen.',
+    'On a credit note: the credited supply as you state it; nothing is taken from the preceding invoice.',
+  ),
+  'grp.clearing': m('Abwicklung: Verrechnung (Code 97)', 'Settlement: clearing (code 97)'),
+  'grp.clearingHint': m(
+    'Für eine Gutschrift unterstützt dieses Werkzeug nur die Verrechnung mit einer bestehenden Gegenforderung zwischen Verkäufer und Käufer. Eine Erstattung per Überweisung wird nicht unterstützt; eine Bankverbindung wird nicht angegeben.',
+    'For a credit note this tool supports only clearing against an existing reciprocal obligation between seller and buyer. A refund by credit transfer is not supported; no bank details are given.',
+  ),
+  'clearing.confirm': m(
+    'Ich bestätige, dass zwischen Verkäufer und Käufer eine Gegenforderung besteht, mit der diese Gutschrift verrechnet wird.',
+    'I confirm that a reciprocal obligation exists between the seller and the buyer, against which this credit note is cleared.',
+  ),
+  'clearing.note': m(
+    'Das ist Ihre Erklärung; das Werkzeug prüft sie nicht. Sie ist nie vorausgewählt und wird bei jedem Wechsel des Dokumenttyps zurückgesetzt.',
+    'This is your declaration; the tool does not check it. It is never preselected and is withdrawn whenever the document type changes.',
+  ),
   'grp.paymentDue': m('Fälligkeit', 'Payment due'),
   'grp.paymentDueHint': m(
     'Bei einem offenen Betrag: Fälligkeitsdatum oder Zahlungsbedingungen angeben (mindestens eines).',
@@ -110,6 +153,11 @@ export const copy = {
   ),
 
   'f.invoiceNumber': m('Rechnungsnummer', 'Invoice number'),
+  'f.cnNumber': m('Gutschriftnummer', 'Credit note number'),
+  'f.cnIssueDate': m('Gutschriftdatum', 'Credit note date'),
+  'f.precedingNumber': m('Nummer der ursprünglichen Rechnung', 'Preceding invoice number'),
+  'f.precedingDate': m('Datum der ursprünglichen Rechnung', 'Preceding invoice date'),
+  'f.clearingConfirmation': m('Bestätigung der Verrechnung', 'Clearing confirmation'),
   'f.issueDate': m('Rechnungsdatum', 'Issue date'),
   'f.deliveryDate': m('Leistungsdatum', 'Date of supply'),
   'f.periodStart': m('Beginn des Abrechnungszeitraums', 'Invoicing period start'),
@@ -339,10 +387,16 @@ export function openCountText(missing: number, invalid: number, locale: Locale):
   return parts.join(', ');
 }
 
-/** Normalizes `lines[3].quantity` to its label key; group paths and unknown paths fall back to a section name. */
-export function labelFor(path: string, locale: Locale): string {
+/** Labels that name the document itself, and so differ on a credit note 381 (MDR-49). */
+const CREDIT_NOTE_LABEL_KEYS: Readonly<Record<string, CopyKey>> = { invoiceNumber: 'f.cnNumber', issueDate: 'f.cnIssueDate' };
+
+/**
+ * Normalizes `lines[3].quantity` to its label key; group paths and unknown paths fall back to a section name. `documentType`
+ * '381' names the credit note's own number and date as such.
+ */
+export function labelFor(path: string, locale: Locale, documentType: '380' | '381' = '380'): string {
   const normalized = path.replace(/^lines\[\d+\]/, 'lines');
-  const key = LABEL_KEYS[normalized];
+  const key = (documentType === '381' ? CREDIT_NOTE_LABEL_KEYS[normalized] : undefined) ?? LABEL_KEYS[normalized];
   if (key !== undefined) return copy[key][locale];
   if (path === 'seller') return copy['sec.seller'][locale];
   if (path === 'buyer') return copy['sec.buyer'][locale];
@@ -366,6 +420,8 @@ export const LABEL_KEYS: Readonly<Record<string, CopyKey>> = {
   'buyer.legalRegistrationId': 'f.legalRegistrationId',
   'payment.means.code': 'f.meansCode', 'payment.means.account.id.value': 'f.iban', 'payment.means.account.name': 'f.accountName',
   'payment.means.account.bic': 'f.bic', 'payment.dueDate': 'f.dueDate', 'payment.termsText': 'f.termsText',
+  'precedingInvoice.number': 'f.precedingNumber', 'precedingInvoice.issueDate': 'f.precedingDate',
+  'payment.settlement.reciprocalObligationConfirmed': 'f.clearingConfirmation',
   'notes[0].text': 'f.note',
   'lines.name': 'f.lines.name', 'lines.unitCode': 'f.lines.unitCode', 'lines.quantity': 'f.lines.quantity',
   'lines.unitPrice': 'f.lines.unitPrice', 'lines.vat.rate': 'f.lines.vat.rate',
@@ -424,7 +480,10 @@ export const errorMessages: Readonly<Record<DocumentErrorCode, Msg>> = {
   unsupported_credit_note_payment_means: notReachable,
   unsupported_credit_note_refund_transfer: notReachable,
   unsupported_credit_note_settlement: notReachable,
-  missing_clearing_confirmation: notReachable,
+  missing_clearing_confirmation: m(
+    'Bestätigen Sie die Verrechnung mit einer bestehenden Gegenforderung, oder wählen Sie den Dokumenttyp Rechnung (380). Die Bestätigung wird nie vorausgewählt.',
+    'Confirm the clearing against an existing reciprocal obligation, or choose the document type Invoice (380). The confirmation is never preselected.',
+  ),
   missing_payment_due_information: m(
     'Bei einem offenen Betrag ist ein Fälligkeitsdatum oder eine Zahlungsbedingung erforderlich.',
     'With an amount due, a due date or payment terms are required.',
@@ -472,16 +531,16 @@ export function describeError(code: DocumentErrorCode, path: string, locale: Loc
 /** Compact scope note (MDR-32 obligation at M3). Mirrors the domain README "Supported and not supported"; tool limits are not legal prohibitions. */
 export const scopeLists: Record<'now' | 'core' | 'out' | 'tool', { readonly de: readonly string[]; readonly en: readonly string[] }> = {
   now: {
-    de: ['Rechnung Typ 380', 'Deutsches Inlandsprofil (Verkäufer und Käufer in Deutschland), Währung EUR', 'Umsatzsteuer: Normalsatz 19 % und ermäßigter Satz 7 %', 'Reverse Charge (§ 13b UStG) je Position, auch zusammen mit 19 % und 7 % in einer Rechnung', 'Kleinunternehmer (§ 19 UStG) für die ganze Rechnung', 'Zahlung per Überweisung (Code 30 oder 58) mit IBAN', 'Projekt-, Vertrags- und Bestellreferenz (BT-11, BT-12, BT-13), jeweils optional', 'Leistungsdatum (BT-72) oder Abrechnungszeitraum (BG-14), genau eines von beiden', 'Optionale Leitweg-ID-Prüfung der Käuferreferenz (nur Aufbau und Prüfziffern)', 'Prüfung im Browser gegen die Regeln dieses Werkzeugs und Export als UBL- oder CII-XML'],
-    en: ['Invoice type 380', 'German domestic profile (seller and buyer in Germany), currency EUR', 'VAT: standard rate 19% and reduced rate 7%', 'Reverse Charge (§ 13b UStG) per line, also together with 19% and 7% in one invoice', 'Kleinunternehmer (§ 19 UStG) for the whole invoice', 'Payment by credit transfer (code 30 or 58) with an IBAN', 'Project, contract and purchase order references (BT-11, BT-12, BT-13), each optional', 'Date of supply (BT-72) or invoicing period (BG-14), exactly one of the two', 'Optional Leitweg-ID check of the buyer reference (structure and check digits only)', 'Check in the browser against this tool’s rules and export as UBL or CII XML'],
+    de: ['Rechnung Typ 380', 'Kaufmännische Gutschrift Typ 381 mit Bezug auf die ursprüngliche Rechnung (Nummer Pflicht, Datum optional), nur mit bestätigter Verrechnung (Code 97)', 'Deutsches Inlandsprofil (Verkäufer und Käufer in Deutschland), Währung EUR', 'Umsatzsteuer: Normalsatz 19 % und ermäßigter Satz 7 %', 'Reverse Charge (§ 13b UStG) je Position, auch zusammen mit 19 % und 7 % in einer Rechnung', 'Kleinunternehmer (§ 19 UStG) für die ganze Rechnung', 'Zahlung der Rechnung per Überweisung (Code 30 oder 58) mit IBAN', 'Projekt-, Vertrags- und Bestellreferenz (BT-11, BT-12, BT-13), jeweils optional', 'Leistungsdatum (BT-72) oder Abrechnungszeitraum (BG-14), genau eines von beiden', 'Optionale Leitweg-ID-Prüfung der Käuferreferenz (nur Aufbau und Prüfziffern)', 'Prüfung im Browser gegen die Regeln dieses Werkzeugs und Export als UBL- oder CII-XML'],
+    en: ['Invoice type 380', 'Credit note type 381 with a reference to the preceding invoice (number required, date optional), settled only by confirmed clearing (code 97)', 'German domestic profile (seller and buyer in Germany), currency EUR', 'VAT: standard rate 19% and reduced rate 7%', 'Reverse Charge (§ 13b UStG) per line, also together with 19% and 7% in one invoice', 'Kleinunternehmer (§ 19 UStG) for the whole invoice', 'Payment of an invoice by credit transfer (code 30 or 58) with an IBAN', 'Project, contract and purchase order references (BT-11, BT-12, BT-13), each optional', 'Date of supply (BT-72) or invoicing period (BG-14), exactly one of the two', 'Optional Leitweg-ID check of the buyer reference (structure and check digits only)', 'Check in the browser against this tool’s rules and export as UBL or CII XML'],
   },
   core: {
-    de: ['Gutschrift 381 (nur bestätigte Verrechnung)', 'Strukturiertes Skonto'],
-    en: ['Credit note 381 (confirmed clearing only)', 'Structured Skonto'],
+    de: ['Strukturiertes Skonto'],
+    en: ['Structured Skonto'],
   },
   out: {
-    de: ['Andere Dokumenttypen als 380 und 381 (zum Beispiel 384, 389)', 'Andere Währungen als EUR; Beteiligte außerhalb Deutschlands', 'Andere Steuerkategorien, Steuersätze oder Steuerbehandlungen als im Profil', 'Kleinunternehmer (§ 19 UStG) zusammen mit 19 %, 7 % oder Reverse Charge in einer Rechnung', 'Andere Zahlungsarten als Überweisung (30, 58); Erstattung einer Gutschrift per Überweisung', 'Nachlässe und Zuschläge, Anzahlungen, Teil- und Ratenrechnungen, Anhänge, negative Mengen und Preise'],
-    en: ['Document types other than 380 and 381 (for example 384, 389)', 'Currencies other than EUR; parties outside Germany', 'VAT categories, rates or treatments beyond the profile', 'Kleinunternehmer (§ 19 UStG) together with 19%, 7% or Reverse Charge in one invoice', 'Payment means other than credit transfer (30, 58); refunding a credit note by credit transfer', 'Allowances and charges, prepayments, staged or installment invoices, attachments, negative quantities and prices'],
+    de: ['Andere Dokumenttypen als 380 und 381, zum Beispiel Rechnungskorrektur (384) oder Selbstfakturierung durch den Käufer (389)', 'Andere Währungen als EUR; Beteiligte außerhalb Deutschlands', 'Andere Steuerkategorien, Steuersätze oder Steuerbehandlungen als im Profil', 'Kleinunternehmer (§ 19 UStG) zusammen mit 19 %, 7 % oder Reverse Charge in einer Rechnung', 'Andere Zahlungsarten als Überweisung (30, 58) bei der Rechnung und Verrechnung (97) bei der Gutschrift; Erstattung einer Gutschrift per Überweisung', 'Nachlässe und Zuschläge, Anzahlungen, Teil- und Ratenrechnungen, Anhänge, negative Mengen und Preise'],
+    en: ['Document types other than 380 and 381, for example a corrected invoice (384) or self-billing by the buyer (389)', 'Currencies other than EUR; parties outside Germany', 'VAT categories, rates or treatments beyond the profile', 'Kleinunternehmer (§ 19 UStG) together with 19%, 7% or Reverse Charge in one invoice', 'Payment means other than credit transfer (30, 58) on an invoice and clearing (97) on a credit note; refunding a credit note by credit transfer', 'Allowances and charges, prepayments, staged or installment invoices, attachments, negative quantities and prices'],
   },
   tool: {
     de: ['XML-Import (vorhandene XRechnung-, UBL- oder CII-Dateien einlesen)', 'PDF-Erzeugung'],

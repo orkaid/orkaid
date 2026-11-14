@@ -442,7 +442,8 @@ test('scope note: Kleinunternehmer and Reverse Charge are available, the rest st
   assert.match(now('en'), /Kleinunternehmer/);
   assert.match(now('en'), /Reverse Charge/i);
   assert.doesNotMatch(core('en'), /Kleinunternehmer|Reverse charge/i);
-  assert.match(core('en'), /381/);
+  // 381 left the core list with the credit note slice (MDR-49); Skonto remains.
+  assert.doesNotMatch(core('en'), /381/);
   assert.match(core('en'), /Skonto/);
   assert.match(now('de'), /Kleinunternehmer/);
   assert.doesNotMatch(core('de'), /Kleinunternehmer|Reverse Charge/);

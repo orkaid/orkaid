@@ -56,8 +56,11 @@ test('scope note: four groups in both languages with equal structure; capabiliti
     assert.equal(scopeLists[key].de.length, scopeLists[key].en.length, key);
   }
   const core = scopeLists.core.en.join(' | ');
-  // Slice 3 (MDR-44) moved Kleinunternehmer and Reverse Charge from the domain core to "available"; 381 and Skonto remain core.
-  for (const needle of ['381', 'Skonto']) assert.match(core, new RegExp(needle), needle);
+  // Slice 3 (MDR-44) moved Kleinunternehmer and Reverse Charge from the domain core to "available", and the credit note slice
+  // (MDR-49) moved 381; Skonto remains core.
+  assert.match(core, /Skonto/);
+  assert.doesNotMatch(core, /381/);
+  assert.match(scopeLists.now.en.join(' | '), /381/);
   for (const needle of ['Kleinunternehmer', 'Reverse Charge']) assert.doesNotMatch(core, new RegExp(needle, 'i'), needle);
   for (const needle of ['Kleinunternehmer', 'Reverse Charge']) assert.match(scopeLists.now.en.join(' | '), new RegExp(needle), needle);
   const out = scopeLists.out.en.join(' | ');

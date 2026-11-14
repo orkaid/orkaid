@@ -259,7 +259,7 @@ test('calendar-chosen leap days and reversed periods behave exactly like typed o
   assert.ok(!('invoicingPeriod' in buildDocumentInput(state)));
 });
 
-test('all five date fields get the calendar from the one shared field component, with distinct translated button names', () => {
+test('all six date fields get the calendar from the one shared field component, with distinct translated button names', () => {
   const field = readFileSync(new URL('../../src/components/tools/xrechnung/Field.svelte', import.meta.url), 'utf8');
   assert.match(field, /textFromNativeDate/); // the shared conversion, built on germanDateFromIso
   assert.match(field, /showPicker/);
@@ -272,10 +272,11 @@ test('all five date fields get the calendar from the one shared field component,
   ];
   // The shared Field renders the calendar button for every date field, named with the field's own label.
   assert.match(field, /\{:else if kind === 'date'\}[\s\S]*?<button type="button" class="cal"[^>]*aria-label=\{fill\(copy\['date\.calendar'\]\[locale\], \{ field: label \}\)\}/);
-  assert.deepEqual(dateFields.sort(), ['deliveryDate', 'invoicingPeriod.endDate', 'invoicingPeriod.startDate', 'issueDate', 'payment.dueDate']);
+  // The credit note's BT-26 (MDR-49) is the sixth date field; it gets the same shared calendar.
+  assert.deepEqual(dateFields.sort(), ['deliveryDate', 'invoicingPeriod.endDate', 'invoicingPeriod.startDate', 'issueDate', 'payment.dueDate', 'precedingInvoice.issueDate']);
   for (const locale of ['de', 'en'] as const) {
     const names = dateFields.map((id) => fill(copy['date.calendar'][locale], { field: labelFor(id ?? '', locale) }));
-    assert.equal(new Set(names).size, 5, locale);
+    assert.equal(new Set(names).size, 6, locale);
     for (const name of names) assert.doesNotMatch(name, /[{}]/);
     assert.notEqual(copy['date.calendar'].de, copy['date.calendar'].en);
   }

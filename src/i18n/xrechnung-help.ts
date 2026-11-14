@@ -435,6 +435,62 @@ export const helpEntries = {
       profile: ['There are no presets for payment terms. Structured Skonto cannot be used in this stage.'],
     },
   },
+  precedingInvoice: {
+    bt: 'BG-3 (BT-25, BT-26)', fieldId: 'precedingInvoice.number', mistakes: ['missing_field', 'empty_text', 'invalid_text', 'text_too_long', 'invalid_date'],
+    sources: [`${README} — Credit note 381 (first bounded slice): Preceding invoice (BG-3); Recipient compatibility`, `${DOC} — readPrecedingInvoice`],
+    de: {
+      title: 'Bezug auf die ursprüngliche Rechnung', short: 'Nummer (BT-25) und, wenn nötig, Datum (BT-26) der Rechnung, auf die sich diese Gutschrift bezieht.',
+      enter: 'Tragen Sie die Nummer der ursprünglichen Rechnung genau so ein, wie sie dort steht. Das Datum geben Sie an, wenn die Nummer allein die Rechnung nicht eindeutig bezeichnet.',
+      status: 'required', format: 'Nummer: freier Text ohne Leerzeichen am Anfang oder Ende. Datum: TT.MM.JJJJ, z. B. 05.11.2026.', valid: 'RE-2026-0001',
+      profile: [
+        'Die Nummer ist nach dem Profil dieses Werkzeugs Pflicht; das ist keine allgemeine Anforderung von EN 16931. Bei einer Rechnung (380) wird kein Bezug übermittelt.',
+        'Das Werkzeug speichert keine Rechnungen, ruft die ursprüngliche Rechnung nicht ab und prüft weder, ob es sie gibt, noch ob die gutgeschriebenen Beträge zu ihr passen. Das liegt in Ihrer Verantwortung.',
+      ],
+      unverified: ['XRechnung unterscheidet die Gutschrift (381) von der Rechnungskorrektur (384). Ob Empfänger, insbesondere im öffentlichen Sektor, eine Gutschrift mit diesem Bezug als Aufhebung einer Rechnung annehmen, ist nicht geklärt.'],
+    },
+    en: {
+      title: 'Preceding invoice', short: 'Number (BT-25) and, where needed, date (BT-26) of the invoice this credit note refers to.',
+      enter: 'Enter the number of the preceding invoice exactly as it appears there. Give the date when the number alone does not identify the invoice uniquely.',
+      status: 'required', format: 'Number: free text without spaces at the start or end. Date: DD.MM.YYYY, e.g. 05.11.2026.', valid: 'RE-2026-0001',
+      profile: [
+        'The number is required by this tool’s profile; it is not a general requirement of EN 16931. On an invoice (380) no reference is sent.',
+        'The tool stores no invoices, does not retrieve the preceding invoice and checks neither that it exists nor that the credited amounts match it. That is your responsibility.',
+      ],
+      unverified: ['XRechnung distinguishes the credit note (381) from the corrected invoice (384). Whether recipients, in particular in the public sector, accept a credit note with this reference as cancelling an invoice is not established.'],
+    },
+  },
+  clearing: {
+    bt: 'BG-16 (code 97)', fieldId: 'payment.settlement.reciprocalObligationConfirmed', mistakes: ['missing_clearing_confirmation', 'missing_payment_due_information'],
+    sources: [`${README} — Credit note 381 (first bounded slice): Payment; Refused; BR-CO-25`, `${DOC} — readCreditNotePayment, readClearing`],
+    de: {
+      title: 'Zahlung bei der Gutschrift', short: 'Nur Verrechnung mit einer bestehenden Gegenforderung (Zahlungsart 97), von Ihnen ausdrücklich bestätigt.',
+      enter: 'Bestätigen Sie die Verrechnung und geben Sie ein Fälligkeitsdatum oder Zahlungsbedingungen an.', status: 'required',
+      fields: [
+        { name: 'Bestätigung der Verrechnung', status: 'required', format: 'Ihre Erklärung, nie vorausgewählt' },
+        { name: 'Fälligkeitsdatum / Zahlungsbedingungen', status: 'conditional', format: 'mindestens eines bei offenem Betrag' },
+      ],
+      profile: [
+        'Andere Abwicklungen, insbesondere eine Erstattung per Überweisung, unterstützt dieses Werkzeug für Gutschriften nicht. Das ist eine Grenze dieses Werkzeugs, keine Aussage, dass XRechnung oder EN 16931 eine Erstattung ausschließen.',
+        'Die Verrechnung wird nie vorausgewählt, und die Bestätigung wird bei jedem Wechsel des Dokumenttyps zurückgesetzt. Eine Bankverbindung (BG-17) wird nicht geschrieben.',
+        'Wie bei der Rechnung verlangt das Werkzeug bei positivem Zahlbetrag ein Fälligkeitsdatum oder Zahlungsbedingungen (BR-CO-25).',
+      ],
+      unverified: ['Dass BR-CO-25 auch für Gutschriften gilt, ist aus dem Regelkontext von SeMoX gelesen und nicht am lizenzierten Text von EN 16931 bestätigt.'],
+    },
+    en: {
+      title: 'Payment on a credit note', short: 'Only clearing against an existing reciprocal obligation (payment means 97), explicitly confirmed by you.',
+      enter: 'Confirm the clearing and give a due date or payment terms.', status: 'required',
+      fields: [
+        { name: 'Clearing confirmation', status: 'required', format: 'your declaration, never preselected' },
+        { name: 'Due date / payment terms', status: 'conditional', format: 'at least one with an amount due' },
+      ],
+      profile: [
+        'This tool does not support any other settlement of a credit note, in particular no refund by credit transfer. That is a limit of this tool, not a statement that XRechnung or EN 16931 exclude a refund.',
+        'Clearing is never preselected, and the confirmation is withdrawn whenever the document type changes. No bank details (BG-17) are written.',
+        'As on an invoice, the tool requires a due date or payment terms when the amount due is positive (BR-CO-25).',
+      ],
+      unverified: ['That BR-CO-25 applies to credit notes is read from the SeMoX rule context and is not confirmed against the licensed EN 16931 text.'],
+    },
+  },
   'sec.seller': {
     bt: 'BG-4', fieldId: 'seller.name', sources: [`${README} — Implemented profile`, `${DOC} — readSeller`],
     de: {

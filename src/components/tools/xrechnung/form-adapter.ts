@@ -9,7 +9,7 @@ import {
 } from '../../../lib/domain/xrechnung/invoice.ts';
 import { serializeUblInvoice } from '../../../lib/domain/xrechnung/ubl.ts';
 import { dateInput, decimalInput } from './input-format.ts';
-import type { FieldId, FormState, LineForm } from './form-state.ts';
+import { CLEARING_CONFIRMATION_ID, CREDIT_TRANSFER_FIELD_IDS, PRECEDING_INVOICE_FIELD_IDS, type FieldId, type FormState, type LineForm } from './form-state.ts';
 
 export type SectionId = 'document' | 'seller' | 'buyer' | 'lines' | 'payment' | 'notes';
 export const SECTION_IDS: readonly SectionId[] = ['document', 'seller', 'buyer', 'lines', 'payment', 'notes'];
@@ -36,9 +36,16 @@ export function sectionOf(path: string): SectionId | 'general' {
   return 'document';
 }
 
-/** Every value in the form under its domain path, including each line field (`lines[0].quantity`). */
+/**
+ * Every active value in the form under its domain path, including each line field (`lines[0].quantity`). Fields of the
+ * inactive document type are left out, as they are from the domain input; on a 381 the clearing confirmation is listed under
+ * its own path ('' while unconfirmed) so that its diagnostic is placed and navigated like a field's.
+ */
 export function fieldValues(state: FormState): Record<string, string> {
   const values: Record<string, string> = { ...state.fields };
+  const inactive = state.documentType === '381' ? CREDIT_TRANSFER_FIELD_IDS : PRECEDING_INVOICE_FIELD_IDS;
+  for (const id of inactive) delete values[id];
+  if (state.documentType === '381') values[CLEARING_CONFIRMATION_ID] = state.clearingConfirmed ? 'confirmed' : '';
   state.lines.forEach((line, i) => {
     values[`lines[${i}].name`] = line.name;
     values[`lines[${i}].unitCode`] = line.unitCode;
@@ -87,7 +94,12 @@ export function activeFixedReasons(state: FormState): readonly FixedReason[] {
 /** A VAT bucket is identified by treatment and rate, never by the rate alone (E and AE are both rate 0). */
 export const vatBucketKey = (bucket: Pick<VatBreakdown, 'treatment' | 'rate'>): string => `${bucket.treatment}:${bucket.rate}`;
 
-/** The domain input for an invoice 380. Objects are always present so a diagnostic names the field, not its parent. */
+/**
+ * The domain input for the selected document type (BT-3, never inferred from amounts). Objects are always present so a
+ * diagnostic names the field, not its parent. A 380 sends credit-transfer payment and never BG-3 or a settlement; a 381 sends
+ * BG-3 and the clearing of MDR-41, never a payment means. The clearing is sent as confirmed only after the user's explicit
+ * confirmation; until then the domain itself answers `missing_clearing_confirmation`, so code 97 cannot be written unconfirmed.
+ */
 export function buildDocumentInput(state: FormState): Record<string, unknown> {
   const f = state.fields;
   const party = (side: 'seller' | 'buyer'): Record<string, unknown> => {
@@ -117,21 +129,39 @@ export function buildDocumentInput(state: FormState): Record<string, unknown> {
   put(seller, 'legalRegistrationId', f['seller.legalRegistrationId']);
   if (f['seller.sellerIdentifiers[0]'] !== '') seller.sellerIdentifiers = [f['seller.sellerIdentifiers[0]']];
 
-  const account: Record<string, unknown> = { id: {} };
-  const accountId = account.id as Record<string, unknown>;
-  accountId.scheme = 'IBAN';
-  put(accountId, 'value', f['payment.means.account.id.value']);
-  put(account, 'name', f['payment.means.account.name']);
-  put(account, 'bic', f['payment.means.account.bic']);
-  const means: Record<string, unknown> = { kind: 'credit-transfer', account };
-  put(means, 'code', f['payment.means.code']);
-  const payment: Record<string, unknown> = { means };
-  putDate(payment, 'dueDate', f['payment.dueDate']);
-  put(payment, 'termsText', f['payment.termsText']);
+  const creditNote = state.documentType === '381';
+  let payment: Record<string, unknown>;
+  if (creditNote) {
+    const settlement: Record<string, unknown> = { kind: 'clearing' };
+    if (state.clearingConfirmed) settlement.reciprocalObligationConfirmed = true;
+    payment = {};
+    putDate(payment, 'dueDate', f['payment.dueDate']);
+    put(payment, 'termsText', f['payment.termsText']);
+    payment.settlement = settlement;
+  } else {
+    const account: Record<string, unknown> = { id: {} };
+    const accountId = account.id as Record<string, unknown>;
+    accountId.scheme = 'IBAN';
+    put(accountId, 'value', f['payment.means.account.id.value']);
+    put(account, 'name', f['payment.means.account.name']);
+    put(account, 'bic', f['payment.means.account.bic']);
+    const means: Record<string, unknown> = { kind: 'credit-transfer', account };
+    put(means, 'code', f['payment.means.code']);
+    payment = { means };
+    putDate(payment, 'dueDate', f['payment.dueDate']);
+    put(payment, 'termsText', f['payment.termsText']);
+  }
 
-  const input: Record<string, unknown> = { documentTypeCode: '380', currency: 'EUR' };
+  const input: Record<string, unknown> = { documentTypeCode: state.documentType, currency: 'EUR' };
   put(input, 'invoiceNumber', f.invoiceNumber);
   putDate(input, 'issueDate', f.issueDate);
+  if (creditNote) {
+    // BG-3: exactly one reference, BT-25 required by the profile, BT-26 only when entered (MDR-35). Nothing is looked up.
+    const reference: Record<string, unknown> = {};
+    put(reference, 'number', f['precedingInvoice.number']);
+    putDate(reference, 'issueDate', f['precedingInvoice.issueDate']);
+    input.precedingInvoice = reference;
+  }
   // Only the active alternative of BT-72 / BG-14 enters the input. In period mode the object is always present, so an empty
   // boundary is reported on its own visible field and not as a missing `deliveryDate` the user cannot see.
   if (state.supplyMode === 'period') {
@@ -168,7 +198,7 @@ export function buildDocumentInput(state: FormState): Record<string, unknown> {
  */
 export function buildMonetaryInput(state: FormState): Record<string, unknown> {
   return {
-    documentTypeCode: '380',
+    documentTypeCode: state.documentType,
     currency: 'EUR',
     lines: state.lines.map((line) => {
       const out: Record<string, unknown> = {};
@@ -199,6 +229,8 @@ const GROUP_TARGET: Readonly<Record<string, string>> = {
   seller: 'seller.vatId',
   buyer: 'buyer.vatId',
   payment: 'payment.dueDate',
+  'payment.settlement': CLEARING_CONFIRMATION_ID,
+  precedingInvoice: 'precedingInvoice.number',
   lines: 'lines[0].name',
 };
 

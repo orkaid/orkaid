@@ -12,7 +12,7 @@
   import LinesEditor from './LinesEditor.svelte';
   import ScopeNote from './ScopeNote.svelte';
   import { activeFixedReasons, checkForm, countByKind, exportXml, fieldValues, hasReverseCharge, previewTotals, sectionOf, type DiagnosticItem, type ExportFormat, type SectionId } from './form-adapter.ts';
-  import { emptyFormState, FIELD_IDS, type FieldId } from './form-state.ts';
+  import { CLEARING_CONFIRMATION_ID, emptyFormState, FIELD_IDS, selectDocumentType, type DocumentType, type FieldId } from './form-state.ts';
   import { returnTarget } from './focus-return.ts';
   import { lineBreakRefused, navigationTarget, placementOf } from './diagnostic-placement.ts';
 
@@ -21,6 +21,9 @@
   type FieldOpts = Partial<Pick<ComponentProps<typeof Field>, 'kind' | 'plain' | 'title' | 'required' | 'optionalMark' | 'markText' | 'keep' | 'options' | 'helpId' | 'hint' | 'describedById' | 'inputmode' | 'autocomplete' | 'rows'>>;
   // Reading order of a real invoice: issuer, document data, recipient, lines, payment, notes.
   const SHEET: readonly SectionId[] = ['seller', 'document', 'buyer', 'lines', 'payment', 'notes'];
+  const DOC_TYPES: readonly DocumentType[] = ['380', '381'];
+  // A credit note names its own number and date as such (MDR-49); every other label is the same on both types.
+  const CN_LABELS: Partial<Record<FieldId, keyof typeof copy>> = { invoiceNumber: 'f.cnNumber', issueDate: 'f.cnIssueDate' };
 
   let { locale }: { locale: Locale } = $props();
 
@@ -55,14 +58,19 @@
   const stamp = $derived(status === 'local' ? copy['sheet.stampReady'][locale] : status === 'pristine' ? copy['sheet.stampDraft'][locale] : fill(copy['sheet.stampOpen'][locale], { n: openTotal }));
 
   const values = $derived(fieldValues(form));
+  const creditNote = $derived(form.documentType === '381');
+  /** The field's name in diagnostics: a credit note names its own number and date as such (MDR-49). */
+  const lbl = (path: string): string => labelFor(path, locale, form.documentType);
+  const sectionName = (id: SectionId): string => (id === 'document' && creditNote ? copy['sec.cnDocument'] : copy[`sec.${id}`])[locale];
+  const shortName = (id: SectionId): string => (id === 'document' && creditNote ? copy['sheet.short_cnDocument'] : copy[`sheet.short_${id}`])[locale];
   // An empty field is "missing", whatever code the monetary part of the domain answers for it; the code itself is untouched.
   const itemText = (item: DiagnosticItem): string =>
     item.kind === 'internal' ? fill(copy['diag.internal'][locale], { code: item.code })
-    : item.kind === 'missing' && item.fieldId === item.path && item.code !== 'unsupported_vat_rate' ? describeError('missing_field', item.path, locale)
+    : item.kind === 'missing' && item.fieldId === item.path && item.code !== 'unsupported_vat_rate' && item.code !== 'missing_clearing_confirmation' ? describeError('missing_field', item.path, locale, lbl(item.path))
     // A line description refuses a hard line break: say so, not only "control characters". The text stays as typed.
     : lineBreakRefused(item, values[item.path] ?? '') ? fill(copy['sheet.lineBreak'][locale], { field: labelFor(item.path, locale) })
     : item.code === 'calculated_amount_limit' ? `${describeError(item.code, item.path, locale)} ${copy[item.path === 'lines' ? 'sheet.limitAllLines' : 'sheet.limitLine'][locale]}`
-    : describeError(item.code, item.path, locale);
+    : describeError(item.code, item.path, locale, lbl(item.path));
   // A message appears once its field was left, or after an explicit check, which marks every open path of that moment.
   // A line added afterwards is therefore not marked before the user has touched it; the counts are always live.
   const shown = $derived.by(() => {
@@ -232,6 +240,14 @@
     statusEl?.focus();
   }
 
+  /** BT-3 changes only here (MDR-49): the confirmation is withdrawn and its feedback starts afresh; focus stays on the choice. */
+  function changeType(type: DocumentType): void {
+    if (form.documentType === type) return;
+    selectDocumentType(form, type);
+    delete touched[CLEARING_CONFIRMATION_ID];
+    announcement = copy[type === '381' ? 'doctype.to381' : 'doctype.to380'][locale];
+  }
+
   function download(xml: string, fileName: string): void {
     const url = URL.createObjectURL(new Blob([xml], { type: 'application/xml;charset=utf-8' }));
     const anchor = document.createElement('a');
@@ -282,7 +298,7 @@
 </script>
 
 {#snippet fld(id: FieldId, key: keyof typeof copy, o: FieldOpts = {})}
-  <Field {id} {locale} label={copy[key][locale]} bind:value={f[id]} error={errorFor(id)} missing={isMissing(id)} onblur={() => touch(id)} onmore={(el) => { if (o.helpId) openHelp(o.helpId, el); }} {...o} />
+  <Field {id} {locale} label={copy[(creditNote ? CN_LABELS[id] : undefined) ?? key][locale]} bind:value={f[id]} error={errorFor(id)} missing={isMissing(id)} onblur={() => touch(id)} onmore={(el) => { if (o.helpId) openHelp(o.helpId, el); }} {...o} />
 {/snippet}
 {#snippet alert(text: string | undefined)}
   {#if text}<p class="group-error" role="alert"><Glyph kind="error" /> {text}</p>{/if}
@@ -322,9 +338,18 @@
 {#snippet bodyDocument()}
   {@render fld('invoiceNumber', 'f.invoiceNumber', { required: true })}
   {@render fld('issueDate', 'f.issueDate', { required: true, kind: 'date' })}
-  <fieldset class="grp" aria-describedby="supply-hint">
+  {#if creditNote}
+    <fieldset class="grp" aria-describedby="preceding-hint">
+      <legend>{copy['grp.preceding'][locale]}</legend>
+      <p class="group-hint" id="preceding-hint">{copy['grp.precedingHint'][locale]}</p>
+      {@render fld('precedingInvoice.number', 'f.precedingNumber', { required: true, helpId: 'precedingInvoice', describedById: 'preceding-hint' })}
+      {@render fld('precedingInvoice.issueDate', 'f.precedingDate', { optionalMark: true, kind: 'date', hint: copy.precedingDateHint[locale] })}
+    </fieldset>
+  {/if}
+  <fieldset class="grp" aria-describedby={creditNote ? 'supply-hint supply-hint-cn' : 'supply-hint'}>
     <legend>{copy['grp.supply'][locale]}</legend>
     <p class="group-hint" id="supply-hint">{copy['grp.supplyHint'][locale]}</p>
+    {#if creditNote}<p class="group-hint" id="supply-hint-cn">{copy['grp.supplyHintCn'][locale]}</p>{/if}
     <div class="choices">
       <label class="choice"><input type="radio" name="supplyMode" value="date" bind:group={form.supplyMode} /> {copy['supply.date'][locale]}</label>
       <label class="choice"><input type="radio" name="supplyMode" value="period" bind:group={form.supplyMode} /> {copy['supply.period'][locale]}</label>
@@ -392,10 +417,28 @@
 {/snippet}
 
 {#snippet bodyPayment()}
-  {@render fld('payment.means.code', 'f.meansCode', { required: true, kind: 'select', options: meansOptions, helpId: 'paymentMeans', hint: copy.meansHint[locale] })}
-  {@render fld('payment.means.account.id.value', 'f.iban', { required: true, helpId: 'iban', hint: copy.ibanHint[locale] })}
-  {@render fld('payment.means.account.name', 'f.accountName', { optionalMark: true })}
-  {@render fld('payment.means.account.bic', 'f.bic', { optionalMark: true, helpId: 'bic' })}
+  {#if creditNote}
+    {@const confirmError = errorFor(CLEARING_CONFIRMATION_ID)}
+    <!-- MDR-41: the only settlement of a 381 is a clearing the user confirms; nothing here is preselected or derived. -->
+    <fieldset class="grp clearing" aria-describedby="clearing-hint">
+      <legend>{copy['grp.clearing'][locale]}</legend>
+      <p class="group-hint" id="clearing-hint">{copy['grp.clearingHint'][locale]}</p>
+      <div class="confirm" class:invalid={confirmError !== undefined}>
+        <label class="choice confirm-label">
+          <input id={CLEARING_CONFIRMATION_ID} type="checkbox" bind:checked={form.clearingConfirmed} onchange={() => touch(CLEARING_CONFIRMATION_ID)} onblur={() => touch(CLEARING_CONFIRMATION_ID)}
+            aria-invalid={confirmError !== undefined} aria-describedby={confirmError !== undefined ? `clearing-note ${CLEARING_CONFIRMATION_ID}-error` : 'clearing-note'} />
+          <span>{copy['clearing.confirm'][locale]}<span class="req" aria-hidden="true"> *</span><span class="sr-only"> ({copy.required[locale]})</span></span>
+        </label>
+        <p class="group-hint" id="clearing-note">{copy['clearing.note'][locale]}</p>
+        {#if confirmError !== undefined}<p class="group-error" id={`${CLEARING_CONFIRMATION_ID}-error`}><Glyph kind="error" /> {confirmError}</p>{/if}
+      </div>
+    </fieldset>
+  {:else}
+    {@render fld('payment.means.code', 'f.meansCode', { required: true, kind: 'select', options: meansOptions, helpId: 'paymentMeans', hint: copy.meansHint[locale] })}
+    {@render fld('payment.means.account.id.value', 'f.iban', { required: true, helpId: 'iban', hint: copy.ibanHint[locale] })}
+    {@render fld('payment.means.account.name', 'f.accountName', { optionalMark: true })}
+    {@render fld('payment.means.account.bic', 'f.bic', { optionalMark: true, helpId: 'bic' })}
+  {/if}
   <fieldset class="grp">
     <legend>{copy['grp.paymentDue'][locale]}</legend>
     <p class="group-hint">{copy['grp.paymentDueHint'][locale]}</p>
@@ -411,7 +454,7 @@
 
 {#snippet block(id: SectionId, helpId: HelpId | undefined, body: Snippet)}
   {@const state = sections[id]}
-  {@const name = copy[`sec.${id}`][locale]}
+  {@const name = sectionName(id)}
   {@const on = open === id}
   {@const nextId = SHEET[SHEET.indexOf(id) + 1]}
   <!-- Focus or a click anywhere in the block makes it the one being worked in; nothing has to be "opened" first. -->
@@ -430,7 +473,7 @@
     {#if on}
       <div class="blk-foot">
         <button type="button" class="btn" onclick={() => closeBlock(true)}>{copy['sheet.done'][locale]}</button>
-        {#if nextId}<button type="button" class="btn" onclick={() => void nextBlock(nextId)}>{fill(copy['sheet.nextBlock'][locale], { section: copy[`sheet.short_${nextId}`][locale] })} <span aria-hidden="true">→</span></button>{/if}
+        {#if nextId}<button type="button" class="btn" onclick={() => void nextBlock(nextId)}>{fill(copy['sheet.nextBlock'][locale], { section: shortName(nextId) })} <span aria-hidden="true">→</span></button>{/if}
         <span class="keys">{copy[id === 'lines' ? 'sheet.keysLines' : 'sheet.keys'][locale]}</span>
       </div>
     {/if}
@@ -459,7 +502,7 @@
         <ol>
           {#each SHEET as id (id)}
             {@const state = sections[id]}
-            <li><a class={state.kind} class:here={open === id} href={`#section-${id}`} onclick={(event) => { event.preventDefault(); jump(id); }}><Glyph kind={state.kind} /> <span class="o-name">{copy[`sheet.short_${id}`][locale]}</span>{#if state.kind === 'error' || state.kind === 'incomplete'}<span class="o-count">{state.text}</span>{/if}</a></li>
+            <li><a class={state.kind} class:here={open === id} href={`#section-${id}`} onclick={(event) => { event.preventDefault(); jump(id); }}><Glyph kind={state.kind} /> <span class="o-name">{shortName(id)}</span>{#if state.kind === 'error' || state.kind === 'incomplete'}<span class="o-count">{state.text}</span>{/if}</a></li>
           {/each}
         </ol>
       </nav>
@@ -473,9 +516,18 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="sheet" onpointerdown={(event) => { if (event.target instanceof Element && !event.target.closest('.blk')) closeBlock(); }}>
     <header class="sheet-top">
-      <p class="sheet-title">{copy['sheet.sheetTitle'][locale]} <span class="sheet-no">{f.invoiceNumber}</span></p>
+      <p class="sheet-title">{copy[creditNote ? 'sheet.cnTitle' : 'sheet.sheetTitle'][locale]} <span class="sheet-no">{f.invoiceNumber}</span></p>
       <p class={`stamp ${status}`}>{stamp}</p>
-      <p class="sheet-meta">{copy['sheet.sheetMeta'][locale]}</p>
+      <p class="sheet-meta">{copy[creditNote ? 'sheet.cnMeta' : 'sheet.sheetMeta'][locale]}</p>
+      <fieldset class="doctype" aria-describedby="doctype-hint">
+        <legend>{copy['doctype.legend'][locale]}</legend>
+        <div class="choices">
+          {#each DOC_TYPES as type (type)}
+            <label class="choice"><input id={`documentType.${type}`} type="radio" name="documentType" value={type} checked={form.documentType === type} onchange={() => changeType(type)} /> {copy[`doctype.${type}`][locale]}</label>
+          {/each}
+        </div>
+        <p class="group-hint" id="doctype-hint">{copy['doctype.hint'][locale]}</p>
+      </fieldset>
     </header>
     {#if status === 'pristine'}<p class="intro">{copy['sheet.intro'][locale]}</p>{/if}
     {#if documentIssues.length > 0}
@@ -489,7 +541,7 @@
       {@render block('document', undefined, bodyDocument)}
       {@render block('buyer', 'sec.buyer', bodyBuyer)}
       {@render block('lines', 'sec.lines', bodyLines)}
-      {@render block('payment', 'sec.payment', bodyPayment)}
+      {@render block('payment', creditNote ? 'clearing' : 'sec.payment', bodyPayment)}
       {@render block('notes', undefined, bodyNotes)}
     </div>
     <p class="notice"><Glyph kind="info" /> {copy['notice.external'][locale]} {copy['export.hint'][locale]}</p>
@@ -580,6 +632,14 @@
   .choice { display: inline-flex; align-items: center; gap: 0.5rem; min-block-size: 2rem; font: 500 0.875rem var(--sans); cursor: pointer; }
   .choice input { inline-size: 1.125rem; block-size: 1.125rem; margin: 0; accent-color: var(--ink); }
   .leitweg { display: flex; flex-wrap: wrap; align-items: center; gap: 0 0.5rem; }
+  .doctype { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 0 1.25rem; margin: 0.375rem 0 0; padding: 0; border: 0; min-width: 0; }
+  .doctype legend { float: left; padding: 0; margin-inline-end: 0.25rem; color: var(--muted); font: 500 0.75rem/2rem var(--mono); letter-spacing: 0.04em; }
+  .doctype .group-hint { flex-basis: 100%; }
+  .confirm { display: flex; flex-direction: column; gap: 0.125rem; }
+  .confirm-label { align-items: flex-start; font-weight: 400; line-height: 1.4; }
+  .confirm-label input { margin-block-start: 0.15rem; flex: none; }
+  .confirm.invalid .confirm-label input { outline: 2px solid var(--danger); outline-offset: 1px; }
+  .req { font-family: var(--mono); margin-inline-start: 0.15em; }
   .leitweg .group-hint { flex-basis: 100%; }
   .blk.on .grp { gap: 0.5rem; margin-block-start: 0.25rem; padding: 0.125rem 0 0.25rem 0.75rem; border-inline-start: 1px solid var(--rule); }
   .regime { margin-block-end: 0.75rem; }
@@ -593,7 +653,8 @@
   .blk:not(.on) .leitweg .group-hint,
   .blk:not(.on) .reasons h3,
   .blk:not(.on) .reasons dt,
-  .blk:not(.on) .reason-terms { display: none; }
+  .blk:not(.on) .reason-terms,
+  .blk:not(.on) .confirm .group-hint { display: none; }
   .blk:not(.on) .leitweg { color: var(--muted); }
   .reasons { margin-block-start: 0.75rem; }
   .reasons h3 { margin: 0 0 0.25rem; font: 500 0.8125rem/1.3 var(--sans); }
