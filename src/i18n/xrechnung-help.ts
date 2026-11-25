@@ -424,14 +424,14 @@ export const helpEntries = {
     sources: [`${README} — Implemented profile (BR-CO-25; BT-9 and BT-20 independent)`],
     de: {
       title: 'Fälligkeit', short: 'Fälligkeitsdatum (BT-9) und/oder Zahlungsbedingungen als Text (BT-20).',
-      enter: 'Geben Sie ein Fälligkeitsdatum, Zahlungsbedingungen oder beides an.', status: 'conditional',
+      enter: 'Geben Sie ein Fälligkeitsdatum, Zahlungsbedingungen oder beides an. Bei der Rechnung (380) genügt auch strukturiertes Skonto allein.', status: 'conditional',
       condition: 'Bei einem Zahlbetrag über null ist mindestens eines erforderlich (bei der Rechnung auch strukturiertes Skonto).', format: 'Datum als TT.MM.JJJJ, z. B. 05.12.2026. Zahlungsbedingungen: freier Text, Zeilenumbrüche erlaubt, kein „#“.',
       external: ['BR-CO-25: bei positivem Zahlbetrag ist BT-9 oder BT-20 erforderlich. Der gepinnte Validator setzt die Regel nicht um; dieses Werkzeug prüft sie nach der Berechnung.'],
       profile: ['Es gibt keine Voreinstellungen für Zahlungsbedingungen. Bei der Rechnung (380) zählt strukturiertes Skonto ebenfalls als Zahlungsbedingung (BT-20) und genügt allein für BR-CO-25; es steht im Feld darunter.'],
     },
     en: {
       title: 'Payment due', short: 'Due date (BT-9) and/or payment terms as text (BT-20).',
-      enter: 'Give a due date, payment terms, or both.', status: 'conditional',
+      enter: 'Give a due date, payment terms, or both. On an invoice (380) structured Skonto alone is also enough.', status: 'conditional',
       condition: 'With an amount due above zero, at least one is required (on an invoice, structured Skonto counts too).', format: 'Date as DD.MM.YYYY, e.g. 05.12.2026. Payment terms: free text, line breaks allowed, no “#”.',
       external: ['BR-CO-25: with a positive amount due, BT-9 or BT-20 is required. The pinned validator does not implement this rule; this tool checks it after the calculation.'],
       profile: ['There are no presets for payment terms. On an invoice (380) structured Skonto also counts as payment terms (BT-20) and alone satisfies BR-CO-25; it is entered below.'],
@@ -444,7 +444,7 @@ export const helpEntries = {
     de: {
       title: 'Skonto (strukturiert)', short: 'Skontobedingungen als Stufen aus Tagen und Prozent, im Rechnungsdokument als strukturierte Zahlungsbedingungen (BT-20).',
       enter: 'Je Stufe die Anzahl Tage und den Prozentsatz. Mehrere Stufen mit aufsteigenden Tagen.', status: 'optional',
-      format: 'Tage: ganze Zahl von 1 bis 365. Prozent: mit Komma, höchstens 2 Nachkommastellen, z. B. 2,5.',
+      format: 'Tage: ganze Zahl von 1 bis 365. Prozent: mit Komma, höchstens 2 Nachkommastellen (nachgestellte Nullen zählen nicht), z. B. 2,5.',
       external: [
         'XRechnung 3.0.2 sieht für Skonto strukturierte Angaben in den Zahlungsbedingungen (BT-20) vor. Das Werkzeug schreibt sie aus Ihren Stufen; freier Text steht davor.',
         'Ohne Basisbetrag bezieht sich der Prozentsatz auf den gesamten Zahlbetrag (BT-115).',
@@ -462,7 +462,7 @@ export const helpEntries = {
     en: {
       title: 'Early-payment discount (Skonto)', short: 'Skonto conditions as tiers of days and percent, carried in the document as structured payment terms (BT-20).',
       enter: 'For each tier the number of days and the percentage. Several tiers with ascending days.', status: 'optional',
-      format: 'Days: whole number from 1 to 365. Percent: with a comma, at most 2 fractional digits, e.g. 2,5.',
+      format: 'Days: whole number from 1 to 365. Percent: with a comma, at most 2 fractional digits (trailing zeros not counted), e.g. 2,5.',
       external: [
         'XRechnung 3.0.2 provides structured Skonto entries in the payment terms (BT-20). The tool writes them from your tiers; free text comes first.',
         'Without a base amount the percentage refers to the whole amount due (BT-115).',
@@ -507,7 +507,7 @@ export const helpEntries = {
     sources: [`${README} — Credit note 381 (first bounded slice): Payment; Refused; BR-CO-25`, `${DOC} — readCreditNotePayment, readClearing`],
     de: {
       title: 'Zahlung bei der Gutschrift', short: 'Nur Verrechnung mit einer bestehenden Gegenforderung (Zahlungsart 97), von Ihnen ausdrücklich bestätigt.',
-      enter: 'Bestätigen Sie die Verrechnung und geben Sie ein Fälligkeitsdatum oder Zahlungsbedingungen an.', status: 'required',
+      enter: 'Bestätigen Sie die Verrechnung. Bei einem Zahlbetrag über null geben Sie außerdem ein Fälligkeitsdatum oder Zahlungsbedingungen an; strukturiertes Skonto gibt es bei der Gutschrift nicht.', status: 'required',
       fields: [
         { name: 'Bestätigung der Verrechnung', status: 'required', format: 'Ihre Erklärung, nie vorausgewählt' },
         { name: 'Fälligkeitsdatum / Zahlungsbedingungen', status: 'conditional', format: 'mindestens eines bei offenem Betrag' },
@@ -521,7 +521,7 @@ export const helpEntries = {
     },
     en: {
       title: 'Payment on a credit note', short: 'Only clearing against an existing reciprocal obligation (payment means 97), explicitly confirmed by you.',
-      enter: 'Confirm the clearing and give a due date or payment terms.', status: 'required',
+      enter: 'Confirm the clearing. With an amount due above zero, also give a due date or payment terms; structured Skonto is not available on a credit note.', status: 'required',
       fields: [
         { name: 'Clearing confirmation', status: 'required', format: 'your declaration, never preselected' },
         { name: 'Due date / payment terms', status: 'conditional', format: 'at least one with an amount due' },
@@ -614,23 +614,23 @@ export const helpEntries = {
   'sec.payment': {
     bt: 'BG-16', fieldId: 'payment.means.code', sources: [`${README} — Implemented profile`],
     de: {
-      title: 'Zahlung', short: 'Zahlungsart, Konto und Fälligkeit.', enter: 'Code, IBAN und mindestens Fälligkeitsdatum oder Zahlungsbedingungen.', status: 'required',
+      title: 'Zahlung', short: 'Zahlungsart, Konto und Fälligkeit.', enter: 'Code und IBAN; bei einem Zahlbetrag über null außerdem Fälligkeitsdatum, Zahlungsbedingungen oder strukturiertes Skonto (mindestens eines).', status: 'required',
       fields: [
         { name: 'Zahlungsart', status: 'required', format: '30 oder 58' },
         { name: 'IBAN', status: 'required', format: 'ohne Leerzeichen' },
         { name: 'Kontoinhaber', status: 'optional', format: 'Text' },
         { name: 'BIC', status: 'optional', format: '8 oder 11 Zeichen' },
-        { name: 'Fälligkeitsdatum / Zahlungsbedingungen', status: 'conditional', format: 'mindestens eines bei offenem Betrag' },
+        { name: 'Fälligkeitsdatum / Zahlungsbedingungen / Skonto', status: 'conditional', format: 'mindestens eines bei offenem Betrag' },
       ],
     },
     en: {
-      title: 'Payment', short: 'Payment means, account and due information.', enter: 'Code, IBAN and at least a due date or payment terms.', status: 'required',
+      title: 'Payment', short: 'Payment means, account and due information.', enter: 'Code and IBAN; with an amount due above zero also a due date, payment terms or structured Skonto (at least one).', status: 'required',
       fields: [
         { name: 'Payment means', status: 'required', format: '30 or 58' },
         { name: 'IBAN', status: 'required', format: 'no spaces' },
         { name: 'Account holder', status: 'optional', format: 'Text' },
         { name: 'BIC', status: 'optional', format: '8 or 11 characters' },
-        { name: 'Due date / payment terms', status: 'conditional', format: 'at least one with an amount due' },
+        { name: 'Due date / payment terms / Skonto', status: 'conditional', format: 'at least one with an amount due' },
       ],
     },
   },

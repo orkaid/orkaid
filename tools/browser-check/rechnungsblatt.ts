@@ -488,6 +488,93 @@ for (const { locale, path } of ROUTES) {
   const qtyHelp = await page<string>(`[...document.querySelectorAll('dialog.drawer[open] li')].map((li) => li.textContent).join(' | ')`);
   expect(`${locale} SK quantity/unit price help keeps the six-digit limit`, qtyHelp.includes(locale === 'de' ? 'höchstens 6 Nachkommastellen' : 'at most 6 fractional digits'), qtyHelp.slice(0, 300));
   await page(`document.querySelector('dialog.drawer[open] .close')?.click()`);
+
+  // C7-02a: the electronic-address help is shared by both parties; leaving it (Jump, Escape, Close) keeps the party it was
+  // opened from, at constant widths and after a wide-to-narrow change while it is open. Real F1, Tab, Enter, Escape and Tab.
+  const settled = () => page<{ id: string; cls: string; visible: boolean; connected: boolean; field: string | null; block: string | null; controls: string | null }>(`new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => {
+    const a = document.activeElement; done({ id: a?.id ?? '', cls: typeof a?.className === 'string' ? a.className : '', visible: !!a && a !== document.body && a.getClientRects().length > 0, connected: !!a?.isConnected,
+      field: a?.closest?.('.field')?.querySelector('input, select, textarea')?.id ?? null, block: a?.closest?.('.blk')?.id ?? null, controls: a?.getAttribute?.('aria-controls') ?? null }); }, 250))))`);
+  const CONDITIONS = [['wide', 1366, 1366], ['narrow', 390, 390], ['wide→narrow', 1366, 390]] as const;
+  for (const party of ['buyer', 'seller'] as const) {
+    for (const dismissal of party === 'buyer' ? (['jump', 'escape', 'close'] as const) : (['jump'] as const)) {
+      for (const [condition, from, to] of CONDITIONS) {
+        const tag = `${locale} C7-02a ${party} ${condition} ${dismissal}`;
+        await viewport(from, from < 768);
+        await open(path);
+        await page(`(document.getElementById('${party}.electronicAddress.schemeId').focus(), window.__wait(80))`);
+        await press('F1');
+        await press('Tab');
+        const more = await settled();
+        await press('Enter');
+        const opened = await page<{ open: boolean; bt: string | null }>(`({ open: !!document.querySelector('dialog.drawer[open]'), bt: document.querySelector('dialog.drawer[open] .bt')?.textContent ?? null })`);
+        expect(`${tag}: More reached by Tab opens the electronic-address help`, more.cls.includes('more') && more.field === `${party}.electronicAddress.schemeId` && opened.open && opened.bt === 'BT-34 / BT-49', { more, opened });
+        if (to !== from) await viewport(to, to < 768);
+        if (dismissal === 'jump') { await page(`document.querySelector('dialog.drawer[open] .jump').focus()`); await press('Enter'); }
+        else if (dismissal === 'close') { await page(`document.querySelector('dialog.drawer[open] .close').focus()`); await press('Enter'); }
+        else await press('Escape');
+        const landed = await settled();
+        await press('Tab');
+        const next = await settled();
+        const block = `section-${party}`;
+        if (dismissal === 'jump') {
+          expect(`${tag}: lands on ${party}.electronicAddress.value, visible and connected`, landed.id === `${party}.electronicAddress.value` && landed.visible && landed.connected && landed.block === block, landed);
+          expect(`${tag}: next Tab continues to the ${party} VAT-ID help`, next.controls === `${party}.vatId-help` && next.visible && next.block === block, next);
+        } else {
+          expect(`${tag}: returns to the ${party} scheme's More, visible and connected`, landed.cls.includes('more') && landed.field === `${party}.electronicAddress.schemeId` && landed.visible && landed.connected && landed.block === block, landed);
+          expect(`${tag}: next Tab continues to ${party}.electronicAddress.value`, next.id === `${party}.electronicAddress.value` && next.visible && next.block === block, next);
+        }
+      }
+    }
+  }
+  // Party-specific helps keep their own target: the party rule changes only a help both parties share.
+  for (const [origin, targetId] of [['seller.contact.name', 'seller.contact.name'], ['seller.vatId', 'seller.vatId'], ['seller.taxRegistrationId', 'seller.taxRegistrationId'], ['seller.legalRegistrationId', 'seller.legalRegistrationId'], ['buyer.vatId', 'buyer.vatId']] as const) {
+    await viewport(1366);
+    await open(path);
+    // Empty optional fields show only in the block being worked in: enter the block first.
+    await page(`(async () => { document.getElementById('${origin.split('.')[0]}.name').focus(); await window.__wait(120); document.getElementById('${origin}').focus(); await window.__wait(80); })()`);
+    await press('F1');
+    await press('Tab');
+    const more = await settled();
+    await press('Enter');
+    const opened = await page<boolean>(`!!document.querySelector('dialog.drawer[open] .jump')`);
+    if (opened) { await page(`document.querySelector('dialog.drawer[open] .jump').focus()`); await press('Enter'); }
+    const landed = await settled();
+    expect(`${locale} C7-02a control party help from ${origin}: Jump lands on ${targetId}`, opened && landed.id === targetId && landed.visible && landed.connected, { more, opened, landed });
+  }
+  // C5-01/04/05: the rendered scope note names the B2B profile, the split exclusions and the missing sending and sign-in.
+  await open(path);
+  const scopeText = await page<string>(`[...document.querySelectorAll('.scope details')].map((d) => d.textContent).join(' ')`);
+  for (const needle of locale === 'de' ? ['(B2B)', 'BT-113', 'BG-24', 'BT-7, BT-8', 'Peppol', 'Anmeldung', 'je Position'] : ['(B2B)', 'BT-113', 'BG-24', 'BT-7, BT-8', 'Peppol', 'sign-in', 'per line']) {
+    expect(`${locale} C5 rendered scope note names ${needle}`, scopeText.includes(needle), scopeText.slice(0, 200));
+  }
+  // Controls on the shared mechanism: Skonto F1 → Jump goes to tier 1 Days, then Tab to Percent; a line-column help closes back
+  // to its column link.
+  for (const [condition, from, to] of CONDITIONS) {
+    await viewport(from, from < 768);
+    await open(path);
+    await page(`(document.querySelector('#section-payment .tiers .add').click(), window.__wait(120))`);
+    await page(`(document.getElementById(${JSON.stringify(SK(0, 'percent'))}).focus(), window.__wait(80))`);
+    await press('F1');
+    if (to !== from) await viewport(to, to < 768);
+    await page(`document.querySelector('dialog.drawer[open] .jump').focus()`);
+    await press('Enter');
+    const landed = await settled();
+    await press('Tab');
+    const next = await settled();
+    expect(`${locale} C7-02a control Skonto ${condition} jump: tier 1 Days, then Tab to tier 1 Percent`, landed.id === SK(0, 'days') && landed.visible && next.id === SK(0, 'percent'), { landed, next });
+
+    await viewport(from, from < 768);
+    await open(path);
+    await page(`(document.getElementById('lines[0].quantity').focus(), window.__wait(80))`);
+    await page(`[...document.querySelectorAll('.help-link')].find((b) => /Menge|Quantity/.test(b.textContent)).focus()`);
+    await press('Enter');
+    if (to !== from) await viewport(to, to < 768);
+    await page(`document.querySelector('dialog.drawer[open] .close').focus()`);
+    await press('Enter');
+    const back = await settled();
+    expect(`${locale} C7-02a control line-column help ${condition} close: back on its column link`, back.cls.includes('help-link') && back.visible && back.connected && back.block === 'section-lines', back);
+  }
+  await viewport(1366);
 }
 
 expect('no console error, page exception or CSP report', pageErrors.length === 0, pageErrors);

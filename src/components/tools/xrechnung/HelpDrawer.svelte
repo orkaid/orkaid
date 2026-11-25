@@ -51,7 +51,9 @@
     if (event.target === dialog) dialog?.close();
   }
   function jump() {
-    const target = entry?.fieldId;
+    // A help both parties share names one party's field: the jump stays in the party whose field opened it (C7-02a).
+    const party = fieldContext?.match(/^(seller|buyer)\./)?.[0];
+    const target = party ? entry?.fieldId?.replace(/^(seller|buyer)\./, party) : entry?.fieldId;
     trigger = null;
     fieldContext = undefined;
     dialog?.close();
