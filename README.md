@@ -25,7 +25,7 @@ Three identities are kept apart:
 
 | Identity | Value | What it names |
 | --- | --- | --- |
-| Orkaid application release | `v0.1.0` | The intended first public release of the website and the generator. It has not been tagged, published as a release or deployed. |
+| Orkaid application release | `v0.1.0` | The version of the website and the generator (also in `package.json`). Published versions are listed under [GitHub Releases](https://github.com/orkaid/orkaid/releases); deployment to orkaid.de is a separate step. |
 | Semantic contract | `xrechnung-domain-v1` | The frozen meaning of the domain engine's input and output; see the [domain README](src/lib/domain/xrechnung/README.md). |
 | XRechnung specification | 3.0.2 | The standard version the generator writes. Development checks use the pinned KoSIT validator 1.6.3 with the validation configuration 2026-08-31 (see [`tools/kosit`](tools/kosit/README.md)). |
 
