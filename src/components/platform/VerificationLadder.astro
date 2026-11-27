@@ -1,0 +1,39 @@
+---
+// PR-28: the four levels of checking, kept apart: the tool, the project, the user's own validation, the recipient.
+import { localePath, type Locale } from '../../i18n/ui';
+
+interface Props { locale: Locale; guideLink?: boolean }
+const { locale, guideLink = true } = Astro.props;
+const steps = {
+  de: [
+    ['Im Werkzeug', 'Pflichtangaben, Formate und Beträge werden beim Erfassen gegen die Regeln dieses Werkzeugs geprüft – in Ihrem Browser, ohne Übertragung.'],
+    ['Im Projekt', 'Während der Entwicklung prüft der offizielle KoSIT-Validator mit einer fest eingestellten Konfiguration die erzeugten Testdateien. Das betrifft Testdateien, nicht Ihre Rechnung.'],
+    ['Durch Sie', 'Ihre exportierte Datei validieren Sie vor dem Versand selbst.'],
+    ['Beim Empfänger', 'Ob die Rechnung angenommen wird und steuerlich richtig ist, entscheidet keine technische Prüfung. Orkaid ist nicht zertifiziert.'],
+  ],
+  en: [
+    ['In the tool', 'Required data, formats and amounts are checked against this tool’s rules as you enter them – in your browser, nothing is sent.'],
+    ['In the project', 'During development, the official KoSIT validator with a pinned configuration checks the generated test files. This covers test files, not your invoice.'],
+    ['By you', 'You validate your exported file yourself before sending it.'],
+    ['At the recipient', 'Whether the invoice is accepted and correct for tax purposes is not decided by a technical check. Orkaid is not certified.'],
+  ],
+}[locale];
+---
+<ol class="ladder">
+  {steps.map(([who, text], i) => (
+    <li>
+      <p class="who"><span aria-hidden="true">{i + 1} · </span>{who}</p>
+      <p>{text}{i === 2 && guideLink && <> <a href={localePath(locale, '/knowledge/xrechnung-pruefen/')}>{locale === 'de' ? 'So geht’s' : 'How to'}</a></>}</p>
+    </li>
+  ))}
+</ol>
+
+<style>
+  .ladder { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 var(--space-3); margin: 0; padding: 0; list-style: none; }
+  li { padding-top: var(--space-2); border-top: 3px solid var(--rule); font-size: 0.9375rem; }
+  li:nth-child(-n + 2) { border-top-color: var(--accent); }
+  p { margin: 0; }
+  .who { margin-bottom: 0.375rem; font: 500 var(--fs-label)/1.4 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
+  .who span { color: var(--muted); }
+  @media (max-width: 52rem) { .ladder { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); } }
+</style>

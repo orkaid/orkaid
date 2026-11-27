@@ -1,0 +1,8 @@
+---
+// An external destination: new tab, marked visually (↗) and in the accessible name.
+import { ui, type Locale } from '../../i18n/ui';
+
+interface Props { href: string; locale: Locale; class?: string }
+const { href, locale, class: className } = Astro.props;
+---
+<a class:list={['ext', className]} href={href} target="_blank" rel="noopener noreferrer"><slot /><span class="ext-mark" aria-hidden="true">↗</span><span class="vh"> {ui[locale].external}</span></a>

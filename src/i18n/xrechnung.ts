@@ -103,7 +103,7 @@ export const copy = {
     'Optional and off by default. Only the structure and check digits are checked; the text is never changed. Passing does not show that the Leitweg-ID is assigned, works for routing, or that a recipient accepts the invoice.',
   ),
   'lines.numberHint': m('Zahlen mit Komma als Dezimaltrennzeichen, ohne Tausenderpunkt, z. B. 125,50.', 'Numbers with a comma as the decimal separator and no thousands separator, e.g. 125,50.'),
-  // Credit note 381 (MDR-49). Working labels; their statutory wording is not verified (oq-cn-label-statutory-verification).
+  // Credit note 381 (MDR-49). Labels checked against XRechnung 3.0.2 section 13.1 and § 14 Abs. 2 UStG on 2026-11-27 (AI-assisted); professional verification is pending (oq-cn-label-statutory-verification).
   'doctype.legend': m('Dokumenttyp', 'Document type'),
   'doctype.380': m('Rechnung (380)', 'Invoice (380)'),
   'doctype.381': m('Kaufmännische Gutschrift (381)', 'Credit note (381)'),
@@ -139,12 +139,12 @@ export const copy = {
     'For a credit note this tool supports only clearing against an existing reciprocal obligation between seller and buyer. A refund by credit transfer is not supported; no bank details are given.',
   ),
   'clearing.confirm': m(
-    'Ich bestätige, dass zwischen Verkäufer und Käufer eine Gegenforderung besteht, mit der diese Gutschrift verrechnet wird.',
-    'I confirm that a reciprocal obligation exists between the seller and the buyer, against which this credit note is cleared.',
+    'Ich bestätige, dass zwischen Verkäufer und Käufer eine Gegenforderung besteht, mit der diese Gutschrift verrechnet werden soll.',
+    'I confirm that a reciprocal obligation exists between the seller and the buyer, against which this credit note is to be cleared.',
   ),
   'clearing.note': m(
-    'Das ist Ihre Erklärung; das Werkzeug prüft sie nicht. Sie ist nie vorausgewählt und wird bei jedem Wechsel des Dokumenttyps zurückgesetzt.',
-    'This is your declaration; the tool does not check it. It is never preselected and is withdrawn whenever the document type changes.',
+    'Das ist Ihre Erklärung; das Werkzeug prüft sie nicht und führt selbst keine Verrechnung durch. Sie ist nie vorausgewählt und wird bei jedem Wechsel des Dokumenttyps zurückgesetzt.',
+    'This is your declaration; the tool does not check it and does not carry out the clearing itself. It is never preselected and is withdrawn whenever the document type changes.',
   ),
   'grp.paymentDue': m('Fälligkeit', 'Payment due'),
   'grp.paymentDueHint': m(
@@ -259,8 +259,8 @@ export const copy = {
   'status.generated': m('{format}-XML erzeugt, {time}', '{format} XML generated, {time}'),
   'status.changed': m('Formular seit dem letzten Export geändert.', 'Form changed since the last export.'),
   'notice.external': m(
-    'Kein externer Validator und kein Empfänger hat dieses Dokument geprüft. Keine Steuer- oder Rechtsberatung.',
-    'No external validator and no recipient has checked this document. No tax or legal advice.',
+    'Die Prüfung in diesem Werkzeug ist keine externe XRechnung-Validierung und keine Prüfung der steuerlichen Richtigkeit oder der Annahme durch den Empfänger. Keine Steuer- oder Rechtsberatung.',
+    'The check in this tool is not an external XRechnung validation, nor a check of tax correctness or of acceptance by the recipient. No tax or legal advice.',
   ),
   'scope.title': m('Was dieses Werkzeug nicht kann', 'What this tool cannot do'),
   'scope.summary': m(
@@ -338,6 +338,15 @@ export const copy = {
   'sheet.sheetTitle': m('Rechnung', 'Invoice'),
   'sheet.sheetMeta': m('Typ 380 · EUR · Deutschland', 'Type 380 · EUR · Germany'),
   'sheet.barLabel': m('Status und Export', 'Status and export'),
+  // PR-11: confirmation before a navigation would discard the in-memory document. Nothing is stored, so leaving loses it.
+  'leave.title': m('Seite verlassen?', 'Leave this page?'),
+  'leave.body': m(
+    'Ihre Eingaben werden nirgends gespeichert. Wenn Sie die Seite verlassen, gehen sie verloren. Eine exportierte XML-Datei lässt sich hier nicht wieder einlesen.',
+    'Your input is not stored anywhere. If you leave this page, it is lost. An exported XML file cannot be read back in here.',
+  ),
+  'leave.language': m('Auch beim Wechsel der Sprache werden die Eingaben nicht übernommen.', 'Switching the language does not carry your input over either.'),
+  'leave.stay': m('Auf der Seite bleiben', 'Stay on this page'),
+  'leave.go': m('Verlassen und Eingaben verwerfen', 'Leave and discard input'),
   'sheet.pos': m('Pos.', 'No.'),
   'sheet.missingShort': m('fehlt', 'missing'),
   'sheet.lineOpen': m('Noch offen: {list}', 'Still open: {list}'),
@@ -583,8 +592,8 @@ export const scopeLists: Record<'now' | 'core' | 'out' | 'tool', { readonly de: 
     en: [],
   },
   out: {
-    de: ['Andere Dokumenttypen als 380 und 381, zum Beispiel Rechnungskorrektur (384) oder Selbstfakturierung durch den Käufer (389)', 'Andere Währungen als EUR; Beteiligte außerhalb Deutschlands', 'Andere Steuerkategorien, Steuersätze oder Steuerbehandlungen als im Profil', 'Kleinunternehmer (§ 19 UStG) zusammen mit 19 %, 7 % oder Reverse Charge in einer Rechnung', 'Andere Zahlungsarten als Überweisung (30, 58) bei der Rechnung und Verrechnung (97) bei der Gutschrift; Erstattung einer Gutschrift per Überweisung', 'Nachlässe und Zuschläge, auf Dokumentebene wie je Position', 'Bereits gezahlte Beträge und Anzahlungen (BT-113), Teil- und Ratenrechnungen, strukturierte Zahlungspläne', 'Rechnungsbegründende Unterlagen (BG-24): weder Anhänge noch Verweise auf solche Unterlagen', 'Ein eigenes Datum oder ein Code des Steuerzeitpunkts (BT-7, BT-8)', 'Negative Mengen und Preise'],
-    en: ['Document types other than 380 and 381, for example a corrected invoice (384) or self-billing by the buyer (389)', 'Currencies other than EUR; parties outside Germany', 'VAT categories, rates or treatments beyond the profile', 'Kleinunternehmer (§ 19 UStG) together with 19%, 7% or Reverse Charge in one invoice', 'Payment means other than credit transfer (30, 58) on an invoice and clearing (97) on a credit note; refunding a credit note by credit transfer', 'Allowances and charges, at document level or per line', 'Amounts already paid and prepayments (BT-113), staged or installment invoices, structured payment schedules', 'Supporting documents (BG-24): neither attachments nor references to such documents', 'A separate tax point date or code (BT-7, BT-8)', 'Negative quantities and prices'],
+    de: ['Andere Dokumenttypen als 380 und 381, zum Beispiel Rechnungsberichtigung (384) oder Gutschrift im Sinne des § 14 Abs. 2 Satz 5 UStG, also Abrechnung durch den Leistungsempfänger (389)', 'Andere Währungen als EUR; Beteiligte außerhalb Deutschlands', 'Andere Steuerkategorien, Steuersätze oder Steuerbehandlungen als im Profil', 'Kleinunternehmer (§ 19 UStG) zusammen mit 19 %, 7 % oder Reverse Charge in einer Rechnung', 'Andere Zahlungsarten als Überweisung (30, 58) bei der Rechnung und Verrechnung (97) bei der Gutschrift; Erstattung einer Gutschrift per Überweisung', 'Nachlässe und Zuschläge, auf Dokumentebene wie je Position', 'Bereits gezahlte Beträge und Anzahlungen (BT-113), Teil- und Ratenrechnungen, strukturierte Zahlungspläne', 'Rechnungsbegründende Unterlagen (BG-24): weder Anhänge noch Verweise auf solche Unterlagen', 'Ein eigenes Datum oder ein Code des Steuerzeitpunkts (BT-7, BT-8)', 'Negative Mengen und Preise'],
+    en: ['Document types other than 380 and 381, for example a corrected invoice (384) or self-billing under § 14(2) sentence 5 UStG, where the recipient issues the invoice (389)', 'Currencies other than EUR; parties outside Germany', 'VAT categories, rates or treatments beyond the profile', 'Kleinunternehmer (§ 19 UStG) together with 19%, 7% or Reverse Charge in one invoice', 'Payment means other than credit transfer (30, 58) on an invoice and clearing (97) on a credit note; refunding a credit note by credit transfer', 'Allowances and charges, at document level or per line', 'Amounts already paid and prepayments (BT-113), staged or installment invoices, structured payment schedules', 'Supporting documents (BG-24): neither attachments nor references to such documents', 'A separate tax point date or code (BT-7, BT-8)', 'Negative quantities and prices'],
   },
   tool: {
     de: ['XML-Import (vorhandene XRechnung-, UBL- oder CII-Dateien einlesen)', 'PDF-Erzeugung', 'Versand oder Einreichung der Rechnung, etwa über Peppol', 'Benutzerkonten und Anmeldung'],

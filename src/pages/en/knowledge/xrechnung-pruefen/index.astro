@@ -1,0 +1,110 @@
+---
+import GuideLayout from '../../../../layouts/GuideLayout.astro';
+import VerificationLadder from '../../../../components/platform/VerificationLadder.astro';
+import ExtLink from '../../../../components/platform/ExtLink.astro';
+
+const toc = [
+  { id: 'ebenen', label: 'Four levels of checking' },
+  { id: 'werkzeug', label: 'What Orkaid checks in the tool' },
+  { id: 'projekt', label: 'What the project checks establish' },
+  { id: 'validieren', label: 'Validating your file yourself' },
+  { id: 'online', label: 'Caution with online validation services' },
+  { id: 'grenzen', label: 'What a passed check does not mean' },
+  { id: 'weitergeben', label: 'Sending the file' },
+];
+const sources = [
+  { label: 'KoSIT validator (GitHub)', href: 'https://github.com/itplr-kosit/validator', note: 'program, usage, Apache 2.0 licence' },
+  { label: 'KoSIT validator: command line', href: 'https://github.com/itplr-kosit/validator/blob/main/docs/cli.md', note: 'options' },
+  { label: 'KoSIT validator: releases', href: 'https://github.com/itplr-kosit/validator/releases', note: 'version 1.6.3 of 20 August 2026' },
+  { label: 'KoSIT: XRechnung validation configuration, releases', href: 'https://github.com/itplr-kosit/validator-configuration-xrechnung/releases', note: 'release v2026-08-31, compatible with XRechnung 3.0' },
+  { label: 'KoSIT: XRechnung validation configuration, usage', href: 'https://github.com/itplr-kosit/validator-configuration-xrechnung/blob/master/docs/usage.md', note: 'example call and report files' },
+  { label: 'KoSIT: XRechnung – versions and bundles (German)', href: 'https://xeinkauf.de/xrechnung/versionen-und-bundles/', note: 'bundle 3.0.2 Summer 2026 Bugfix of 31 August 2026' },
+  { label: '§ 14b UStG: retention of invoices (German)', href: 'https://www.gesetze-im-internet.de/ustg_1980/__14b.html', note: 'retrieved on 27 November 2026' },
+  { label: 'German Federal Ministry of Finance: questions and answers on electronic invoicing (German)', href: 'https://www.bundesfinanzministerium.de/Content/DE/FAQ/e-rechnung.html', note: 'question 13 on retention; page of 29 October 2026, retrieved on 27 November 2026' },
+];
+---
+<GuideLayout
+  locale="en"
+  id="xrechnung-pruefen"
+  description="Check an XRechnung created with Orkaid: what the tool checks, how to validate the file yourself with the KoSIT validator, and what remains open afterwards."
+  prerequisites="An exported XML file; for your own validation, Java 11 or later"
+  appliesTo="Files exported with the XRechnung generator v0.1.0 · XRechnung 3.0.2 · KoSIT validator 1.6.3 with configuration 2026-08-31"
+  toc={toc}
+  sources={sources}
+  sourcesRetrieved="2026-11-26"
+>
+  <section id="ebenen" aria-labelledby="h-ebenen">
+    <h2 id="h-ebenen">Four levels of checking</h2>
+    <p>“Checked” can mean different things. These four levels build on each other, but none replaces another:</p>
+    <VerificationLadder locale="en" guideLink={false} />
+  </section>
+
+  <section id="werkzeug" aria-labelledby="h-werkzeug">
+    <h2 id="h-werkzeug">What Orkaid checks in the tool</h2>
+    <p>With every entry, the tool checks your input in the browser against its own rules: whether required information is missing, whether dates, the IBAN and numbers have the expected form, and whether the data fits the implemented profile. It calculates every amount exactly from the lines. The rules take over requirements of EN 16931 and XRechnung where the profile is concerned; every message names the field it belongs to.</p>
+    <p>The tool does not run the KoSIT validator and sends your data nowhere. The status message <span class="ui">Checked against this tool's rules</span> means exactly that – no more.</p>
+  </section>
+
+  <section id="projekt" aria-labelledby="h-projekt">
+    <h2 id="h-projekt">What the project checks establish</h2>
+    <p>During development, Orkaid generates test invoices for the supported cases and checks them with the official KoSIT validator. A specific version is pinned for this: validator 1.6.3 with the validation configuration 2026-08-31 for XRechnung 3.0 from bundle 3.0.2 (Summer 2026 Bugfix).</p>
+    <p>This shows that, for these test cases, the tool produces files that this configuration accepts. It does not show that every possible input is accepted, and it says nothing about your particular file.</p>
+  </section>
+
+  <section id="validieren" aria-labelledby="h-validieren">
+    <h2 id="h-validieren">Validating your file yourself</h2>
+    <p>The KoSIT validator is an open-source Java program (Apache 2.0 licence). It runs on your computer; your file does not leave it.</p>
+    <ol class="steps">
+      <li>
+        <h3>Have Java ready</h3>
+        <p>The validator needs Java 11 or later.</p>
+      </li>
+      <li>
+        <h3>Download the validator</h3>
+        <p>From the <ExtLink href="https://github.com/itplr-kosit/validator/releases" locale="en">validator release page</ExtLink>, download the file <code>validator-&lt;version&gt;-standalone.jar</code>; it is attached to the release directly. The ZIP file offered next to it contains a different variant with separate libraries. On 26 November 2026, the current version is 1.6.3.</p>
+      </li>
+      <li>
+        <h3>Download the XRechnung validation configuration</h3>
+        <p>Download the current version from the <ExtLink href="https://github.com/itplr-kosit/validator-configuration-xrechnung/releases" locale="en">release page of the XRechnung configuration</ExtLink> and unzip it into a folder. On 26 November 2026, this is release v2026-08-31, compatible with XRechnung 3.0. Each configuration names in its description the validator version it was built with – for v2026-08-31 that is 1.6.3. Use that pair rather than updating the validator and the configuration independently.</p>
+      </li>
+      <li>
+        <h3>Run the check</h3>
+        <p>Put the JAR file and your exported file, here <code>rechnung.xml</code>, into the unzipped folder and run there (KoSIT’s example for Linux and macOS):</p>
+        <pre><code>java -jar validator-1.6.3-standalone.jar -s scenarios.xml -r ${'{'}PWD{'}'} -h rechnung.xml</code></pre>
+        <p><code>-s</code> names the configuration’s scenario file, <code>-r</code> the configuration folder, and <code>-h</code> also saves an HTML report. <code>${'{'}PWD{'}'}</code> inserts the full path of the current folder; a relative path such as <code>.</code> was not resolved in our test. We have not tested the call on Windows.</p>
+      </li>
+      <li>
+        <h3>Read the report</h3>
+        <p>In the terminal, the validator prints a result line with <code>ACCEPTABLE</code> or <code>REJECT</code>. It writes <code>rechnung-report.xml</code> and the test report <code>rechnung-report.html</code>. The test report (in German) names the detected document type, the result of the conformance check and an assessment, such as “Es wird empfohlen das Dokument anzunehmen und weiter zu verarbeiten” (accept and process) or “Es wird empfohlen das Dokument zurückzuweisen” (reject). Errors are listed with the identifier of each rule, for example <code>BR-DE-15</code> when the buyer reference is missing.</p>
+        <p>The test report contains the complete content of the invoice and the file path. Treat it as confidentially as the invoice itself.</p>
+      </li>
+    </ol>
+    <p>We ran these steps on 26 November 2026 on Linux with fictional invoices from the tool: an invoice and a credit note in UBL and an invoice in CII were accepted; an invoice without a buyer reference was rejected with <code>BR-DE-15</code>.</p>
+    <aside class="note">
+      <p class="note-label">Which version?</p>
+      <p>On 26 November 2026, the newest validation configuration is the same one the project tests with. When a newer one appears, use the current version for the XRechnung version in force. Orkaid keeps testing with its pinned version until the project deliberately updates it; the two may then differ.</p>
+    </aside>
+  </section>
+
+  <section id="online" aria-labelledby="h-online">
+    <h2 id="h-online">Caution with online validation services</h2>
+    <p>Some websites let you upload an XRechnung for checking. Doing so hands the complete invoice to a third party: names, addresses, contact details, bank details, lines and amounts, including your customer’s.</p>
+    <p>For real invoices, checking on your own computer is the data-minimising choice. If you want to use an online service, first find out who runs it and what happens to the data. For trying things out, fictional data such as the example in the <a href="/en/knowledge/xrechnung-erstellen/#beispiel">creation guide</a> is suitable.</p>
+  </section>
+
+  <section id="grenzen" aria-labelledby="h-grenzen">
+    <h2 id="h-grenzen">What a passed check does not mean</h2>
+    <ul>
+      <li><strong>Not acceptance by the recipient.</strong> Recipients can have their own requirements, such as a specific buyer reference or Leitweg-ID, a purchase order number or a particular delivery channel.</li>
+      <li><strong>Not tax correctness.</strong> The validator checks form and rules, not whether the VAT rate, the Kleinunternehmer rule or Reverse Charge applies to your transaction, or whether the content is right.</li>
+      <li><strong>Not certification.</strong> Neither Orkaid nor a single check with the validator is a certification.</li>
+    </ul>
+  </section>
+
+  <section id="weitergeben" aria-labelledby="h-weitergeben">
+    <h2 id="h-weitergeben">Sending the file</h2>
+    <p>Send the XML file through the channel you agreed with your customer, for example by e-mail or through a portal. Orkaid sends nothing.</p>
+    <p>Do not edit the exported file by hand. If something needs correcting, change the data in the tool while the page is open, export again and check the new file.</p>
+    <p>Retain the issued and transmitted XML file in its original form in accordance with the statutory retention requirements applicable to you. A PDF rendering or a printout does not replace retention of the structured invoice data. Orkaid does not provide an archiving function; for the details, ask your tax adviser.</p>
+  </section>
+</GuideLayout>

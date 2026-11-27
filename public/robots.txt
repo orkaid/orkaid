@@ -1,0 +1,5 @@
+# Orkaid crawler file (origin part). On orkaid.de, Cloudflare's managed robots.txt, with its content signals and crawler
+# rules, is served above this file; those rules are configured in Cloudflare and are deliberately not repeated here.
+# This part only adds the sitemap location, which applies independently of any user-agent group.
+
+Sitemap: https://orkaid.de/sitemap-index.xml

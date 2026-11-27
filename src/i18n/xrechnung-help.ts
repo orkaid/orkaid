@@ -44,6 +44,12 @@ const DOC = 'src/lib/domain/xrechnung/document.ts';
 const INV = 'src/lib/domain/xrechnung/invoice.ts';
 // Wording of the statutory titles and the § 14a Abs. 5 phrase read on gesetze-im-internet.de on 2026-11-09 (the pages carry no Stand date).
 const USTG = 'UStG § 19 „Besteuerung der Kleinunternehmer“, § 13b „Leistungsempfänger als Steuerschuldner“, § 14a Abs. 5 (gesetze-im-internet.de, gelesen 2026-11-09)';
+// Terminology reconciliation of 2026-11-27 (AI-assisted source reading, not professional verification).
+const USTG_1127 = 'UStG § 13b Abs. 5, § 14 Abs. 2 Satz 5, § 17 Abs. 1, § 19 Abs. 1 (gesetze-im-internet.de, gelesen 2026-11-27)';
+const BGB_1127 = 'BGB §§ 387–389 (gesetze-im-internet.de, gelesen 2026-11-27)';
+const XR302 = 'XRechnung 3.0.2 (KoSIT, veröffentlicht 20.06.2024), Abschnitte 13.1–13.3 und BR-DE-18';
+const BMF_FAQ = 'BMF, FAQ zur E-Rechnung, Frage 7b (Seite vom 29.10.2026, gelesen 2026-11-27)';
+const UNCL4461 = 'UNTDID 4461 D.16B, Code 97 „Clearing between partners“ (OpenPeppol BIS Billing 3.0 code list, gelesen 2026-11-27)';
 
 export const helpEntries = {
   buyerReference: {
@@ -286,30 +292,31 @@ export const helpEntries = {
   },
   vatRate: {
     bt: 'BT-151 / BT-152', mistakes: ['unsupported_vat_rate', 'missing_field'],
-    sources: [`${README} — Implemented profile (standard VAT 19 % and 7 %; reverse charge)`, `${INV} — InvoiceLineVat`, USTG],
+    sources: [`${README} — Implemented profile (standard VAT 19 % and 7 %; reverse charge)`, `${INV} — InvoiceLineVat`, USTG, USTG_1127],
     de: {
       title: 'USt-Behandlung der Position', short: 'Ihre Wahl je Position: 19 %, 7 % oder Reverse Charge (§ 13b UStG).',
       enter: 'Wählen Sie je Position die Behandlung. Es wird keine vorausgewählt. Bei „Kleinunternehmer“ (Auswahl darüber) gibt es keine Wahl je Position.', status: 'required', format: 'Auswahl: 19 %, 7 % oder Reverse Charge.',
-      external: ['Reverse Charge wird als Steuerkategorie AE mit dem Satz 0 übertragen. Führt der Unternehmer eine Leistung im Sinne des § 13b Abs. 2 UStG aus, für die der Leistungsempfänger nach § 13b Abs. 5 UStG die Steuer schuldet, ist er zur Ausstellung einer Rechnung mit der Angabe „Steuerschuldnerschaft des Leistungsempfängers“ verpflichtet (§ 14a Abs. 5 UStG).'],
+      external: ['Bei Anwendung des § 13b UStG schuldet der Leistungsempfänger die Umsatzsteuer (§ 13b Abs. 5 UStG). Reverse Charge wird als Steuerkategorie AE mit dem Satz 0 übertragen. Führt der Unternehmer eine Leistung im Sinne des § 13b Abs. 2 UStG aus, für die der Leistungsempfänger nach § 13b Abs. 5 UStG die Steuer schuldet, ist er zur Ausstellung einer Rechnung mit der Angabe „Steuerschuldnerschaft des Leistungsempfängers“ verpflichtet (§ 14a Abs. 5 UStG).'],
       profile: ['Dieses Profil kennt 19 %, 7 % und Reverse Charge. Jede nichtleere Auswahl davon darf in einer Rechnung zusammen vorkommen. Kleinunternehmer lässt sich nicht damit mischen. Der Text zu Reverse Charge ist fest und nicht editierbar.'],
       unverified: ['Das Werkzeug prüft nicht, welcher Satz für Ihre Leistung zutrifft und ob § 13b UStG auf sie anzuwenden ist. Diese Entscheidung und ihre Verantwortung liegen bei Ihnen.'],
     },
     en: {
       title: 'VAT treatment of the line', short: 'Your choice per line: 19 %, 7 % or Reverse Charge (§ 13b UStG).',
       enter: 'Choose the treatment per line. None is preselected. With “Kleinunternehmer” (the choice above) there is no choice per line.', status: 'required', format: 'Choose 19 %, 7 % or Reverse Charge.',
-      external: ['Reverse Charge is transmitted as tax category AE with rate 0. Where the supplier performs a supply within the meaning of § 13b(2) UStG for which the recipient owes the tax under § 13b(5) UStG, the supplier must issue an invoice with the statement “Steuerschuldnerschaft des Leistungsempfängers” (§ 14a(5) UStG).'],
+      external: ['In the cases covered by § 13b UStG, the recipient is liable for the VAT (§ 13b(5) UStG). Reverse Charge is transmitted as tax category AE with rate 0. Where the supplier performs a supply within the meaning of § 13b(2) UStG for which the recipient owes the tax under § 13b(5) UStG, the supplier must issue an invoice with the statement “Steuerschuldnerschaft des Leistungsempfängers” (§ 14a(5) UStG).'],
       profile: ['This profile knows 19 %, 7 % and Reverse Charge. Any nonempty selection of them may appear together in one invoice. Kleinunternehmer cannot be mixed with them. The Reverse Charge text is fixed and not editable.'],
       unverified: ['The tool does not check which rate applies to your supply or whether § 13b UStG applies to it. That decision and its responsibility are yours.'],
     },
   },
   vatRegime: {
-    bt: 'BT-151 / BT-152 / BT-120 / BT-33', fieldId: 'vatRegime.regular', sources: [`${README} — Implemented profile (Kleinunternehmer; reverse charge)`, `${INV} — KLEINUNTERNEHMER_EXEMPTION_TEXT, REVERSE_CHARGE_TEXT`, `${DOC} — readSeller, readBuyer`, USTG],
+    bt: 'BT-151 / BT-152 / BT-120 / BT-33', fieldId: 'vatRegime.regular', sources: [`${README} — Implemented profile (Kleinunternehmer; reverse charge)`, `${INV} — KLEINUNTERNEHMER_EXEMPTION_TEXT, REVERSE_CHARGE_TEXT`, `${DOC} — readSeller, readBuyer`, USTG, USTG_1127, XR302],
     de: {
       title: 'Umsatzsteuerliche Behandlung der Rechnung', short: 'Ihre Auswahl für die ganze Rechnung: „Reguläre Besteuerung / Reverse Charge“ oder „Kleinunternehmer (§ 19 UStG)“.',
       enter: 'Bei „Reguläre Besteuerung / Reverse Charge“ wählen Sie je Position 19 %, 7 % oder Reverse Charge. Bei „Kleinunternehmer (§ 19 UStG)“ erhalten alle Positionen die Kategorie E mit dem Satz 0 und es gibt keine Wahl je Position. Eingaben je Position bleiben beim Wechsel im Formular, werden aber in dieser Einstellung nicht verwendet.', status: 'required',
       format: 'Auswahl: eine von zwei. Vorausgewählt ist „Reguläre Besteuerung / Reverse Charge“ nur, damit der bisherige Ablauf unverändert bleibt.',
       external: [
         'Gesetzliche Titel: § 19 UStG „Besteuerung der Kleinunternehmer“, § 13b UStG „Leistungsempfänger als Steuerschuldner“. Für eine Leistung im Sinne des § 13b Abs. 2 UStG, für die der Leistungsempfänger nach § 13b Abs. 5 UStG die Steuer schuldet, verlangt § 14a Abs. 5 UStG die Angabe „Steuerschuldnerschaft des Leistungsempfängers“.',
+        'Steuerbefreiung für Kleinunternehmer: Nach § 19 Abs. 1 UStG sind die Umsätze unter den dort genannten Voraussetzungen steuerfrei. XRechnung 3.0.2 bildet das in Abschnitt 13.3 mit der Kategorie E und dem festen Text ab.',
         'Kleinunternehmer: Kategorie E, Satz 0, der Verkäufer braucht BT-31 oder BT-32 (BR-E-02, BR-DE-16). Außerdem gilt BR-CO-26: BT-29, BT-30 oder BT-31.',
         'Reverse Charge: Kategorie AE, Satz 0; der Käufer braucht BT-47 oder BT-48 (BR-AE-02).',
       ],
@@ -329,6 +336,7 @@ export const helpEntries = {
       format: 'Choose one of two. “Regular taxation / Reverse Charge” is preselected only so that the previous workflow stays unchanged.',
       external: [
         'Statutory titles: § 19 UStG “Besteuerung der Kleinunternehmer”, § 13b UStG “Leistungsempfänger als Steuerschuldner”. For a supply within the meaning of § 13b(2) UStG for which the recipient owes the tax under § 13b(5) UStG, § 14a(5) UStG requires the statement “Steuerschuldnerschaft des Leistungsempfängers”.',
+        'Small business VAT exemption (Kleinunternehmer): under § 19(1) UStG, the supplies are exempt from VAT where the conditions stated there are met. XRechnung 3.0.2 represents this in section 13.3 with category E and the fixed text.',
         'Kleinunternehmer: category E, rate 0; the seller needs BT-31 or BT-32 (BR-E-02, BR-DE-16). BR-CO-26 also applies: BT-29, BT-30 or BT-31.',
         'Reverse Charge: category AE, rate 0; the buyer needs BT-47 or BT-48 (BR-AE-02).',
       ],
@@ -440,7 +448,7 @@ export const helpEntries = {
   skonto: {
     bt: 'BT-20 (Skonto)', fieldId: 'payment.skonto[0].days', mistakesFieldId: 'payment.skonto[0].percent',
     mistakes: ['unsupported_skonto_days', 'unsupported_skonto_tier_order', 'unsupported_skonto_percent', 'fraction_digits_limit', 'invalid_decimal', 'missing_field'],
-    sources: [`${README} — Structured Skonto in BT-20`, `${DOC} — readSkonto, paymentTermsText`],
+    sources: [`${README} — Structured Skonto in BT-20`, `${DOC} — readSkonto, paymentTermsText`, XR302, USTG_1127],
     de: {
       title: 'Skonto (strukturiert)', short: 'Skontobedingungen als Stufen aus Tagen und Prozent, im Rechnungsdokument als strukturierte Zahlungsbedingungen (BT-20).',
       enter: 'Je Stufe die Anzahl Tage und den Prozentsatz. Mehrere Stufen mit aufsteigenden Tagen.', status: 'optional',
@@ -453,6 +461,7 @@ export const helpEntries = {
         'Grenzen dieses Werkzeugs, keine Regeln von XRechnung: 1 bis 10 Stufen, Tage 1 bis 365 und streng aufsteigend, Prozent über 0 und höchstens 100, kein Basisbetrag (BASISBETRAG), nicht bei der Gutschrift (381).',
         'Das Werkzeug berechnet keinen Skontobetrag, keinen gekürzten Betrag und kein Zahlungsdatum. Die Stufen ändern keinen Rechnungsbetrag. Die Stufen werden nicht sortiert.',
         'Ob ein Skonto vereinbart ist und in Anspruch genommen werden darf, prüft das Werkzeug nicht; es überträgt nur Ihre Angaben.',
+        'Ändert sich später die Bemessungsgrundlage, weil Skonto in Anspruch genommen wird (§ 17 UStG), bildet das Werkzeug das nicht ab.',
       ],
       unverified: [
         'XRechnung 3.0.2 legt nicht eindeutig fest, ab welchem Zeitpunkt die Tage zählen. Das Werkzeug nimmt keinen Bezugszeitpunkt an.',
@@ -471,6 +480,7 @@ export const helpEntries = {
         'Limits of this tool, not rules of XRechnung: 1 to 10 tiers, days 1 to 365 and strictly ascending, percent above 0 and at most 100, no base amount (BASISBETRAG), not on a credit note (381).',
         'The tool calculates no discount amount, no reduced amount and no payment date. The tiers change no invoice amount. The tiers are not sorted.',
         'Whether a discount was agreed and may be taken is not checked by the tool; it only carries your entries.',
+        'If the taxable amount later changes because a discount is taken (§ 17 UStG), the tool does not reflect that.',
       ],
       unverified: [
         'XRechnung 3.0.2 does not unequivocally define from which point the days are counted. The tool assumes no reference point.',
@@ -480,7 +490,7 @@ export const helpEntries = {
   },
   precedingInvoice: {
     bt: 'BG-3 (BT-25, BT-26)', fieldId: 'precedingInvoice.number', mistakes: ['missing_field', 'empty_text', 'invalid_text', 'text_too_long', 'invalid_date'],
-    sources: [`${README} — Credit note 381 (first bounded slice): Preceding invoice (BG-3); Recipient compatibility`, `${DOC} — readPrecedingInvoice`],
+    sources: [`${README} — Credit note 381 (first bounded slice): Preceding invoice (BG-3); Recipient compatibility`, `${DOC} — readPrecedingInvoice`, USTG_1127, XR302, BMF_FAQ],
     de: {
       title: 'Bezug auf die ursprüngliche Rechnung', short: 'Nummer (BT-25) und, wenn nötig, Datum (BT-26) der Rechnung, auf die sich diese Gutschrift bezieht.',
       enter: 'Tragen Sie die Nummer der ursprünglichen Rechnung genau so ein, wie sie dort steht. Das Datum geben Sie an, wenn die Nummer allein die Rechnung nicht eindeutig bezeichnet.',
@@ -488,8 +498,13 @@ export const helpEntries = {
       profile: [
         'Die Nummer ist nach dem Profil dieses Werkzeugs Pflicht; das ist keine allgemeine Anforderung von EN 16931. Bei einer Rechnung (380) wird kein Bezug übermittelt.',
         'Das Werkzeug speichert keine Rechnungen, ruft die ursprüngliche Rechnung nicht ab und prüft weder, ob es sie gibt, noch ob die gutgeschriebenen Beträge zu ihr passen. Das liegt in Ihrer Verantwortung.',
+        'Die Gutschrift ist in diesem Werkzeug eine kaufmännische Gutschrift (381) mit Bezug auf eine zuvor ausgestellte Rechnung. Eine Gutschrift im Sinne des § 14 Abs. 2 Satz 5 UStG, also die Abrechnung durch den Leistungsempfänger (389), und eine Rechnungsberichtigung (384) unterstützt dieses Werkzeug nicht.',
       ],
-      unverified: ['XRechnung unterscheidet die Gutschrift (381) von der Rechnungskorrektur (384). Ob Empfänger, insbesondere im öffentlichen Sektor, eine Gutschrift mit diesem Bezug als Aufhebung einer Rechnung annehmen, ist nicht geklärt.'],
+      unverified: [
+        'XRechnung 3.0.2 (Abschnitt 13.1) unterscheidet die kaufmännische Gutschrift (381) von der Rechnungsberichtigung (384) und der Gutschrift nach dem UStG (389). Nach den FAQ des BMF zur E-Rechnung (Frage 7b) ist technisch noch nicht festgelegt, mit welchem Rechnungstyp eine kaufmännische Gutschrift darzustellen ist.',
+        'Ob und wie sich die Gutschrift umsatzsteuerlich auswirkt, beurteilt das Werkzeug nicht.',
+        'Ob Empfänger, insbesondere im öffentlichen Sektor, eine Gutschrift mit diesem Bezug als Aufhebung einer Rechnung annehmen, ist nicht geklärt.',
+      ],
     },
     en: {
       title: 'Preceding invoice', short: 'Number (BT-25) and, where needed, date (BT-26) of the invoice this credit note refers to.',
@@ -498,13 +513,18 @@ export const helpEntries = {
       profile: [
         'The number is required by this tool’s profile; it is not a general requirement of EN 16931. On an invoice (380) no reference is sent.',
         'The tool stores no invoices, does not retrieve the preceding invoice and checks neither that it exists nor that the credited amounts match it. That is your responsibility.',
+        'In this tool a credit note is a commercial credit note (381, kaufmännische Gutschrift) referring to a previously issued invoice. Self-billing under § 14(2) sentence 5 UStG, where the recipient issues the invoice (389), and a corrected invoice (384) are not supported by this tool.',
       ],
-      unverified: ['XRechnung distinguishes the credit note (381) from the corrected invoice (384). Whether recipients, in particular in the public sector, accept a credit note with this reference as cancelling an invoice is not established.'],
+      unverified: [
+        'XRechnung 3.0.2 (section 13.1) distinguishes the commercial credit note (381) from the corrected invoice (384) and from the self-billed invoice under the UStG (389). According to the German Federal Ministry of Finance’s FAQ on electronic invoicing (question 7b), it is not yet technically settled which invoice type represents a commercial credit note.',
+        'Whether and how the credit note affects VAT is not assessed by the tool.',
+        'Whether recipients, in particular in the public sector, accept a credit note with this reference as cancelling an invoice is not established.',
+      ],
     },
   },
   clearing: {
     bt: 'BG-16 (code 97)', fieldId: 'payment.settlement.reciprocalObligationConfirmed', mistakes: ['missing_clearing_confirmation', 'missing_payment_due_information'],
-    sources: [`${README} — Credit note 381 (first bounded slice): Payment; Refused; BR-CO-25`, `${DOC} — readCreditNotePayment, readClearing`],
+    sources: [`${README} — Credit note 381 (first bounded slice): Payment; Refused; BR-CO-25`, `${DOC} — readCreditNotePayment, readClearing`, UNCL4461, BGB_1127],
     de: {
       title: 'Zahlung bei der Gutschrift', short: 'Nur Verrechnung mit einer bestehenden Gegenforderung (Zahlungsart 97), von Ihnen ausdrücklich bestätigt.',
       enter: 'Bestätigen Sie die Verrechnung. Bei einem Zahlbetrag über null geben Sie außerdem ein Fälligkeitsdatum oder Zahlungsbedingungen an; strukturiertes Skonto gibt es bei der Gutschrift nicht.', status: 'required',
@@ -512,12 +532,16 @@ export const helpEntries = {
         { name: 'Bestätigung der Verrechnung', status: 'required', format: 'Ihre Erklärung, nie vorausgewählt' },
         { name: 'Fälligkeitsdatum / Zahlungsbedingungen', status: 'conditional', format: 'mindestens eines bei offenem Betrag' },
       ],
+      external: ['Zahlungsart 97 (UNTDID 4461, „Clearing between partners“): Beträge, die sich zwei Partner gegenseitig schulden, werden verrechnet, um Zahlungen zu vermeiden.'],
       profile: [
         'Andere Abwicklungen, insbesondere eine Erstattung per Überweisung, unterstützt dieses Werkzeug für Gutschriften nicht. Das ist eine Grenze dieses Werkzeugs, keine Aussage, dass XRechnung oder EN 16931 eine Erstattung ausschließen.',
         'Die Verrechnung wird nie vorausgewählt, und die Bestätigung wird bei jedem Wechsel des Dokumenttyps zurückgesetzt. Eine Bankverbindung (BG-17) wird nicht geschrieben.',
         'Wie bei der Rechnung verlangt das Werkzeug bei positivem Zahlbetrag ein Fälligkeitsdatum oder Zahlungsbedingungen (BR-CO-25).',
       ],
-      unverified: ['Dass BR-CO-25 auch für Gutschriften gilt, ist aus dem Regelkontext von SeMoX gelesen und nicht am lizenzierten Text von EN 16931 bestätigt.'],
+      unverified: [
+        'Das Werkzeug prüft nicht, ob die rechtlichen Voraussetzungen einer Verrechnung vorliegen, etwa einer Aufrechnung nach §§ 387 ff. BGB oder einer vereinbarten Verrechnung, und führt selbst keine Verrechnung durch.',
+        'Dass BR-CO-25 auch für Gutschriften gilt, ist aus dem Regelkontext von SeMoX gelesen und nicht am lizenzierten Text von EN 16931 bestätigt.',
+      ],
     },
     en: {
       title: 'Payment on a credit note', short: 'Only clearing against an existing reciprocal obligation (payment means 97), explicitly confirmed by you.',
@@ -526,12 +550,16 @@ export const helpEntries = {
         { name: 'Clearing confirmation', status: 'required', format: 'your declaration, never preselected' },
         { name: 'Due date / payment terms', status: 'conditional', format: 'at least one with an amount due' },
       ],
+      external: ['Payment means 97 (UNTDID 4461, “Clearing between partners”): amounts that two partners owe each other are offset so that no payment is needed.'],
       profile: [
         'This tool does not support any other settlement of a credit note, in particular no refund by credit transfer. That is a limit of this tool, not a statement that XRechnung or EN 16931 exclude a refund.',
         'Clearing is never preselected, and the confirmation is withdrawn whenever the document type changes. No bank details (BG-17) are written.',
         'As on an invoice, the tool requires a due date or payment terms when the amount due is positive (BR-CO-25).',
       ],
-      unverified: ['That BR-CO-25 applies to credit notes is read from the SeMoX rule context and is not confirmed against the licensed EN 16931 text.'],
+      unverified: [
+        'The tool does not check whether the legal requirements for offsetting are met, for example a set-off under §§ 387 ff. BGB or an agreed clearing, and does not carry out the clearing itself.',
+        'That BR-CO-25 applies to credit notes is read from the SeMoX rule context and is not confirmed against the licensed EN 16931 text.',
+      ],
     },
   },
   'sec.seller': {

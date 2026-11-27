@@ -1,0 +1,110 @@
+---
+import GuideLayout from '../../../layouts/GuideLayout.astro';
+import VerificationLadder from '../../../components/platform/VerificationLadder.astro';
+import ExtLink from '../../../components/platform/ExtLink.astro';
+
+const toc = [
+  { id: 'ebenen', label: 'Vier Ebenen der Prüfung' },
+  { id: 'werkzeug', label: 'Was Orkaid im Werkzeug prüft' },
+  { id: 'projekt', label: 'Was die Projektprüfung belegt' },
+  { id: 'validieren', label: 'Ihre Datei selbst validieren' },
+  { id: 'online', label: 'Vorsicht bei Online-Prüfdiensten' },
+  { id: 'grenzen', label: 'Was eine bestandene Prüfung nicht bedeutet' },
+  { id: 'weitergeben', label: 'Die Datei weitergeben' },
+];
+const sources = [
+  { label: 'KoSIT Validator (GitHub)', href: 'https://github.com/itplr-kosit/validator', note: 'Programm, Aufruf, Lizenz Apache 2.0' },
+  { label: 'KoSIT Validator: Kommandozeile', href: 'https://github.com/itplr-kosit/validator/blob/main/docs/cli.md', note: 'Optionen' },
+  { label: 'KoSIT Validator: Releases', href: 'https://github.com/itplr-kosit/validator/releases', note: 'Version 1.6.3 vom 20.08.2026' },
+  { label: 'KoSIT: Prüfkonfiguration für XRechnung, Releases', href: 'https://github.com/itplr-kosit/validator-configuration-xrechnung/releases', note: 'Release v2026-08-31, kompatibel mit XRechnung 3.0' },
+  { label: 'KoSIT: Prüfkonfiguration für XRechnung, Verwendung', href: 'https://github.com/itplr-kosit/validator-configuration-xrechnung/blob/master/docs/usage.md', note: 'Aufrufbeispiel und Berichtsdateien' },
+  { label: 'KoSIT: XRechnung – Versionen und Bundles', href: 'https://xeinkauf.de/xrechnung/versionen-und-bundles/', note: 'Bundle 3.0.2 Summer 2026 Bugfix vom 31.08.2026' },
+  { label: '§ 14b UStG: Aufbewahrung von Rechnungen', href: 'https://www.gesetze-im-internet.de/ustg_1980/__14b.html', note: 'abgerufen am 27.11.2026' },
+  { label: 'Bundesministerium der Finanzen: Fragen und Antworten zur E-Rechnung', href: 'https://www.bundesfinanzministerium.de/Content/DE/FAQ/e-rechnung.html', note: 'Frage 13 zur Aufbewahrung; Seite vom 29.10.2026, abgerufen am 27.11.2026' },
+];
+---
+<GuideLayout
+  locale="de"
+  id="xrechnung-pruefen"
+  description="Eine mit Orkaid erstellte XRechnung prüfen: was das Werkzeug prüft, wie Sie die Datei mit dem KoSIT-Validator selbst validieren und was danach offen bleibt."
+  prerequisites="Eine exportierte XML-Datei; für die eigene Validierung Java ab Version 11"
+  appliesTo="Mit dem XRechnung-Generator v0.1.0 exportierte Dateien · XRechnung 3.0.2 · KoSIT-Validator 1.6.3 mit Prüfkonfiguration 2026-08-31"
+  toc={toc}
+  sources={sources}
+  sourcesRetrieved="2026-11-26"
+>
+  <section id="ebenen" aria-labelledby="h-ebenen">
+    <h2 id="h-ebenen">Vier Ebenen der Prüfung</h2>
+    <p>„Geprüft“ kann Verschiedenes heißen. Diese vier Ebenen bauen aufeinander auf, ersetzen sich aber nicht:</p>
+    <VerificationLadder locale="de" guideLink={false} />
+  </section>
+
+  <section id="werkzeug" aria-labelledby="h-werkzeug">
+    <h2 id="h-werkzeug">Was Orkaid im Werkzeug prüft</h2>
+    <p>Bei jeder Eingabe prüft das Werkzeug in Ihrem Browser gegen seine eigenen Regeln: ob Pflichtangaben fehlen, ob Datum, IBAN und Zahlen die erwartete Form haben, ob die Angaben zum implementierten Profil passen. Alle Beträge rechnet es exakt aus den Positionen. Die Regeln übernehmen Anforderungen der EN 16931 und der XRechnung, soweit das Profil sie betrifft; jede Meldung nennt das Feld, an dem sie entsteht.</p>
+    <p>Das Werkzeug führt den KoSIT-Validator nicht aus und sendet Ihre Daten nirgendwohin. Die Statusmeldung <span class="ui">Gegen die Regeln dieses Werkzeugs geprüft</span> heißt genau das – nicht mehr.</p>
+  </section>
+
+  <section id="projekt" aria-labelledby="h-projekt">
+    <h2 id="h-projekt">Was die Projektprüfung belegt</h2>
+    <p>Während der Entwicklung erzeugt Orkaid Testrechnungen für die unterstützten Fälle und prüft sie mit dem offiziellen KoSIT-Validator. Dafür ist eine bestimmte Fassung fest eingestellt: Validator 1.6.3 mit der Prüfkonfiguration 2026-08-31 für XRechnung 3.0 aus dem Bundle 3.0.2 (Summer 2026 Bugfix).</p>
+    <p>Das belegt, dass das Werkzeug für diese Testfälle Dateien erzeugt, die diese Konfiguration annimmt. Es belegt nicht, dass jede mögliche Eingabe angenommen wird, und es sagt nichts über Ihre konkrete Datei.</p>
+  </section>
+
+  <section id="validieren" aria-labelledby="h-validieren">
+    <h2 id="h-validieren">Ihre Datei selbst validieren</h2>
+    <p>Der KoSIT-Validator ist ein quelloffenes Java-Programm (Lizenz Apache 2.0). Er läuft auf Ihrem Rechner; Ihre Datei verlässt ihn dabei nicht.</p>
+    <ol class="steps">
+      <li>
+        <h3>Java bereitstellen</h3>
+        <p>Der Validator braucht Java ab Version 11.</p>
+      </li>
+      <li>
+        <h3>Validator herunterladen</h3>
+        <p>Laden Sie von der <ExtLink href="https://github.com/itplr-kosit/validator/releases" locale="de">Release-Seite des Validators</ExtLink> die Datei <code>validator-&lt;Version&gt;-standalone.jar</code>; sie ist dem Release direkt beigefügt. Die daneben angebotene ZIP-Datei enthält eine andere Variante mit getrennten Bibliotheken. Am 26.11.2026 ist die aktuelle Version 1.6.3.</p>
+      </li>
+      <li>
+        <h3>Prüfkonfiguration für XRechnung herunterladen</h3>
+        <p>Laden Sie von der <ExtLink href="https://github.com/itplr-kosit/validator-configuration-xrechnung/releases" locale="de">Release-Seite der XRechnung-Konfiguration</ExtLink> die aktuelle Fassung und entpacken Sie sie in einen Ordner. Am 26.11.2026 ist das das Release v2026-08-31, kompatibel mit XRechnung 3.0. Jede Konfiguration nennt in ihrer Beschreibung die Validator-Version, mit der sie erstellt wurde – für v2026-08-31 ist das 1.6.3. Verwenden Sie dieses Paar, statt Validator und Konfiguration unabhängig voneinander zu aktualisieren.</p>
+      </li>
+      <li>
+        <h3>Prüfen</h3>
+        <p>Legen Sie die JAR-Datei und Ihre exportierte Datei, hier <code>rechnung.xml</code>, in den entpackten Ordner und rufen Sie dort auf (Beispiel der KoSIT für Linux und macOS):</p>
+        <pre><code>java -jar validator-1.6.3-standalone.jar -s scenarios.xml -r ${'{'}PWD{'}'} -h rechnung.xml</code></pre>
+        <p><code>-s</code> nennt die Szenario-Datei der Konfiguration, <code>-r</code> den Ordner der Konfiguration, <code>-h</code> speichert zusätzlich einen HTML-Bericht. <code>${'{'}PWD{'}'}</code> setzt den vollständigen Pfad des aktuellen Ordners ein; ein relativer Pfad wie <code>.</code> wurde in unserem Test nicht aufgelöst. Unter Windows haben wir den Aufruf nicht getestet.</p>
+      </li>
+      <li>
+        <h3>Bericht lesen</h3>
+        <p>Im Terminal zeigt der Validator eine Ergebniszeile mit <code>ACCEPTABLE</code> oder <code>REJECT</code>. Er schreibt <code>rechnung-report.xml</code> und den Prüfbericht <code>rechnung-report.html</code>. Der Prüfbericht nennt den erkannten Dokumenttyp, das Ergebnis der Konformitätsprüfung und eine Bewertung, etwa „Es wird empfohlen das Dokument anzunehmen und weiter zu verarbeiten“ oder „Es wird empfohlen das Dokument zurückzuweisen“. Fehler stehen dort mit der Kennung der jeweiligen Regel, zum Beispiel <code>BR-DE-15</code>, wenn die Käuferreferenz fehlt.</p>
+        <p>Der Prüfbericht enthält den vollständigen Inhalt der Rechnung und den Pfad der Datei. Behandeln Sie ihn so vertraulich wie die Rechnung selbst.</p>
+      </li>
+    </ol>
+    <p>Diese Schritte haben wir am 26.11.2026 unter Linux mit fiktiven Rechnungen aus dem Werkzeug ausgeführt: Rechnung und Gutschrift in UBL sowie eine Rechnung in CII wurden angenommen, eine Rechnung ohne Käuferreferenz wurde mit <code>BR-DE-15</code> zurückgewiesen.</p>
+    <aside class="note">
+      <p class="note-label">Welche Fassung?</p>
+      <p>Am 26.11.2026 ist die neueste Prüfkonfiguration dieselbe, mit der das Projekt testet. Erscheint eine neuere, verwenden Sie die aktuelle Fassung für die gültige XRechnung-Version. Orkaid testet weiter mit seiner fest eingestellten Fassung, bis das Projekt sie bewusst aktualisiert; beide können dann voneinander abweichen.</p>
+    </aside>
+  </section>
+
+  <section id="online" aria-labelledby="h-online">
+    <h2 id="h-online">Vorsicht bei Online-Prüfdiensten</h2>
+    <p>Es gibt Webseiten, auf die Sie eine XRechnung zum Prüfen hochladen können. Damit übermitteln Sie die vollständige Rechnung an Dritte: Namen, Anschriften, Kontaktdaten, Bankverbindung, Positionen und Beträge, auch die Ihres Kunden.</p>
+    <p>Für echte Rechnungen ist die Prüfung auf dem eigenen Rechner die datensparsame Wahl. Wenn Sie einen Online-Dienst nutzen wollen, prüfen Sie vorher, wer ihn betreibt und was mit den Daten geschieht. Zum Ausprobieren eignen sich fiktive Daten wie im Beispiel der <a href="/knowledge/xrechnung-erstellen/#beispiel">Anleitung zum Erstellen</a>.</p>
+  </section>
+
+  <section id="grenzen" aria-labelledby="h-grenzen">
+    <h2 id="h-grenzen">Was eine bestandene Prüfung nicht bedeutet</h2>
+    <ul>
+      <li><strong>Keine Annahme durch den Empfänger.</strong> Empfänger können eigene Anforderungen haben, etwa eine bestimmte Käuferreferenz oder Leitweg-ID, eine Bestellnummer oder einen bestimmten Übertragungsweg.</li>
+      <li><strong>Keine steuerliche Richtigkeit.</strong> Der Validator prüft Form und Regeln, nicht, ob der Steuersatz, die Kleinunternehmerregelung oder Reverse Charge auf Ihren Vorgang zutrifft oder ob die Inhalte stimmen.</li>
+      <li><strong>Keine Zertifizierung.</strong> Weder Orkaid noch eine einzelne Prüfung mit dem Validator ist eine Zertifizierung.</li>
+    </ul>
+  </section>
+
+  <section id="weitergeben" aria-labelledby="h-weitergeben">
+    <h2 id="h-weitergeben">Die Datei weitergeben</h2>
+    <p>Senden Sie die XML-Datei auf dem Weg, den Sie mit Ihrem Kunden vereinbart haben, zum Beispiel per E-Mail oder über ein Portal. Orkaid versendet nichts.</p>
+    <p>Ändern Sie die exportierte Datei nicht von Hand. Wenn etwas korrigiert werden muss, ändern Sie die Angaben im Werkzeug, solange die Seite offen ist, exportieren Sie erneut und prüfen Sie die neue Datei.</p>
+    <p>Bewahren Sie die ausgestellte und übermittelte XML-Datei entsprechend den für Sie geltenden gesetzlichen Aufbewahrungspflichten in ihrer ursprünglichen Form auf. Eine PDF-Ansicht oder ein Ausdruck ersetzt die Aufbewahrung des strukturierten Rechnungsteils nicht. Orkaid bietet keine Archivierungsfunktion; Einzelheiten klären Sie mit Ihrer steuerlichen Beratung.</p>
+  </section>
+</GuideLayout>

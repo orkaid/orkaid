@@ -1,0 +1,128 @@
+---
+// Shell of a knowledge resource (PR-03): breadcrumb, audience and applicability, contents, the body, sources, next steps.
+import BaseLayout from './BaseLayout.astro';
+import ExtLink from '../components/platform/ExtLink.astro';
+import { localePath, ui, type Locale } from '../i18n/ui';
+import { longDate, resource, resourceKinds, resources, type ResourceId } from '../i18n/platform';
+
+interface Props {
+  locale: Locale;
+  id: ResourceId;
+  description: string;
+  appliesTo: string;
+  prerequisites?: string;
+  toc: readonly { id: string; label: string }[];
+  sources: readonly { label: string; href: string; note?: string }[];
+  sourcesRetrieved: string;
+}
+const { locale, id, description, appliesTo, prerequisites, toc, sources, sourcesRetrieved } = Astro.props;
+const r = resource(id);
+const path = r.path;
+const others = resources.filter((x) => x.id !== id);
+const c = {
+  de: { knowledge: 'Wissen', for: 'Für', prerequisites: 'Voraussetzungen', applies: 'Gilt für', updated: 'Stand', contents: 'Inhalt', sources: 'Quellen', retrieved: 'Abgerufen am', related: 'Weiterlesen', tool: 'Zum XRechnung-Generator',
+    license: 'Lizenz',
+    // Knowledge-content license: original guide text only; brand and third-party material stay excluded.
+    licenseText: ['Der Text dieses Beitrags von Mihai-Adrian Mateescu (Orkaid) steht unter der Lizenz ', '. Danach dürfen Sie ihn auch gewerblich weitergeben, übersetzen und bearbeiten; die Lizenz verlangt insbesondere, den Urheber zu nennen, auf diese Seite und die Lizenz zu verweisen und Änderungen kenntlich zu machen. Ausgenommen sind der Name, das Logo und das Erscheinungsbild von Orkaid sowie Material Dritter, etwa zitierte Texte, Gesetzes- und Normtexte und Ausgaben des KoSIT-Validators; dafür gelten deren eigene Bedingungen. Der Programmcode der Website steht unter der MIT-Lizenz. Eine Weiterverwendung bedeutet keine Billigung oder Prüfung durch Orkaid.'] },
+  en: { knowledge: 'Knowledge', for: 'For', prerequisites: 'Prerequisites', applies: 'Applies to', updated: 'Updated', contents: 'Contents', sources: 'Sources', retrieved: 'Retrieved on', related: 'Read next', tool: 'Open the XRechnung generator',
+    license: 'License',
+    licenseText: ['The text of this guide by Mihai-Adrian Mateescu (Orkaid) is licensed under ', '. Under it you may share, translate and adapt the text, including commercially; the license requires in particular that you credit the author, refer to this page and the license, and indicate any changes. Excluded are the Orkaid name, logo and visual identity, and third-party material such as quoted texts, statutory and standards texts and output of the KoSIT validator; their own terms apply. The website\u2019s program code is licensed under the MIT License. Reuse does not imply endorsement or review by Orkaid.'] },
+}[locale];
+---
+<BaseLayout locale={locale} title={`${r.title[locale]} — Orkaid`} description={description} pathname={path}>
+  <article class="guide">
+    <header class="page-head guide-head">
+      <nav class="crumbs" aria-label={ui[locale].breadcrumb}><ol><li><a href={localePath(locale, '/knowledge/')}>{c.knowledge}</a></li><li aria-current="page">{resourceKinds[r.kind][locale]}</li></ol></nav>
+      <h1 class="title-page">{r.title[locale]}</h1>
+      <p class="lead">{r.summary[locale]}</p>
+      <dl class="guide-meta">
+        <div><dt>{c.for}</dt><dd>{r.audience[locale]}</dd></div>
+        {prerequisites && <div><dt>{c.prerequisites}</dt><dd>{prerequisites}</dd></div>}
+        <div><dt>{c.applies}</dt><dd>{appliesTo}</dd></div>
+        <div><dt>{c.updated}</dt><dd><time datetime={r.updated}>{longDate(r.updated, locale)}</time></dd></div>
+      </dl>
+    </header>
+
+    <div class="guide-body">
+      <nav class="toc" aria-labelledby="toc-title">
+        <p id="toc-title" class="toc-title">{c.contents}</p>
+        <ol>{toc.map((item) => <li><a href={`#${item.id}`}>{item.label}</a></li>)}</ol>
+      </nav>
+      <div class="prose">
+        <slot />
+        <section class="sources" aria-labelledby="sources-title">
+          <h2 id="sources-title">{c.sources}</h2>
+          <ul>
+            {sources.map((s) => <li><ExtLink href={s.href} locale={locale}>{s.label}</ExtLink>{s.note && <span class="source-note"> – {s.note}</span>}</li>)}
+          </ul>
+          <p class="retrieved">{c.retrieved} <time datetime={sourcesRetrieved}>{longDate(sourcesRetrieved, locale)}</time>.</p>
+        </section>
+        <section class="license" aria-labelledby="license-title">
+          <h2 id="license-title">{c.license}</h2>
+          <p>{c.licenseText[0]}<ExtLink href="https://creativecommons.org/licenses/by/4.0/" locale={locale}>CC BY 4.0</ExtLink>{c.licenseText[1]}</p>
+        </section>
+        <nav class="related" aria-labelledby="related-title">
+          <h2 id="related-title">{c.related}</h2>
+          <ul>
+            {others.map((o) => <li><span class="related-kind">{resourceKinds[o.kind][locale]}</span> <a href={localePath(locale, o.path)}>{o.title[locale]}</a></li>)}
+            <li><a class="button button-primary" href={localePath(locale, '/tools/xrechnung/')}>{c.tool} <span aria-hidden="true">→</span></a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </article>
+</BaseLayout>
+
+<style is:global>
+  .guide-meta { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-4); margin: var(--space-3) 0 0; padding-top: var(--space-2); border-top: 1px solid var(--rule); }
+  .guide-meta div { max-width: 22rem; }
+  .guide-meta dt { color: var(--muted); font: 500 var(--fs-label)/1.4 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
+  .guide-meta dd { margin: 0.125rem 0 0; font-size: 0.9375rem; }
+  .guide-body { display: grid; grid-template-columns: 14rem minmax(0, 46rem); gap: var(--space-5); padding-top: var(--space-4); border-top: 3px solid var(--ink); }
+  .toc { position: sticky; top: var(--space-2); align-self: start; font-size: 0.9375rem; }
+  .toc-title { margin: 0 0 0.5rem; color: var(--muted); font: 500 var(--fs-label)/1.4 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; }
+  .toc ol { margin: 0; padding-inline-start: 1.25rem; }
+  .toc li { padding-block: 0.25rem; }
+  .prose > section { margin-bottom: var(--space-4); scroll-margin-top: var(--space-2); }
+  .prose h2 { margin: 0 0 var(--space-2); font-size: var(--fs-section); font-weight: 400; line-height: 1.25; }
+  .prose h3 { margin: var(--space-3) 0 0.25rem; font-size: 1.0625rem; font-weight: 600; }
+  .prose p, .prose li { max-width: 68ch; }
+  .prose ul, .prose ol { padding-inline-start: 1.25rem; }
+  .prose li + li { margin-top: 0.375rem; }
+  .prose code { padding: 0 0.25em; border: 1px solid var(--rule); font-size: 0.875em; }
+  .prose pre { margin: var(--space-2) 0; padding: var(--space-2); overflow-x: auto; border: 1px solid var(--rule); font: 400 0.875rem/1.5 var(--mono); }
+  .prose pre code { padding: 0; border: 0; }
+  .prose table { width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+  .prose caption { padding-bottom: 0.5rem; text-align: left; color: var(--muted); font-size: 0.875rem; }
+  .prose th, .prose td { padding: 0.5rem 0.75rem 0.5rem 0; border-bottom: 1px solid var(--rule); text-align: left; vertical-align: top; }
+  .prose thead th { color: var(--muted); font: 500 var(--fs-label)/1.4 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; border-bottom-color: var(--ink); }
+  .prose tbody th { font-weight: 500; }
+  .prose .note { margin: var(--space-3) 0; padding: var(--space-2) var(--space-3); border-inline-start: 3px solid var(--accent); }
+  .prose .note p { margin: 0; }
+  .prose .note p + p { margin-top: 0.5rem; }
+  .prose .note-label { font: 500 var(--fs-label)/1.4 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; }
+  .prose .steps { margin: 0; padding: 0; list-style: none; counter-reset: step; }
+  .prose .steps > li { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr); margin: 0; padding-block: 0.875rem; border-top: 1px solid var(--rule); counter-increment: step; max-width: none; }
+  .prose .steps > li::before { content: counter(step); grid-row: span 4; color: var(--accent); font: 600 1.25rem/1.3 var(--serif); }
+  .prose .steps h3 { margin: 0; }
+  .prose .steps p { margin: 0.25rem 0 0; }
+  .prose .ui { padding: 0 0.3em; border: 1px solid var(--rule); font: 500 0.875em var(--sans); box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  .prose .sources { padding-top: var(--space-2); border-top: 1px solid var(--rule); font-size: 0.9375rem; }
+  .prose .sources h2, .prose .related h2 { font: 500 var(--fs-label)/1.4 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .prose .source-note, .prose .retrieved { color: var(--muted); }
+  .prose .license { padding-top: var(--space-2); border-top: 1px solid var(--rule); color: var(--muted); font-size: 0.875rem; }
+  .prose .license h2 { font: 500 var(--fs-label)/1.4 var(--mono); letter-spacing: 0.12em; text-transform: uppercase; }
+  .prose .related { padding: var(--space-3); border: 1px solid var(--ink); }
+  .prose .related ul { margin: 0; padding: 0; list-style: none; }
+  .prose .related li + li { margin-top: var(--space-2); }
+  .prose .related-kind { display: block; color: var(--muted); font: 500 var(--fs-label)/1.4 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
+  @media (max-width: 56rem) {
+    .guide-body { grid-template-columns: minmax(0, 1fr); gap: var(--space-3); }
+    .toc { position: static; padding-bottom: var(--space-2); border-bottom: 1px solid var(--rule); }
+  }
+  @media (max-width: 30rem) {
+    .prose table.stack thead { display: none; }
+    .prose table.stack tr { display: grid; padding-block: 0.5rem; border-bottom: 1px solid var(--rule); }
+    .prose table.stack th, .prose table.stack td { padding: 0; border: 0; }
+  }
+</style>

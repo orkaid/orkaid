@@ -9,15 +9,36 @@ interface Props {
   pathname: string;
   noindex?: boolean;
   width?: 'default' | 'wide';
+  /** PR-18: the shared 404 page. No canonical or hreflang (it stands for no route), noindex, no current state, language links to the home pages. */
+  errorPage?: boolean;
 }
 
-const { locale, title, description, pathname, noindex = false, width = 'default' } = Astro.props;
+const { locale, title, description, pathname, noindex = false, width = 'default', errorPage = false } = Astro.props;
 const origin = Astro.site ?? new URL('https://orkaid.de');
 const deUrl = new URL(localePath('de', pathname), origin);
 const enUrl = new URL(localePath('en', pathname), origin);
 const canonical = locale === 'de' ? deUrl : enUrl;
 const alternateLocale: Locale = locale === 'de' ? 'en' : 'de';
 const copy = ui[locale];
+const hreflang = (target: Locale) => (target === 'de' ? 'de-DE' : 'en');
+// Navigation state: the exact page carries aria-current="page"; an ancestor section is marked visually and in its accessible name only.
+const current = (path: string) => (errorPage ? undefined : pathname === path ? 'page' : pathname.startsWith(path) && path !== '/' ? 'section' : undefined);
+const switchPath = errorPage ? '/' : pathname;
+const external = [
+  { href: 'https://github.com/orkaid/orkaid', label: copy.source },
+  { href: 'https://github.com/orkaid/orkaid/issues', label: copy.issues },
+  { href: 'https://orkaid.substack.com', label: copy.buildLog },
+  { href: 'https://www.youtube.com/@orkaidbuilds', label: copy.videos },
+];
+const sections = [
+  { path: '/tools/', label: copy.tools },
+  { path: '/knowledge/', label: copy.knowledge },
+];
+const pages = [
+  ...sections,
+  { path: '/impressum/', label: copy.imprint },
+  { path: '/datenschutz/', label: copy.privacy },
+];
 ---
 
 <!doctype html>
@@ -27,11 +48,15 @@ const copy = ui[locale];
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    {noindex && <meta name="robots" content="noindex, follow" />}
-    <link rel="canonical" href={canonical} />
-    <link rel="alternate" hreflang="de-DE" href={deUrl} />
-    <link rel="alternate" hreflang="en" href={enUrl} />
-    <link rel="alternate" hreflang="x-default" href={deUrl} />
+    {(noindex || errorPage) && <meta name="robots" content="noindex, follow" />}
+    {!errorPage && (
+      <>
+        <link rel="canonical" href={canonical} />
+        <link rel="alternate" hreflang="de-DE" href={deUrl} />
+        <link rel="alternate" hreflang="en" href={enUrl} />
+        <link rel="alternate" hreflang="x-default" href={deUrl} />
+      </>
+    )}
     <link rel="icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png" />
     <link rel="icon" href="/assets/favicon-16.png" sizes="16x16" type="image/png" />
     <link rel="icon" href="/assets/icon-192.png" sizes="192x192" type="image/png" />
@@ -40,34 +65,53 @@ const copy = ui[locale];
     <meta property="og:site_name" content="Orkaid" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical} />
+    {!errorPage && <meta property="og:url" content={canonical} />}
     <meta property="og:image" content={new URL('/assets/orkaid-social.png', origin)} />
     <meta property="og:locale" content={locale === 'de' ? 'de_DE' : 'en_US'} />
-    <meta property="og:locale:alternate" content={locale === 'de' ? 'en_US' : 'de_DE'} />
+    {!errorPage && <meta property="og:locale:alternate" content={locale === 'de' ? 'en_US' : 'de_DE'} />}
     <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <div class:list={['site-shell', { 'site-shell--wide': width === 'wide' }]}>
-      <a class="skip-link" href="#content">{locale === 'de' ? 'Zum Inhalt' : 'Skip to content'}</a>
+      <a class="skip-link" href="#content">{copy.skip}</a>
       <header class="site-header">
-        <div class="brand-block">
-          <a class="brand" href={localePath(locale, '/')} aria-label={copy.home}>
-            <img
-              src="/assets/orkaid-logo-horizontal-light-600x160.png"
-              srcset="/assets/orkaid-logo-horizontal-light-600x160.png 1x, /assets/orkaid-logo-horizontal-light-1200x320.png 2x"
-              width="600"
-              height="160"
-              alt="Orkaid"
-            />
-          </a>
-          <span class="brand-descriptor">{copy.descriptor}</span>
-        </div>
-        <nav class="site-nav" aria-label={locale === 'de' ? 'Hauptnavigation' : 'Main navigation'}>
+        <a class="brand" href={localePath(locale, '/')} aria-current={current('/') === 'page' ? 'page' : undefined}>
+          <img
+            src="/assets/orkaid-logo-horizontal-light-600x160.png"
+            srcset="/assets/orkaid-logo-horizontal-light-600x160.png 1x, /assets/orkaid-logo-horizontal-light-1200x320.png 2x"
+            width="600"
+            height="160"
+            alt={copy.home}
+          />
+        </a>
+        <p class="brand-descriptor">{copy.descriptor}</p>
+        <nav class="site-nav" aria-label={copy.mainNav}>
+          <ul class="nav-primary">
+            {sections.map(({ path, label }) => (
+              <li>
+                <a
+                  href={localePath(locale, path)}
+                  aria-current={current(path) === 'page' ? 'page' : undefined}
+                  class:list={{ 'is-section': current(path) === 'section' }}
+                >{label}{current(path) === 'section' && <span class="vh"> {copy.currentSection}</span>}</a>
+              </li>
+            ))}
+          </ul>
+          <ul class="nav-secondary">
+            <li><a class="ext" href="https://github.com/orkaid/orkaid" target="_blank" rel="noopener noreferrer">GitHub<span class="ext-mark" aria-hidden="true">↗</span><span class="vh"> {copy.external}</span></a></li>
+          </ul>
+        </nav>
+        <nav class="lang-switch" aria-label={copy.languageLabel}>
           <ul>
-            <li><a href={localePath(locale, '/')}>{copy.home}</a></li>
-            <li><a href={localePath(locale, '/tools/')}>{copy.tools}</a></li>
-            <li><a href="https://github.com/orkaid/orkaid" target="_blank" rel="noopener noreferrer">GitHub</a></li>
-            <li><a href="https://orkaid.substack.com" target="_blank" rel="noopener noreferrer">Substack</a></li>
+            {(['de', 'en'] as const).map((target) => (
+              <li>
+                {target === locale ? (
+                  <span aria-current="true" lang={target}>{target.toUpperCase()}<span class="vh"> – {ui[target].languageName}</span></span>
+                ) : (
+                  <a href={localePath(target, switchPath)} hreflang={hreflang(target)} lang={target} data-locale-switch>{target.toUpperCase()}<span class="vh"> – {ui[target].languageName}</span></a>
+                )}
+              </li>
+            ))}
           </ul>
         </nav>
       </header>
@@ -75,15 +119,31 @@ const copy = ui[locale];
         <slot />
       </main>
       <footer class="site-footer">
-        <span>Orkaid — <a href="mailto:kontakt@orkaid.de">kontakt@orkaid.de</a></span>
-        <nav aria-label={locale === 'de' ? 'Rechtliches und Sprache' : 'Legal and language'}>
+        <div class="footer-about">
+          <p class="footer-name">Orkaid</p>
+          <p>{copy.descriptor}. {copy.footerAbout}</p>
+          <p class="footer-disclaimer">{copy.disclaimer}</p>
+        </div>
+        <nav aria-label={copy.footerPages}>
+          <p class="footer-label" aria-hidden="true">{copy.footerPages}</p>
           <ul>
-            <li><a href={localePath(locale, '/impressum/')}>{copy.imprint}</a></li>
-            <li><a href={localePath(locale, '/datenschutz/')}>{copy.privacy}</a></li>
-            <li><a href={localePath(alternateLocale, pathname)} hreflang={alternateLocale === 'de' ? 'de-DE' : 'en'}>{copy.language}</a></li>
+            {pages.map(({ path, label }) => (
+              <li><a href={localePath(locale, path)} aria-current={current(path) === 'page' ? 'page' : undefined}>{label}</a></li>
+            ))}
           </ul>
         </nav>
-        <span class="footer-disclaimer">© 2026 — {copy.disclaimer}</span>
+        <nav aria-label={copy.footerProject}>
+          <p class="footer-label" aria-hidden="true">{copy.footerProject}</p>
+          <ul>
+            {external.map(({ href, label }) => (
+              <li><a class="ext" href={href} target="_blank" rel="noopener noreferrer">{label}<span class="ext-mark" aria-hidden="true">↗</span><span class="vh"> {copy.external}</span></a></li>
+            ))}
+            <li><a href="mailto:kontakt@orkaid.de">kontakt@orkaid.de</a></li>
+          </ul>
+        </nav>
+        <p class="footer-base">
+          © 2026 Orkaid · <a href={localePath(alternateLocale, switchPath)} hreflang={hreflang(alternateLocale)} lang={alternateLocale} data-locale-switch>{copy.language}</a>
+        </p>
       </footer>
     </div>
   </body>

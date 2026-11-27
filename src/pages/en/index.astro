@@ -1,26 +1,13 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import HomePage from '../../components/platform/HomePage.astro';
 ---
 
 <BaseLayout
   locale="en"
-  title="Orkaid — Open tools for finance and compliance"
-  description="Orkaid is a free, open-source hub of professional tools for finance, accounting, compliance and software."
+  title="Orkaid — Tools and knowledge for finance, accounting and compliance"
+  description="Orkaid is a free, open-source hub of tools for finance, accounting and compliance. The first tool creates XRechnung invoices in the browser."
   pathname="/"
 >
-  <section class="hero">
-    <p class="eyebrow">What is being built</p>
-    <h1>Open tools for German e-invoicing.</h1>
-    <div class="lead-grid">
-      <p>Orkaid is a free, open-source hub of professional tools at the intersection of finance, accounting, compliance and software — built in the open by a practising financial accountant, for the people who actually have to file the documents.</p>
-      <p>The first building block is planned as an XRechnung generator — the starting point, not the boundary of the project.</p>
-    </div>
-  </section>
-
-  <section class="content-section" aria-labelledby="tools-heading">
-    <p class="eyebrow">Tools</p>
-    <h2 id="tools-heading">The platform foundation is ready.</h2>
-    <p>The tool hub is being built step by step. The XRechnung generator itself is not part of this bootstrap.</p>
-    <p><a href="/en/tools/">Go to the tool hub</a></p>
-  </section>
+  <HomePage locale="en" />
 </BaseLayout>

@@ -1,0 +1,118 @@
+---
+// Home page body (PR-01/02/03/05/06/28). The locale routes are thin wrappers around this component.
+import { localePath, type Locale } from '../../i18n/ui';
+import { LINKS, resourceKinds, resources, tools } from '../../i18n/platform';
+import ExtLink from './ExtLink.astro';
+import ToolFacts from './ToolFacts.astro';
+import VerificationLadder from './VerificationLadder.astro';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const tool = tools[0]!;
+const c = {
+  de: {
+    eyebrow: 'Freie Werkzeuge · offen entwickelt',
+    title: ['Werkzeuge für die Praxis.', 'Wissen für den Alltag.'],
+    lead: 'Orkaid ist ein quelloffenes Werkzeug-Hub für Finanzen, Buchhaltung und Compliance, entwickelt aus der Praxis der Finanzbuchhaltung. Das erste Werkzeug erstellt XRechnungen direkt in Ihrem Browser.',
+    start: 'XRechnung erstellen',
+    guideFirst: 'Erst die Anleitung lesen',
+    kicker: 'Erstes Werkzeug',
+    scope: 'Umfang und Grenzen',
+    knowledge: 'Wissen und Anleitungen',
+    all: 'Alle Inhalte',
+    verify: 'Was Orkaid prüft – und was nicht',
+    project: 'Offen entwickelt',
+    projectText: 'Quellcode und Tests von Orkaid sind öffentlich. Wie das Werkzeug entsteht, zeigen das Build-Log und die Videos. Fehlerberichte und Hinweise aus der Praxis sind willkommen.',
+    links: ['Quellcode auf GitHub', 'Fehler melden oder Werkzeug vorschlagen', 'Build-Log auf Substack', 'Videos auf YouTube'],
+  },
+  en: {
+    eyebrow: 'Free tools · built in the open',
+    title: ['Practical tools.', 'Knowledge for everyday work.'],
+    lead: 'Orkaid is an open-source hub of tools for finance, accounting and compliance, built from day-to-day accounting practice. The first tool creates XRechnung invoices directly in your browser.',
+    start: 'Create an XRechnung',
+    guideFirst: 'Read the guide first',
+    kicker: 'First tool',
+    scope: 'Scope and limits',
+    knowledge: 'Knowledge and guides',
+    all: 'All resources',
+    verify: 'What Orkaid checks – and what it does not',
+    project: 'Built in the open',
+    projectText: 'Orkaid’s source code and tests are public. The build log and the videos show how the tool is made. Bug reports and feedback from practice are welcome.',
+    links: ['Source code on GitHub', 'Report an issue or suggest a tool', 'Build log on Substack', 'Videos on YouTube'],
+  },
+}[locale];
+const projectLinks = [LINKS.github, LINKS.issues, LINKS.substack, LINKS.youtube];
+---
+<section class="home-hero" aria-labelledby="hero-title">
+  <div>
+    <p class="eyebrow">{c.eyebrow}</p>
+    <h1 id="hero-title" class="title-hero">{c.title[0]}<br />{c.title[1]}</h1>
+    <p class="lead">{c.lead}</p>
+    <div class="actions">
+      <a class="button button-primary" href={localePath(locale, tool.path)}>{c.start} <span aria-hidden="true">→</span></a>
+      <a class="button-secondary" href={localePath(locale, `/knowledge/${tool.guide}/`)}>{c.guideFirst}</a>
+    </div>
+  </div>
+  <aside class="datasheet" aria-labelledby="ds-title">
+    <p class="kicker">{c.kicker}</p>
+    <h2 id="ds-title" class="ds-title">{tool.name[locale]}</h2>
+    <ToolFacts tool={tool} locale={locale} />
+    <p class="ds-link"><a href={`${localePath(locale, '/tools/')}#${tool.id}`}>{c.scope} <span aria-hidden="true">→</span></a></p>
+  </aside>
+</section>
+
+<section class="band" aria-labelledby="res-title">
+  <div class="band-head">
+    <h2 id="res-title" class="title-section">{c.knowledge}</h2>
+    <p><a href={localePath(locale, '/knowledge/')}>{c.all} <span aria-hidden="true">→</span></a></p>
+  </div>
+  <ol class="res-list">
+    {resources.map((r, i) => (
+      <li>
+        <p class="res-meta"><span class="res-no">{String(i + 1).padStart(2, '0')}</span> {resourceKinds[r.kind][locale]}</p>
+        <h3><a href={localePath(locale, r.path)}>{r.title[locale]}</a></h3>
+        <p>{r.summary[locale]}</p>
+      </li>
+    ))}
+  </ol>
+</section>
+
+<section class="band" aria-labelledby="verify-title">
+  <div class="band-head"><h2 id="verify-title" class="title-section">{c.verify}</h2></div>
+  <VerificationLadder locale={locale} />
+</section>
+
+<section class="band band-project" aria-labelledby="project-title">
+  <div>
+    <h2 id="project-title" class="title-section">{c.project}</h2>
+    <p>{c.projectText}</p>
+  </div>
+  <ul class="link-list">
+    {projectLinks.map((href, i) => <li><ExtLink href={href} locale={locale}>{c.links[i]}</ExtLink></li>)}
+    <li><a href="mailto:kontakt@orkaid.de">kontakt@orkaid.de</a></li>
+  </ul>
+</section>
+
+<style>
+  .home-hero { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--space-4) var(--space-5); align-items: start; padding-block: clamp(2rem, 4.5vw, 3.5rem) var(--space-4); }
+  .datasheet { padding: var(--space-3) 0 var(--space-2); border-top: 3px solid var(--ink); border-bottom: 1px solid var(--ink); }
+  .kicker { display: inline-block; margin: 0 0 0.5rem; padding: 0 0.35rem; background: var(--highlight); font: 500 var(--fs-label)/1.6 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
+  .ds-title { margin: 0 0 var(--space-2); font-size: 1.5rem; font-weight: 600; }
+  .ds-link { margin: var(--space-2) 0 0; font-weight: 500; }
+  .res-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3) var(--space-4); margin: 0; padding: 0; list-style: none; }
+  .res-list li { padding-top: var(--space-2); border-top: 1px solid var(--ink); }
+  .res-list h3 { margin: 0; font-size: 1.25rem; font-weight: 600; line-height: 1.3; }
+  .res-list h3 a { text-decoration: none; }
+  .res-list h3 a:hover { text-decoration: underline; text-decoration-color: var(--accent); }
+  .res-list p { margin: 0.5rem 0 0; font-size: 0.9375rem; }
+  .res-list .res-meta { margin: 0 0 0.5rem; color: var(--muted); font: 500 var(--fs-label)/1.4 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; }
+  .res-no { color: var(--ink); margin-inline-end: 0.5rem; }
+  .band-project { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--space-3) var(--space-5); }
+  .band-project p { max-width: 60ch; }
+  .link-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--ink); }
+  .link-list li { border-bottom: 1px solid var(--rule); }
+  .link-list :global(a) { display: flex; align-items: center; min-height: var(--target); font-weight: 500; text-decoration: none; }
+  .link-list :global(a:hover) { text-decoration: underline; text-decoration-color: var(--accent); }
+  @media (max-width: 60rem) { .home-hero { grid-template-columns: minmax(0, 1fr); } }
+  @media (max-width: 52rem) { .res-list, .band-project { grid-template-columns: minmax(0, 1fr); } }
+</style>

@@ -1,0 +1,55 @@
+---
+// PR-18: the single recovery page that Cloudflare Pages serves, with status 404, for every unknown path.
+// It belongs to no locale route: German and English side by side, no canonical or hreflang, noindex, no script.
+import BaseLayout from '../layouts/BaseLayout.astro';
+
+const blocks = [
+  {
+    lang: 'de',
+    title: 'Auf Deutsch weiter',
+    text: 'Unter dieser Adresse gibt es keine Seite. Vielleicht hat sie sich geändert, oder die Adresse enthält einen Tippfehler.',
+    links: [['/', 'Startseite'], ['/tools/', 'Werkzeuge'], ['/tools/xrechnung/', 'XRechnung-Generator'], ['/knowledge/', 'Wissen und Anleitungen']],
+  },
+  {
+    lang: 'en',
+    title: 'Continue in English',
+    text: 'There is no page at this address. It may have moved, or the address may contain a typo.',
+    links: [['/en/', 'Home'], ['/en/tools/', 'Tools'], ['/en/tools/xrechnung/', 'XRechnung generator'], ['/en/knowledge/', 'Knowledge and guides']],
+  },
+] as const;
+---
+
+<BaseLayout locale="de" title="Seite nicht gefunden · Page not found — Orkaid" description="Diese Seite gibt es nicht. This page does not exist." pathname="/" errorPage>
+  <header class="page-head">
+    <p class="eyebrow">Fehler 404 · Error 404</p>
+    <h1 class="title-page">Seite nicht gefunden<br /><span lang="en" class="title-en">Page not found</span></h1>
+    <p class="jump"><a href="#nf-en" lang="en">English version below <span aria-hidden="true">↓</span></a></p>
+  </header>
+  <div class="recovery">
+    {blocks.map((b) => (
+      <section lang={b.lang} aria-labelledby={`nf-${b.lang}`}>
+        <h2 id={`nf-${b.lang}`}>{b.title}</h2>
+        <p>{b.text}</p>
+        <ul>{b.links.map(([href, text]) => <li><a href={href}>{text}</a></li>)}</ul>
+      </section>
+    ))}
+  </div>
+</BaseLayout>
+
+<style>
+  .title-en { color: var(--muted); }
+  .jump { display: none; margin: var(--space-2) 0 0; font-weight: 500; }
+  .jump a { display: inline-flex; align-items: center; gap: 0.375rem; min-height: var(--target); }
+  .recovery { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4) var(--space-5); padding-block: var(--space-4); border-top: 3px solid var(--ink); }
+  section { scroll-margin-top: var(--space-2); }
+  h2 { margin: 0 0 var(--space-2); font-size: var(--fs-section); font-weight: 400; }
+  .recovery p { margin: 0 0 var(--space-2); max-width: 52ch; }
+  ul { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--ink); }
+  li { border-bottom: 1px solid var(--rule); }
+  li a { display: flex; align-items: center; min-height: var(--target); font-weight: 500; text-decoration: none; }
+  li a:hover { text-decoration: underline; text-decoration-color: var(--accent); }
+  @media (max-width: 52rem) {
+    .recovery { grid-template-columns: minmax(0, 1fr); }
+    .jump { display: block; }
+  }
+</style>

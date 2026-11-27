@@ -1,0 +1,21 @@
+---
+// The factual profile of a catalog tool (home page and tool hub).
+import type { Locale } from '../../i18n/ui';
+import type { Tool } from '../../i18n/platform';
+
+interface Props { tool: Tool; locale: Locale }
+const { tool, locale } = Astro.props;
+---
+<dl class="facts">
+  {tool.facts.map(({ label, value }) => (
+    <div><dt>{label[locale]}</dt><dd>{value[locale]}</dd></div>
+  ))}
+</dl>
+
+<style>
+  .facts { margin: 0; }
+  .facts div { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: 0 var(--space-2); padding-block: 0.5rem; border-top: 1px solid var(--rule); }
+  dt { color: var(--muted); font: 500 var(--fs-label)/1.9 var(--mono); letter-spacing: 0.06em; text-transform: uppercase; }
+  dd { margin: 0; font-size: 0.9375rem; line-height: 1.5; }
+  @media (max-width: 30rem) { .facts div { grid-template-columns: minmax(0, 1fr); } }
+</style>

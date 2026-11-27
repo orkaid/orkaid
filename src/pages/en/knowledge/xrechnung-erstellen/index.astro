@@ -1,0 +1,138 @@
+---
+import GuideLayout from '../../../../layouts/GuideLayout.astro';
+
+const toc = [
+  { id: 'passt', label: 'Does your case fit?' },
+  { id: 'vorbereitung', label: 'Preparation' },
+  { id: 'beispiel', label: 'A fictional example' },
+  { id: 'schritte', label: 'Steps in the tool' },
+  { id: 'gutschrift', label: 'A credit note (381)' },
+  { id: 'export', label: 'Check and export' },
+  { id: 'probleme', label: 'Common difficulties' },
+];
+const sources = [
+  { label: 'Orkaid: scope of the XRechnung generator', href: 'https://github.com/orkaid/orkaid/blob/main/src/lib/domain/xrechnung/README.md', note: 'implemented profile, technical description' },
+  { label: 'KoSIT: XRechnung (German)', href: 'https://xeinkauf.de/xrechnung/', note: 'the XRechnung 3.0 standard' },
+];
+---
+<GuideLayout
+  locale="en"
+  id="xrechnung-erstellen"
+  description="Create an XRechnung (invoice 380 or credit note 381) step by step with the Orkaid generator: preparation, example, check, export."
+  prerequisites="You have the invoice data at hand; seller and buyer are based in Germany"
+  appliesTo="The XRechnung generator v0.1.0 on this website · XRechnung 3.0.2 · invoice 380 and credit note 381"
+  toc={toc}
+  sources={sources}
+  sourcesRetrieved="2026-11-26"
+>
+  <section id="passt" aria-labelledby="h-passt">
+    <h2 id="h-passt">Does your case fit?</h2>
+    <p>The tool deliberately covers a limited profile. It fits when all of the following apply:</p>
+    <ul>
+      <li>an invoice (380) or a credit note (381) between businesses,</li>
+      <li>seller and buyer in Germany, currency EUR,</li>
+      <li>VAT at 19% and/or 7%, Reverse Charge (§ 13b UStG) per line, or Kleinunternehmer (§ 19 UStG) for the whole invoice,</li>
+      <li>an invoice paid by credit transfer with an IBAN; a credit note is settled by clearing,</li>
+      <li>no allowances or charges, no prepayments, no attachments, no negative quantities or prices.</li>
+    </ul>
+    <p>The complete list is shown with the tool under <a href="/en/tools/#xrechnung">Tools</a>. The tool does not check whether the Kleinunternehmer rule or Reverse Charge applies to you; that is your decision.</p>
+  </section>
+
+  <section id="vorbereitung" aria-labelledby="h-vorbereitung">
+    <h2 id="h-vorbereitung">Preparation</h2>
+    <p>The tool stores nothing. Have the information ready before you start; if you leave or reload the page, your input is lost.</p>
+    <table class="stack">
+      <caption>What the tool asks for</caption>
+      <thead><tr><th scope="col">Area</th><th scope="col">Information</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Seller (you)</th><td>Name, street, post code and city; contact name with telephone and e-mail; electronic address with scheme (e.g. <code>EM</code> for e-mail); VAT ID or tax number</td></tr>
+        <tr><th scope="row">Buyer</th><td>Name, street, post code and city; electronic address with scheme; for Reverse Charge also their VAT ID or registration number</td></tr>
+        <tr><th scope="row">Invoice details</th><td>Invoice number, issue date, date of supply or invoicing period, buyer reference</td></tr>
+        <tr><th scope="row">Lines</th><td>For each line: description, quantity, unit, net unit price and VAT treatment</td></tr>
+        <tr><th scope="row">Payment</th><td>Payment means (30 credit transfer or 58 SEPA credit transfer) with an IBAN; plus a due date, payment terms or Skonto</td></tr>
+      </tbody>
+    </table>
+    <p>You get the buyer reference from your customer. If you do not know it, ask; the tool does not generate it.</p>
+  </section>
+
+  <section id="beispiel" aria-labelledby="h-beispiel">
+    <h2 id="h-beispiel">A fictional example</h2>
+    <p>You can practise with these made-up values. Do not use real customer data for tests, screenshots or bug reports.</p>
+    <table class="stack">
+      <caption>Fictional sample invoice</caption>
+      <thead><tr><th scope="col">Field</th><th scope="col">Value</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Seller</th><td>Musterwerk Beratung GmbH, Beispielstraße 12, 50667 Köln, VAT ID DE123456789</td></tr>
+        <tr><th scope="row">Buyer</th><td>Beispiel Handel AG, Musterallee 5, 20095 Hamburg</td></tr>
+        <tr><th scope="row">Invoice number, date</th><td>RE-2026-0001, 10.11.2026; date of supply 31.10.2026</td></tr>
+        <tr><th scope="row">Buyer reference</th><td>Kostenstelle 4410</td></tr>
+        <tr><th scope="row">Line</th><td>Consulting, 8 hours at 120,00 EUR net (typed with a comma), 19%</td></tr>
+        <tr><th scope="row">Payment</th><td>58 – SEPA credit transfer, IBAN DE89 3704 0044 0532 0130 00 (enter without spaces), due 24.11.2026</td></tr>
+      </tbody>
+    </table>
+    <p>The tool calculates €960.00 net, €182.40 VAT and €1,142.40 gross from this.</p>
+  </section>
+
+  <section id="schritte" aria-labelledby="h-schritte">
+    <h2 id="h-schritte">Steps in the tool</h2>
+    <ol class="steps">
+      <li>
+        <h3>Open the tool and check the document type</h3>
+        <p>Open the <a href="/en/tools/xrechnung/">XRechnung generator</a>. <span class="ui">Invoice (380)</span> is preselected.</p>
+      </li>
+      <li>
+        <h3>Start</h3>
+        <p><span class="ui">Start the invoice</span> in the status bar takes you to the first open field. After that, <span class="ui">Next open point</span> (on narrow screens <span class="ui">Next</span>) moves to the next one; inside a field, Enter does the same. You can also click any entry directly.</p>
+      </li>
+      <li>
+        <h3>Fill in seller, invoice details and buyer</h3>
+        <p>The sections are called <span class="ui">Seller (invoice issuer)</span>, <span class="ui">Invoice details</span> and <span class="ui">Buyer (invoice recipient)</span>. Dates are written as DD.MM.YYYY, e.g. 10.11.2026. For the time of supply, choose a single date of supply or an invoicing period.</p>
+      </li>
+      <li>
+        <h3>Enter the lines</h3>
+        <p>Under <span class="ui">VAT treatment of the invoice</span>, choose <span class="ui">Regular taxation / Reverse Charge</span> or <span class="ui">Kleinunternehmer (§ 19 UStG)</span>. Numbers use a comma as the decimal separator and no thousands separator, e.g. 125,50 – also in the English interface. Add more lines with <span class="ui">+ Add line</span>. The totals appear once every line is complete and valid.</p>
+      </li>
+      <li>
+        <h3>Enter the payment</h3>
+        <p>Choose the payment means and enter the IBAN in one block, in capitals and without spaces. If an amount is due, at least one of these is needed: a due date, payment terms or Skonto. Skonto is entered with <span class="ui">+ Add discount tier</span> as days and percent; the tool does not calculate a discount amount.</p>
+      </li>
+    </ol>
+    <aside class="note">
+      <p class="note-label">Help for every field</p>
+      <p>The question mark next to a field, or the F1 key, opens the help: what to enter, a fictional example, common mistakes and the underlying rules.</p>
+    </aside>
+  </section>
+
+  <section id="gutschrift" aria-labelledby="h-gutschrift">
+    <h2 id="h-gutschrift">A credit note (381)</h2>
+    <p>Choose <span class="ui">Credit note (381)</span> at the top. Then:</p>
+    <ul>
+      <li>The <span class="ui">Preceding invoice number</span> is required; the preceding invoice date is optional.</li>
+      <li>Instead of bank details, the credit note is cleared. You confirm explicitly that a reciprocal obligation exists between the seller and the buyer against which it is to be cleared. This is your declaration; the tool does not check it and does not carry out the clearing itself.</li>
+      <li>A refund by credit transfer and Skonto are not possible on a credit note in this tool.</li>
+      <li>This means a commercial credit note (kaufmännische Gutschrift). The tool does not create self-billing under § 14(2) sentence 5 UStG, where the recipient issues the invoice (389), or a corrected invoice (384).</li>
+    </ul>
+    <p>Entries of the type not chosen stay in the form but are not used.</p>
+  </section>
+
+  <section id="export" aria-labelledby="h-export">
+    <h2 id="h-export">Check and export</h2>
+    <p><span class="ui">Check invoice</span> (on narrow screens under <span class="ui">Check &amp; export</span>) shows every open point at its field. When none are left, the status bar reads <span class="ui">Checked against this tool's rules</span>, and the <span class="ui">UBL 2.1 XML</span> and <span class="ui">CII XML</span> buttons download the file.</p>
+    <p>The file is created in your browser. The tool cannot read an exported file back in: change the data while the page is open and export again. Before sending the file, check it with a validator – see the next guide.</p>
+  </section>
+
+  <section id="probleme" aria-labelledby="h-probleme">
+    <h2 id="h-probleme">Common difficulties</h2>
+    <table class="stack">
+      <caption>What you can do</caption>
+      <thead><tr><th scope="col">Situation</th><th scope="col">What to do</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">The export buttons are dashed and inactive</th><td>Points are still open. <span class="ui">Next open point</span> takes you there.</td></tr>
+        <tr><th scope="row">An amount is not accepted</th><td>Use a comma instead of a point and no thousands separator.</td></tr>
+        <tr><th scope="row">The buyer reference is missing</th><td>Ask your customer. If they give you a Leitweg-ID, you can optionally have its structure and check digits checked; this does not confirm that it has been assigned.</td></tr>
+        <tr><th scope="row">Your case is outside the profile</th><td>The tool says so explicitly. It is not suitable for that case; such a message says nothing about whether the case is legally permitted.</td></tr>
+        <tr><th scope="row">You want to leave the page</th><td>The tool asks before unsaved input is lost. It cannot store it.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</GuideLayout>

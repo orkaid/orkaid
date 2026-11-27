@@ -4,6 +4,8 @@ This repository's software is licensed under the MIT License (see `LICENSE`) unl
 
 The MIT License covers the **software** in this repository. It does **not** extend to the Orkaid name, logos, wordmarks, emblem, or visual identity.
 
+The same applies to the CC BY 4.0 license of the knowledge-guide texts (see `README.md`): it does not extend to the Orkaid name, logos, wordmarks, emblem, or visual identity either.
+
 ## Software vs. brand
 
 - **Software** (code, markup, styles, configuration): MIT-licensed, free to use, modify, and redistribute per the license terms.

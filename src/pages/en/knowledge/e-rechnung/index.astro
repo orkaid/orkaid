@@ -1,0 +1,79 @@
+---
+import GuideLayout from '../../../../layouts/GuideLayout.astro';
+import ExtLink from '../../../../components/platform/ExtLink.astro';
+
+const toc = [
+  { id: 'struktur', label: 'A structured invoice or a picture of one' },
+  { id: 'en16931', label: 'The European standard EN 16931' },
+  { id: 'xrechnung', label: 'What XRechnung is' },
+  { id: 'syntax', label: 'UBL and CII' },
+  { id: 'begriffe', label: 'Terms you will meet in the tool' },
+  { id: 'grenzen', label: 'What this page does not answer' },
+];
+const sources = [
+  { label: 'KoSIT: XRechnung (German)', href: 'https://xeinkauf.de/xrechnung/', note: 'standard, components, syntaxes, validator' },
+  { label: 'KoSIT: XRechnung – versions and bundles (German)', href: 'https://xeinkauf.de/xrechnung/versionen-und-bundles/', note: 'valid version and outlook' },
+  { label: 'German Federal Ministry of Finance: questions and answers on electronic invoicing (German)', href: 'https://www.bundesfinanzministerium.de/Content/DE/FAQ/e-rechnung.html', note: 'page of 29 October 2026, retrieved on 27 November 2026' },
+];
+---
+<GuideLayout
+  locale="en"
+  id="e-rechnung"
+  description="Basics of electronic invoicing: structured invoice versus PDF, EN 16931, XRechnung, UBL and CII, with sources."
+  appliesTo="XRechnung 3.0 (the KoSIT standard) and the Orkaid XRechnung generator v0.1.0"
+  toc={toc}
+  sources={sources}
+  sourcesRetrieved="2026-11-26"
+>
+  <section id="struktur" aria-labelledby="h-struktur">
+    <h2 id="h-struktur">A structured invoice or a picture of one</h2>
+    <p>An invoice on paper or as a PDF is made for people. A program that has to process it must first find the invoice number, the date or the amounts in the image or text – and it can get them wrong.</p>
+    <p>A structured electronic invoice is a file in which every piece of information sits in its own, precisely defined field: the invoice number in the invoice-number field, the VAT rate in the VAT-rate field. Software can take it over without anyone retyping it. For XRechnung, this file is an XML file.</p>
+    <p>XML is hard for people to read. Visualisations display the content as an invoice again; KoSIT provides its own component for this. Such a view only shows what the XML file contains.</p>
+  </section>
+
+  <section id="en16931" aria-labelledby="h-en16931">
+    <h2 id="h-en16931">The European standard EN 16931</h2>
+    <p>EN 16931 describes which information an electronic invoice can contain and how the pieces relate, independently of the file format. This is called the semantic data model. The standard also defines two mandatory syntaxes, that is, two ways of writing this model as XML: UBL 2.1 and UN/CEFACT CII.</p>
+    <p>Every element of the model has an identifier, for example <code>BT-1</code> for the invoice number. Rules that connect elements have identifiers too, such as <code>BR-CO-15</code>.</p>
+  </section>
+
+  <section id="xrechnung" aria-labelledby="h-xrechnung">
+    <h2 id="h-xrechnung">What XRechnung is</h2>
+    <p>The German Coordination Office for IT Standards (KoSIT) describes XRechnung as the standard for electronic invoicing to public contracting authorities, through which Germany implements EU Directive 2014/55/EU. KoSIT operates the standard on behalf of the IT Planning Council (IT-Planungsrat).</p>
+    <p>XRechnung builds on EN 16931. As a so-called CIUS, it narrows down the standard’s elements and rules, for example which fields are required; German rules carry identifiers such as <code>BR-DE-15</code>. An invoice under this CIUS is therefore also an invoice under EN 16931. There is also an XRechnung extension that adds further elements; Orkaid does not use it.</p>
+    <p>According to KoSIT, XRechnung 3.0 is currently in force and will remain so until at least 31 July 2027. A preliminary version of XRechnung 4.0 has been published; the final version is announced for spring 2027. Orkaid produces files under XRechnung 3.0, release 3.0.2.</p>
+    <aside class="note">
+      <p class="note-label">Not only for public authorities</p>
+      <p>Orkaid creates XRechnung files for invoices between businesses in Germany. Whether your customer accepts this format, and what else they expect on the invoice, is something to agree with them.</p>
+    </aside>
+  </section>
+
+  <section id="syntax" aria-labelledby="h-syntax">
+    <h2 id="h-syntax">UBL and CII</h2>
+    <p>UBL 2.1 and UN/CEFACT CII are the two XML formats that EN 16931 provides for and XRechnung allows. They carry the same information, only with different element names and a different structure.</p>
+    <p>Orkaid produces both formats from the same input and the same calculated amounts. Which one you send depends on what your recipient can process. If they do not specify one, ask.</p>
+  </section>
+
+  <section id="begriffe" aria-labelledby="h-begriffe">
+    <h2 id="h-begriffe">Terms you will meet in the tool</h2>
+    <table>
+      <caption>Short explanations</caption>
+      <thead><tr><th scope="col">Term</th><th scope="col">Meaning</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">BT-… (business term)</th><td>Identifier of an element in the EN 16931 data model, e.g. <code>BT-1</code> invoice number. The help in the tool names it for every field.</td></tr>
+        <tr><th scope="row">BR-… (business rule)</th><td>Identifier of a rule, e.g. that the totals add up. <code>BR-DE-…</code> are XRechnung rules.</td></tr>
+        <tr><th scope="row">Document type 380 and 381</th><td>Codes for the kind of document: 380 is an invoice, 381 a commercial credit note (<code>BT-3</code>). XRechnung distinguishes these from a corrected invoice (384) and from self-billing under § 14(2) sentence 5 UStG, where the recipient issues the invoice (389); the tool supports neither. In the tool you choose the type explicitly.</td></tr>
+        <tr><th scope="row">Buyer reference</th><td>A reference from your customer that lets them assign the invoice (<code>BT-10</code>). It is required in XRechnung. Public authorities often give a Leitweg-ID here.</td></tr>
+        <tr><th scope="row">Electronic address</th><td>The address at which seller and buyer can be reached electronically, with a scheme, e.g. <code>EM</code> for an e-mail address.</td></tr>
+        <tr><th scope="row">Validator</th><td>A program that checks an XML file against the rules of the standard. KoSIT provides an official validator.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="grenzen" aria-labelledby="h-grenzen">
+    <h2 id="h-grenzen">What this page does not answer</h2>
+    <p>Whether and from when you are required to issue or receive electronic invoices depends on the statutory conditions applicable to your circumstances. For current information, consult the <ExtLink href="https://www.bundesfinanzministerium.de/Content/DE/FAQ/e-rechnung.html" locale="en">German Federal Ministry of Finance’s FAQ on electronic invoicing (German)</ExtLink>.</p>
+    <p>This page also does not settle which invoice particulars apply to your case for tax purposes, or whether a particular document legally counts as an electronic invoice. Please ask your tax adviser.</p>
+  </section>
+</GuideLayout>

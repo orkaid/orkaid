@@ -505,7 +505,8 @@
   </section>
 {/snippet}
 
-<form class="desk" novalidate onsubmit={(event) => event.preventDefault()} onkeydown={onKey}>
+<!-- data-dirty only exposes whether the form differs from its empty state, for the page-level leave guard (PR-11). -->
+<form class="desk" data-dirty={String(snapshot !== initial)} novalidate onsubmit={(event) => event.preventDefault()} onkeydown={onKey}>
   <div class="bar" role="region" aria-label={copy['sheet.barLabel'][locale]}>
     <div class="bar-main">
       <p class={`bar-status ${status}`} tabindex="-1" bind:this={statusEl}><Glyph kind={statusGlyph} /> <strong>{statusLine}</strong></p>
@@ -722,6 +723,14 @@
     .o-count { margin-inline-start: auto; }
     .sheet { box-shadow: none; }
     .blk { margin-inline-start: -0.625rem; padding-inline-start: calc(0.625rem - 3px); }
+  }
+  @media (max-width: 35.99rem) {
+    /* PR-16: below 36rem the status takes its own row and the two actions share the next one, so nothing overlaps or clips. */
+    .bar-main { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); row-gap: 0.375rem; }
+    .bar-status { grid-column: 1 / -1; grid-row: 1; }
+    .act.next, .act.menu { grid-row: 2; min-width: 0; justify-content: center; white-space: normal; text-align: center; }
+    .act.next { grid-column: 1; }
+    .act.menu { grid-column: 2; }
   }
   @media (pointer: coarse) { .sec-help { inline-size: 2.75rem; block-size: 2.75rem; } .btn, .choice { min-block-size: 2.75rem; } .act { min-height: 2.75rem; } }
   @media (prefers-reduced-motion: reduce) { .blk { transition: none; } }

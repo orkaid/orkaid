@@ -1,0 +1,79 @@
+---
+import GuideLayout from '../../../layouts/GuideLayout.astro';
+import ExtLink from '../../../components/platform/ExtLink.astro';
+
+const toc = [
+  { id: 'struktur', label: 'Strukturierte Rechnung oder Bild einer Rechnung' },
+  { id: 'en16931', label: 'Die europäische Norm EN 16931' },
+  { id: 'xrechnung', label: 'Was XRechnung ist' },
+  { id: 'syntax', label: 'UBL und CII' },
+  { id: 'begriffe', label: 'Begriffe, die im Werkzeug vorkommen' },
+  { id: 'grenzen', label: 'Was diese Seite nicht beantwortet' },
+];
+const sources = [
+  { label: 'KoSIT: XRechnung', href: 'https://xeinkauf.de/xrechnung/', note: 'Standard, Bestandteile, Syntaxen, Validator' },
+  { label: 'KoSIT: XRechnung – Versionen und Bundles', href: 'https://xeinkauf.de/xrechnung/versionen-und-bundles/', note: 'gültige Version und Ausblick' },
+  { label: 'Bundesministerium der Finanzen: Fragen und Antworten zur E-Rechnung', href: 'https://www.bundesfinanzministerium.de/Content/DE/FAQ/e-rechnung.html', note: 'Seite vom 29.10.2026, abgerufen am 27.11.2026' },
+];
+---
+<GuideLayout
+  locale="de"
+  id="e-rechnung"
+  description="Grundlagen der E-Rechnung: strukturierte Rechnung und PDF, EN 16931, XRechnung, UBL und CII, mit Quellen."
+  appliesTo="XRechnung 3.0 (Standard der KoSIT) und den XRechnung-Generator v0.1.0 von Orkaid"
+  toc={toc}
+  sources={sources}
+  sourcesRetrieved="2026-11-26"
+>
+  <section id="struktur" aria-labelledby="h-struktur">
+    <h2 id="h-struktur">Strukturierte Rechnung oder Bild einer Rechnung</h2>
+    <p>Eine Rechnung auf Papier oder als PDF ist für Menschen gemacht. Ein Programm, das sie verarbeiten soll, muss Rechnungsnummer, Datum oder Beträge erst aus dem Bild oder Text heraussuchen – und kann sich dabei irren.</p>
+    <p>Eine strukturierte elektronische Rechnung ist dagegen eine Datei, in der jede Angabe in einem eigenen, genau festgelegten Feld steht: die Rechnungsnummer im Feld für die Rechnungsnummer, der Steuersatz im Feld für den Steuersatz. Programme können sie übernehmen, ohne dass jemand abtippt. Bei XRechnung ist diese Datei eine XML-Datei.</p>
+    <p>Für Menschen ist XML unübersichtlich. Zum Lesen gibt es Visualisierungen, die den Inhalt wieder als Rechnung darstellen; die KoSIT stellt dafür eine eigene Komponente bereit. Eine solche Darstellung zeigt nur, was in der XML-Datei steht.</p>
+  </section>
+
+  <section id="en16931" aria-labelledby="h-en16931">
+    <h2 id="h-en16931">Die europäische Norm EN 16931</h2>
+    <p>Die EN 16931 beschreibt, welche Angaben eine elektronische Rechnung enthalten kann und wie sie zusammenhängen, unabhängig vom Dateiformat. Man spricht vom semantischen Datenmodell. Dazu legt die Norm zwei verpflichtende Syntaxen fest, also zwei Arten, dieses Modell als XML zu schreiben: UBL 2.1 und UN/CEFACT CII.</p>
+    <p>Jede Angabe des Modells hat eine Kennung, zum Beispiel <code>BT-1</code> für die Rechnungsnummer. Regeln, die Angaben verknüpfen, haben ebenfalls Kennungen, etwa <code>BR-CO-15</code>.</p>
+  </section>
+
+  <section id="xrechnung" aria-labelledby="h-xrechnung">
+    <h2 id="h-xrechnung">Was XRechnung ist</h2>
+    <p>Die Koordinierungsstelle für IT-Standards (KoSIT) beschreibt XRechnung als den Standard zur elektronischen Rechnungsstellung bei öffentlichen Auftraggebern, mit dem Deutschland die EU-Richtlinie 2014/55/EU maßgeblich umsetzt. Die KoSIT betreibt den Standard im Auftrag des IT-Planungsrats.</p>
+    <p>XRechnung baut auf der EN 16931 auf. Als sogenannte CIUS konkretisiert sie die Angaben und Regeln der Norm, etwa welche Felder Pflicht sind; deutsche Zusatzregeln tragen Kennungen wie <code>BR-DE-15</code>. Eine Rechnung nach dieser CIUS ist damit zugleich eine Rechnung nach EN 16931. Daneben gibt es eine Extension XRechnung, die weitere Angaben ergänzt; Orkaid verwendet sie nicht.</p>
+    <p>Laut KoSIT ist derzeit XRechnung 3.0 in Kraft, und zwar bis mindestens 31. Juli 2027. Eine Vorversion von XRechnung 4.0 ist veröffentlicht; die endgültige Fassung ist für das Frühjahr 2027 angekündigt. Orkaid erzeugt Dateien nach XRechnung 3.0 in der Fassung 3.0.2.</p>
+    <aside class="note">
+      <p class="note-label">Nicht nur für Behörden</p>
+      <p>Orkaid erstellt XRechnungen für Rechnungen zwischen Unternehmen in Deutschland. Ob Ihr Kunde dieses Format annimmt und welche Angaben er zusätzlich erwartet, klären Sie mit ihm.</p>
+    </aside>
+  </section>
+
+  <section id="syntax" aria-labelledby="h-syntax">
+    <h2 id="h-syntax">UBL und CII</h2>
+    <p>UBL 2.1 und UN/CEFACT CII sind die beiden XML-Formate, die die EN 16931 vorsieht und die XRechnung zulässt. Sie transportieren dieselben Angaben, nur mit anderen Elementnamen und einer anderen Struktur.</p>
+    <p>Orkaid erzeugt beide Formate aus denselben Eingaben und denselben berechneten Beträgen. Welches Format Sie senden, hängt davon ab, was Ihr Empfänger verarbeiten kann. Wenn er keines vorgibt, fragen Sie nach.</p>
+  </section>
+
+  <section id="begriffe" aria-labelledby="h-begriffe">
+    <h2 id="h-begriffe">Begriffe, die im Werkzeug vorkommen</h2>
+    <table>
+      <caption>Kurzerklärungen</caption>
+      <thead><tr><th scope="col">Begriff</th><th scope="col">Bedeutung</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">BT-… (Business Term)</th><td>Kennung einer Angabe im Datenmodell der EN 16931, z. B. <code>BT-1</code> Rechnungsnummer. Die Hilfe im Werkzeug nennt sie zu jedem Feld.</td></tr>
+        <tr><th scope="row">BR-… (Business Rule)</th><td>Kennung einer Regel, z. B. dass die Summen zusammenpassen. <code>BR-DE-…</code> sind Regeln der XRechnung.</td></tr>
+        <tr><th scope="row">Dokumenttyp 380 und 381</th><td>Codes für die Art des Dokuments: 380 ist eine Rechnung, 381 eine kaufmännische Gutschrift (<code>BT-3</code>). Davon unterscheidet XRechnung die Rechnungsberichtigung (384) und die Gutschrift im Sinne des § 14 Abs. 2 Satz 5 UStG, bei der der Leistungsempfänger abrechnet (389); beide unterstützt das Werkzeug nicht. Im Werkzeug wählen Sie den Typ ausdrücklich.</td></tr>
+        <tr><th scope="row">Käuferreferenz</th><td>Eine Angabe Ihres Kunden, mit der er die Rechnung zuordnet (<code>BT-10</code>). In XRechnung ist sie Pflicht. Öffentliche Auftraggeber nennen hier oft eine Leitweg-ID.</td></tr>
+        <tr><th scope="row">Elektronische Adresse</th><td>Die Adresse, unter der Verkäufer und Käufer elektronisch erreichbar sind, mit einem Schema, z. B. <code>EM</code> für eine E-Mail-Adresse.</td></tr>
+        <tr><th scope="row">Validator</th><td>Ein Programm, das eine XML-Datei gegen die Regeln der Norm und des Standards prüft. Die KoSIT stellt einen offiziellen Validator bereit.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="grenzen" aria-labelledby="h-grenzen">
+    <h2 id="h-grenzen">Was diese Seite nicht beantwortet</h2>
+    <p>Ob und ab wann Sie zur Ausstellung oder zum Empfang von E-Rechnungen verpflichtet sind, hängt von den gesetzlichen Voraussetzungen Ihres konkreten Falls ab. Aktuelle Informationen finden Sie in den <ExtLink href="https://www.bundesfinanzministerium.de/Content/DE/FAQ/e-rechnung.html" locale="de">FAQ des Bundesministeriums der Finanzen zur E-Rechnung</ExtLink>.</p>
+    <p>Welche Rechnungsangaben steuerlich für Ihren Fall gelten und ob ein bestimmtes Dokument rechtlich als E-Rechnung zählt, klärt diese Seite ebenfalls nicht. Wenden Sie sich dafür an Ihre steuerliche Beratung.</p>
+  </section>
+</GuideLayout>

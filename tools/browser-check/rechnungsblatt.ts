@@ -81,6 +81,8 @@ listeners.push((method, params) => {
   if (method === 'Runtime.consoleAPICalled' && (params.type === 'error' || params.type === 'warning')) pageErrors.push(`console ${String(params.type)}: ${JSON.stringify(params.args).slice(0, 300)}`);
   if (method === 'Log.entryAdded') { const entry = params.entry as { level: string; text: string }; if (entry.level === 'error' || entry.level === 'warning') pageErrors.push(`log ${entry.level}: ${entry.text}`); }
 });
+// The leave guard (PR-11) asks before unloading a changed form; these checks reopen the page on purpose, so they confirm.
+listeners.push((method) => { if (method === 'Page.javascriptDialogOpening') void cdp('Page.handleJavaScriptDialog', { accept: true }); });
 await cdp('Page.enable');
 await cdp('Runtime.enable');
 await cdp('Log.enable');

@@ -1,0 +1,138 @@
+---
+import GuideLayout from '../../../layouts/GuideLayout.astro';
+
+const toc = [
+  { id: 'passt', label: 'Passt Ihr Vorgang?' },
+  { id: 'vorbereitung', label: 'Vorbereitung' },
+  { id: 'beispiel', label: 'Ein fiktives Beispiel' },
+  { id: 'schritte', label: 'Schritte im Werkzeug' },
+  { id: 'gutschrift', label: 'Eine Gutschrift (381)' },
+  { id: 'export', label: 'Prüfen und exportieren' },
+  { id: 'probleme', label: 'Häufige Schwierigkeiten' },
+];
+const sources = [
+  { label: 'Orkaid: Umfang des XRechnung-Generators', href: 'https://github.com/orkaid/orkaid/blob/main/src/lib/domain/xrechnung/README.md', note: 'implementiertes Profil, technische Beschreibung (englisch)' },
+  { label: 'KoSIT: XRechnung', href: 'https://xeinkauf.de/xrechnung/', note: 'Standard XRechnung 3.0' },
+];
+---
+<GuideLayout
+  locale="de"
+  id="xrechnung-erstellen"
+  description="Schritt für Schritt eine XRechnung (Rechnung 380 oder Gutschrift 381) mit dem Orkaid-Generator erstellen: Vorbereitung, Beispiel, Prüfung, Export."
+  prerequisites="Die Rechnungsdaten liegen vor; Verkäufer und Käufer sitzen in Deutschland"
+  appliesTo="XRechnung-Generator v0.1.0 auf dieser Website · XRechnung 3.0.2 · Rechnung 380 und Gutschrift 381"
+  toc={toc}
+  sources={sources}
+  sourcesRetrieved="2026-11-26"
+>
+  <section id="passt" aria-labelledby="h-passt">
+    <h2 id="h-passt">Passt Ihr Vorgang?</h2>
+    <p>Das Werkzeug deckt bewusst ein begrenztes Profil ab. Es passt, wenn alle folgenden Punkte zutreffen:</p>
+    <ul>
+      <li>eine Rechnung (380) oder eine kaufmännische Gutschrift (381) zwischen Unternehmen,</li>
+      <li>Verkäufer und Käufer in Deutschland, Währung EUR,</li>
+      <li>Umsatzsteuer mit 19&nbsp;% und/oder 7&nbsp;%, Reverse Charge (§ 13b UStG) je Position oder Kleinunternehmer (§ 19 UStG) für die ganze Rechnung,</li>
+      <li>Zahlung einer Rechnung per Überweisung mit IBAN; eine Gutschrift wird verrechnet,</li>
+      <li>keine Nachlässe oder Zuschläge, keine Anzahlungen, keine Anhänge, keine negativen Mengen oder Preise.</li>
+    </ul>
+    <p>Die vollständige Liste steht beim Werkzeug unter <a href="/tools/#xrechnung">Werkzeuge</a>. Ob Kleinunternehmerregelung oder Reverse Charge auf Sie zutrifft, prüft das Werkzeug nicht; das entscheiden Sie.</p>
+  </section>
+
+  <section id="vorbereitung" aria-labelledby="h-vorbereitung">
+    <h2 id="h-vorbereitung">Vorbereitung</h2>
+    <p>Das Werkzeug speichert nichts. Legen Sie die Angaben bereit, bevor Sie beginnen; wenn Sie die Seite verlassen oder neu laden, sind die Eingaben verloren.</p>
+    <table class="stack">
+      <caption>Diese Angaben verlangt das Werkzeug</caption>
+      <thead><tr><th scope="col">Bereich</th><th scope="col">Angaben</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Verkäufer (Sie)</th><td>Name, Straße, PLZ und Ort; Ansprechpartner mit Telefon und E-Mail; elektronische Adresse mit Schema (z. B. <code>EM</code> für E-Mail); USt-IdNr. oder Steuernummer</td></tr>
+        <tr><th scope="row">Käufer</th><td>Name, Straße, PLZ und Ort; elektronische Adresse mit Schema; bei Reverse Charge zusätzlich seine USt-IdNr. oder Registernummer</td></tr>
+        <tr><th scope="row">Rechnungsdaten</th><td>Rechnungsnummer, Rechnungsdatum, Leistungsdatum oder Abrechnungszeitraum, Käuferreferenz</td></tr>
+        <tr><th scope="row">Positionen</th><td>je Position Beschreibung, Menge, Einheit, Einzelpreis netto und USt-Behandlung</td></tr>
+        <tr><th scope="row">Zahlung</th><td>Zahlungsart (30 Überweisung oder 58 SEPA-Überweisung) mit IBAN; dazu Fälligkeitsdatum, Zahlungsbedingungen oder Skonto</td></tr>
+      </tbody>
+    </table>
+    <p>Die Käuferreferenz erhalten Sie von Ihrem Kunden. Kennen Sie sie nicht, fragen Sie nach; das Werkzeug erzeugt sie nicht.</p>
+  </section>
+
+  <section id="beispiel" aria-labelledby="h-beispiel">
+    <h2 id="h-beispiel">Ein fiktives Beispiel</h2>
+    <p>Zum Üben können Sie diese erfundenen Angaben verwenden. Nehmen Sie keine echten Kundendaten für Tests, Screenshots oder Fehlerberichte.</p>
+    <table class="stack">
+      <caption>Fiktive Beispielrechnung</caption>
+      <thead><tr><th scope="col">Feld</th><th scope="col">Wert</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Verkäufer</th><td>Musterwerk Beratung GmbH, Beispielstraße 12, 50667 Köln, USt-IdNr. DE123456789</td></tr>
+        <tr><th scope="row">Käufer</th><td>Beispiel Handel AG, Musterallee 5, 20095 Hamburg</td></tr>
+        <tr><th scope="row">Rechnungsnummer, Datum</th><td>RE-2026-0001, 10.11.2026; Leistungsdatum 31.10.2026</td></tr>
+        <tr><th scope="row">Käuferreferenz</th><td>Kostenstelle 4410</td></tr>
+        <tr><th scope="row">Position</th><td>Beratung, 8 Stunden zu 120,00&nbsp;€ netto, 19&nbsp;%</td></tr>
+        <tr><th scope="row">Zahlung</th><td>58 – SEPA-Überweisung, IBAN DE89 3704 0044 0532 0130 00 (ohne Leerzeichen eingeben), fällig 24.11.2026</td></tr>
+      </tbody>
+    </table>
+    <p>Das Werkzeug berechnet daraus 960,00 € netto, 182,40 € Umsatzsteuer und 1.142,40 € brutto.</p>
+  </section>
+
+  <section id="schritte" aria-labelledby="h-schritte">
+    <h2 id="h-schritte">Schritte im Werkzeug</h2>
+    <ol class="steps">
+      <li>
+        <h3>Werkzeug öffnen und Dokumenttyp prüfen</h3>
+        <p>Öffnen Sie den <a href="/tools/xrechnung/">XRechnung-Generator</a>. Vorgewählt ist <span class="ui">Rechnung (380)</span>.</p>
+      </li>
+      <li>
+        <h3>Beginnen</h3>
+        <p><span class="ui">Rechnung beginnen</span> in der Statusleiste führt zum ersten offenen Feld. Danach springt <span class="ui">Nächster offener Punkt</span> (auf schmalen Bildschirmen <span class="ui">Weiter</span>) jeweils zum nächsten; in einem Feld genügt die Eingabetaste. Sie können jede Angabe auch direkt anklicken.</p>
+      </li>
+      <li>
+        <h3>Verkäufer, Rechnungsdaten und Käufer ausfüllen</h3>
+        <p>Die Abschnitte heißen <span class="ui">Verkäufer (Rechnungssteller)</span>, <span class="ui">Rechnungsdaten</span> und <span class="ui">Käufer (Rechnungsempfänger)</span>. Datumsangaben schreiben Sie als TT.MM.JJJJ, z. B. 10.11.2026. Beim Leistungszeitpunkt wählen Sie ein einzelnes Leistungsdatum oder einen Abrechnungszeitraum.</p>
+      </li>
+      <li>
+        <h3>Positionen erfassen</h3>
+        <p>Wählen Sie unter <span class="ui">Umsatzsteuerliche Behandlung der Rechnung</span> zwischen <span class="ui">Reguläre Besteuerung / Reverse Charge</span> und <span class="ui">Kleinunternehmer (§ 19 UStG)</span>. Zahlen schreiben Sie mit Komma und ohne Tausenderpunkt, z. B. 125,50. Weitere Zeilen fügen Sie mit <span class="ui">+ Position hinzufügen</span> an. Die Summen erscheinen, sobald alle Positionen vollständig und gültig sind.</p>
+      </li>
+      <li>
+        <h3>Zahlung angeben</h3>
+        <p>Wählen Sie die Zahlungsart und geben Sie die IBAN durchgehend, in Großbuchstaben und ohne Leerzeichen ein. Bei einem offenen Betrag braucht es mindestens eines davon: Fälligkeitsdatum, Zahlungsbedingungen oder Skonto. Skonto erfassen Sie mit <span class="ui">+ Skontostufe hinzufügen</span> als Tage und Prozent; einen Skontobetrag berechnet das Werkzeug nicht.</p>
+      </li>
+    </ol>
+    <aside class="note">
+      <p class="note-label">Hilfe zu jedem Feld</p>
+      <p>Das Fragezeichen neben einem Feld oder die Taste F1 öffnet die Hilfe: was einzutragen ist, ein fiktives Beispiel, häufige Fehler und die zugrunde liegenden Regeln.</p>
+    </aside>
+  </section>
+
+  <section id="gutschrift" aria-labelledby="h-gutschrift">
+    <h2 id="h-gutschrift">Eine Gutschrift (381)</h2>
+    <p>Wählen Sie oben <span class="ui">Kaufmännische Gutschrift (381)</span>. Dann gilt:</p>
+    <ul>
+      <li>Die <span class="ui">Nummer der ursprünglichen Rechnung</span> ist Pflicht, das Datum der ursprünglichen Rechnung optional.</li>
+      <li>Statt einer Bankverbindung wird verrechnet. Sie bestätigen ausdrücklich, dass zwischen Verkäufer und Käufer eine Gegenforderung besteht, mit der die Gutschrift verrechnet werden soll. Das ist Ihre Erklärung; das Werkzeug prüft sie nicht und führt selbst keine Verrechnung durch.</li>
+      <li>Eine Erstattung per Überweisung und Skonto sind bei einer Gutschrift in diesem Werkzeug nicht möglich.</li>
+      <li>Gemeint ist eine kaufmännische Gutschrift. Eine Gutschrift im Sinne des § 14 Abs. 2 Satz 5 UStG, also die Abrechnung durch den Leistungsempfänger (389), und eine Rechnungsberichtigung (384) erstellt das Werkzeug nicht.</li>
+    </ul>
+    <p>Eingaben des nicht gewählten Typs bleiben im Formular, werden aber nicht verwendet.</p>
+  </section>
+
+  <section id="export" aria-labelledby="h-export">
+    <h2 id="h-export">Prüfen und exportieren</h2>
+    <p>Mit <span class="ui">Rechnung prüfen</span> (auf schmalen Bildschirmen unter <span class="ui">Prüfen &amp; Export</span>) sehen Sie alle offenen Punkte an ihren Feldern. Wenn keine mehr offen sind, meldet die Statusleiste <span class="ui">Gegen die Regeln dieses Werkzeugs geprüft</span>, und die Schaltflächen <span class="ui">UBL 2.1 XML</span> und <span class="ui">CII XML</span> laden die Datei herunter.</p>
+    <p>Die Datei entsteht in Ihrem Browser. Das Werkzeug kann eine exportierte Datei nicht wieder einlesen: Ändern Sie die Angaben, solange die Seite offen ist, und exportieren Sie erneut. Bevor Sie die Datei versenden, prüfen Sie sie mit einem Validator – siehe die nächste Anleitung.</p>
+  </section>
+
+  <section id="probleme" aria-labelledby="h-probleme">
+    <h2 id="h-probleme">Häufige Schwierigkeiten</h2>
+    <table class="stack">
+      <caption>Was Sie tun können</caption>
+      <thead><tr><th scope="col">Situation</th><th scope="col">Lösung</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">Die Export-Schaltflächen sind gestrichelt und inaktiv</th><td>Es sind noch Punkte offen. <span class="ui">Nächster offener Punkt</span> führt Sie hin.</td></tr>
+        <tr><th scope="row">Ein Betrag wird nicht angenommen</th><td>Komma statt Punkt verwenden und keinen Tausenderpunkt schreiben.</td></tr>
+        <tr><th scope="row">Die Käuferreferenz fehlt</th><td>Beim Kunden erfragen. Wenn er eine Leitweg-ID nennt, können Sie optional ihren Aufbau und ihre Prüfziffern prüfen lassen; das bestätigt nicht, dass sie zugeteilt ist.</td></tr>
+        <tr><th scope="row">Ihr Vorgang liegt außerhalb des Profils</th><td>Das Werkzeug meldet das ausdrücklich. Für diesen Vorgang ist es nicht geeignet; eine solche Meldung sagt nichts darüber, ob der Vorgang rechtlich zulässig ist.</td></tr>
+        <tr><th scope="row">Sie wollen die Seite verlassen</th><td>Das Werkzeug fragt nach, bevor ungespeicherte Eingaben verloren gehen. Speichern kann es sie nicht.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</GuideLayout>

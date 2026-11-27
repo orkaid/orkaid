@@ -1,0 +1,99 @@
+---
+// Tool hub body (PR-01/02/05/06): a real catalog of the tools that exist, today one.
+import { localePath, type Locale } from '../../i18n/ui';
+import { LINKS, resource, tools } from '../../i18n/platform';
+import { copy, scopeLists } from '../../i18n/xrechnung';
+import ExtLink from './ExtLink.astro';
+import ToolFacts from './ToolFacts.astro';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const c = {
+  de: {
+    title: 'Werkzeuge',
+    lead: 'Freie Werkzeuge für konkrete Aufgaben aus Buchhaltung und Compliance. Jedes Werkzeug nennt, was es kann, was nicht, und wie Sie das Ergebnis prüfen.',
+    open: 'Werkzeug öffnen',
+    guide: 'Anleitung',
+    check: 'Ergebnis prüfen',
+    full: 'Vollständiger Umfang des Werkzeugs',
+    problem: 'Fehler gefunden oder etwas unklar?',
+    report: 'Auf GitHub melden',
+    more: 'Weitere Werkzeuge',
+    moreText: 'Neue Werkzeuge kommen hinzu, wenn sie professionell gebaut und gepflegt werden können. Vorschläge aus der Praxis:',
+    suggest: 'auf GitHub',
+  },
+  en: {
+    title: 'Tools',
+    lead: 'Free tools for concrete accounting and compliance tasks. Each tool states what it does, what it does not, and how to check the result.',
+    open: 'Open the tool',
+    guide: 'Guide',
+    check: 'Check the result',
+    full: 'Full scope of the tool',
+    problem: 'Found a bug or something unclear?',
+    report: 'Report it on GitHub',
+    more: 'More tools',
+    moreText: 'New tools are added when they can be built and maintained to a professional standard. Suggestions from practice:',
+    suggest: 'on GitHub',
+  },
+}[locale];
+const groups = [
+  [copy['scope.nowTitle'][locale], scopeLists.now[locale]],
+  [copy['scope.outTitle'][locale], scopeLists.out[locale]],
+  [copy['scope.toolTitle'][locale], scopeLists.tool[locale]],
+] as const;
+---
+<header class="page-head">
+  <p class="eyebrow">{c.title}</p>
+  <h1 class="title-page">{c.title}</h1>
+  <p class="lead">{c.lead}</p>
+</header>
+
+{tools.map((tool) => (
+  <article class="entry" id={tool.id} aria-labelledby={`${tool.id}-title`}>
+    <div class="entry-main">
+      <p class="eyebrow">{tool.area[locale]}</p>
+      <h2 id={`${tool.id}-title`} class="entry-title">{tool.name[locale]}</h2>
+      <p>{copy.pageIntro[locale]}</p>
+      <div class="actions">
+        <a class="button button-primary" href={localePath(locale, tool.path)}>{c.open} <span aria-hidden="true">→</span></a>
+        <a class="button-secondary" href={localePath(locale, resource(tool.guide).path)}>{c.guide}</a>
+        <a class="button-secondary" href={localePath(locale, resource(tool.check).path)}>{c.check}</a>
+      </div>
+      <details class="scope">
+        <summary>{c.full}</summary>
+        {groups.map(([title, items]) => items.length > 0 && (
+          <>
+            <h3>{title}</h3>
+            <ul>{items.map((item) => <li>{item}</li>)}</ul>
+          </>
+        ))}
+        <p class="scope-note">{copy['scope.disclaimer'][locale]}</p>
+      </details>
+      <p class="report">{c.problem} <ExtLink href={LINKS.issues} locale={locale}>{c.report}</ExtLink></p>
+    </div>
+    <div class="entry-facts">
+      <ToolFacts tool={tool} locale={locale} />
+    </div>
+  </article>
+))}
+
+<section class="band quiet" aria-labelledby="more-title">
+  <h2 id="more-title" class="title-section">{c.more}</h2>
+  <p>{c.moreText} <ExtLink href={LINKS.issues} locale={locale}>{c.suggest}</ExtLink>.</p>
+</section>
+
+<style>
+  .entry { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: var(--space-3) var(--space-5); padding-block: var(--space-4); border-top: 3px solid var(--ink); scroll-margin-top: var(--space-2); }
+  .entry-title { margin: 0 0 0.5rem; font-size: clamp(1.5rem, 1.3rem + 0.6vw, 1.875rem); font-weight: 400; }
+  .entry-main > p { max-width: 62ch; }
+  .scope { margin-top: var(--space-3); border-block: 1px solid var(--rule); }
+  .scope summary { min-height: var(--target); display: flex; align-items: center; font-weight: 500; cursor: pointer; }
+  .scope h3 { margin: var(--space-2) 0 0.25rem; font: 500 var(--fs-label)/1.4 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+  .scope ul { margin: 0; padding-inline-start: 1.1rem; font-size: 0.9375rem; }
+  .scope li + li { margin-top: 0.25rem; }
+  .scope-note { color: var(--muted); font-size: 0.875rem; }
+  .report { margin-top: var(--space-3); font-size: 0.9375rem; }
+  .entry-facts { padding-top: 0.25rem; }
+  .quiet p { max-width: 70ch; margin: 0.5rem 0 0; color: var(--muted); }
+  @media (max-width: 52rem) { .entry { grid-template-columns: minmax(0, 1fr); } }
+</style>

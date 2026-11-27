@@ -18,6 +18,8 @@ export default defineConfig({
   integrations: [
     svelte(),
     sitemap({
+      // PR-20: the legal pages carry noindex, so they stay out of the sitemap (they remain linked in the footer).
+      filter: (page) => !/^\/(en\/)?(impressum|datenschutz)\/$/.test(new URL(page).pathname),
       i18n: {
         defaultLocale: 'de',
         locales: { de: 'de-DE', en: 'en' },

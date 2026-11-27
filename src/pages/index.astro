@@ -1,26 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import HomePage from '../components/platform/HomePage.astro';
 ---
 
 <BaseLayout
   locale="de"
-  title="Orkaid — Freie Werkzeuge für Finanzen und Compliance"
-  description="Orkaid ist ein freies, quelloffenes Werkzeug-Hub für Finanzen, Buchhaltung, Compliance und Software."
+  title="Orkaid — Werkzeuge und Wissen für Finanzen, Buchhaltung und Compliance"
+  description="Orkaid ist ein freies, quelloffenes Werkzeug-Hub für Finanzen, Buchhaltung und Compliance. Das erste Werkzeug erstellt XRechnungen im Browser."
   pathname="/"
 >
-  <section class="hero">
-    <p class="eyebrow">Was hier entsteht</p>
-    <h1>Offene Werkzeuge für deutsche E-Rechnungen.</h1>
-    <div class="lead-grid">
-      <p>Orkaid ist ein freies, quelloffenes Werkzeug-Hub an der Schnittstelle von Finanzen, Buchhaltung, Compliance und Software — offen entwickelt von einem praktizierenden Finanzbuchhalter, für die Menschen, die die Unterlagen tatsächlich einreichen.</p>
-      <p>Der erste Baustein ist als XRechnung-Generator geplant — der Startpunkt, nicht die Grenze des Projekts.</p>
-    </div>
-  </section>
-
-  <section class="content-section" aria-labelledby="tools-heading">
-    <p class="eyebrow">Werkzeuge</p>
-    <h2 id="tools-heading">Die Plattform-Grundlage steht.</h2>
-    <p>Der Werkzeug-Hub wird schrittweise aufgebaut. Der XRechnung-Generator selbst ist noch nicht Teil dieses Bootstraps.</p>
-    <p><a href="/tools/">Zum Werkzeug-Hub</a></p>
-  </section>
+  <HomePage locale="de" />
 </BaseLayout>

@@ -12,9 +12,9 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
   <article class="legal">
     <header>
       <p class="eyebrow">DSGVO Art. 13</p>
-      <h1>Datenschutzerklärung</h1>
+      <h1 class="title-legal">Datenschutz&shy;erklärung</h1>
       <p>Diese Datenschutzerklärung klärt Sie über die Art, den Umfang und Zweck der Verarbeitung von personenbezogenen Daten auf der Website <strong>orkaid.de</strong> auf.</p>
-      <p class="updated">Stand: September 2026</p>
+      <p class="updated">Stand: November 2026</p>
     </header>
 
     <section>
@@ -31,54 +31,65 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </section>
 
     <section>
-      <h2>2. Datenerfassung auf dieser Website</h2>
-      <p>Orkaid ist eine statische Website ohne eigenes Server-Backend, Nutzerkonten oder Formulare. Beim Aufruf dieser Website verarbeitet mein Hosting- und Sicherheitsanbieter Cloudflare technische Daten, die zur Bereitstellung und Absicherung der Seite erforderlich sind (siehe Abschnitt 3).</p>
-      <p><strong>Zur Klarheit — diese Seite selbst verwendet <em>aktuell nicht</em>:</strong></p>
+      <h2>2. Datenverarbeitung auf dieser Website</h2>
+      <p>Orkaid ist eine statische Website ohne eigenes Server-Backend und ohne Nutzerkonten. Beim Aufruf dieser Website verarbeitet mein Hosting- und Sicherheitsanbieter Cloudflare technische Daten, die zur Bereitstellung und Absicherung der Seite erforderlich sind (siehe Abschnitt 4).</p>
+      <p><strong>Zur Klarheit — diese Website selbst verwendet:</strong></p>
       <ul>
         <li>keine eigenen Cookies</li>
         <li>kein <code>localStorage</code> oder vergleichbare Speicherung im Browser</li>
         <li>keine Web-Analyse/Tracking-Dienste</li>
-        <li>keine Formulare oder Kontaktfelder auf der Seite selbst</li>
         <li>keine optionalen Drittanbieter-Embeds oder -Widgets</li>
         <li>keine KI-gestützten Funktionen</li>
       </ul>
-      <p>Unabhängig davon kann Cloudflare im Rahmen seiner Sicherheitsmechanismen (z. B. bei Erkennung verdächtigen Datenverkehrs) ein technisch unbedingt erforderliches Cookie setzen; dies liegt außerhalb meiner Konfiguration dieser Website (siehe Abschnitt 3).</p>
-      <p>Sollte sich das Vorstehende ändern — etwa durch spätere Werkzeuge oder Funktionen auf orkaid.de —, wird diese Erklärung entsprechend aktualisiert (siehe Abschnitt 8).</p>
+      <p>Eingabefelder gibt es nur im XRechnung-Generator. Was mit diesen Eingaben geschieht, beschreibt Abschnitt 3.</p>
+      <p>Unabhängig davon kann Cloudflare im Rahmen seiner Sicherheitsmechanismen (z. B. bei Erkennung verdächtigen Datenverkehrs) ein technisch unbedingt erforderliches Cookie setzen; dies liegt außerhalb meiner Konfiguration dieser Website (siehe Abschnitt 4).</p>
+      <p>Sollte sich das Vorstehende ändern — etwa durch spätere Werkzeuge oder Funktionen auf orkaid.de —, wird diese Erklärung entsprechend aktualisiert (siehe Abschnitt 9).</p>
     </section>
 
     <section>
-      <h2>3. Hosting und Sicherheitsverarbeitung durch Cloudflare</h2>
+      <h2>3. XRechnung-Generator</h2>
+      <p>Im XRechnung-Generator geben Sie Rechnungsdaten ein, etwa Namen, Anschriften, Kontaktdaten, Steuernummern, Bankverbindungen und Rechnungspositionen. Diese Daten können personenbezogen sein, auch solche Ihrer Kundinnen und Kunden.</p>
+      <p>Der Generator verarbeitet diese Eingaben in Ihrem Browser: Prüfung, Berechnung und Erzeugung der XML-Datei finden auf Ihrem Gerät statt. Die Anwendung überträgt die Eingaben weder an orkaid.de noch an Dritte und speichert sie weder auf einem Server noch im Speicher Ihres Browsers (etwa <code>localStorage</code>). Ich erhalte daher keinen Zugriff auf Ihre Rechnungseingaben.</p>
+      <p>Die Eingaben bestehen im Arbeitsspeicher der geöffneten Seite. Bevor ein Link innerhalb dieser Website ungesicherte Eingaben verwerfen würde, fragt der Generator nach; beim Neuladen oder Schließen kann nur der Browser selbst nachfragen. Funktionen Ihres Browsers können Eingaben unabhängig von Orkaid aufbewahren oder wiederherstellen, etwa wenn Sie mit der Zurück-Funktion zur Seite zurückkehren, beim Wiederherstellen einer Sitzung oder über die Formular-Autovervollständigung. Das steuern Ihr Browser und seine Einstellungen, nicht Orkaid; dasselbe gilt für Browser-Erweiterungen.</p>
+      <p>Die XML-Datei entsteht in Ihrem Browser und wird Ihnen als Download übergeben. Der Generator übermittelt sie nicht automatisch an einen Validator, einen E-Mail-Anbieter oder den Rechnungsempfänger. Was danach mit der Datei geschieht – Speicherung, Versand, Prüfung –, liegt bei Ihnen.</p>
+      <p>Beim Laden der Seite verarbeitet Cloudflare die in Abschnitt 4 beschriebenen technischen Daten. Ihre Rechnungseingaben gehören nicht dazu, weil der Generator sie nicht versendet.</p>
+    </section>
+
+    <section>
+      <h2>4. Hosting und Sicherheitsverarbeitung durch Cloudflare</h2>
       <p>Diese Website wird über Cloudflare bereitgestellt: DNS, Netzwerk-/CDN- und Sicherheitsfunktionen sowie Cloudflare Pages. Der Anbieter ist Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA.</p>
       <p>Cloudflare verarbeitet dabei technische Verbindungs- und Verkehrsdaten, die zur Bereitstellung und Absicherung der Website erforderlich sind. Nach Cloudflares eigener Datenschutzerklärung kann dies insbesondere IP-Adressen, Routing-Informationen des Datenverkehrs, Systemkonfigurationsdaten sowie weitere Informationen zum Datenverkehr von und zu dieser Website umfassen; diese Aufzählung ist bewusst nicht abschließend. Orkaid selbst betreibt kein gesondertes eigenes Zugriffsprotokoll auf Anwendungs-/Server-Ebene.</p>
+      <p><strong>Meldung von Verbindungsfehlern (Network Error Logging):</strong> Die Antworten dieser Website enthalten derzeit Kopfzeilen (<code>NEL</code> und <code>Report-To</code>), mit denen Cloudflare Ihren Browser auffordert, Fehler beim Verbindungsaufbau zu dieser Website an Cloudflare zu melden (Empfänger <code>a.nel.cloudflare.com</code>). Nach der derzeit ausgelieferten Angabe betrifft das nur fehlgeschlagene Verbindungen, nicht erfolgreiche Aufrufe. Ob Ihr Browser solche Berichte speichert und sendet, hängt vom Browser ab. Ein Bericht enthält nach Cloudflares Dokumentation unter anderem die aufgerufene Adresse sowie Art und Phase des Fehlers; nach Cloudflares Angaben wird die IP-Adresse dabei nicht protokolliert.</p>
       <p>Die Sicherheitsfunktionen von Cloudflare können in Ausnahmefällen technisch notwendige Sicherheits-Cookies verwenden, etwa wenn eine Sicherheitsüberprüfung ausgelöst wird. Bei gewöhnlichen, unauffälligen Aufrufen dieser Website wurden bei der Überprüfung keine Cookies beobachtet. Orkaid selbst setzt keine Analyse- oder Marketing-Cookies ein.</p>
       <p>Wie lange Cloudflare technische, sicherheitsbezogene bzw. diagnostische Informationen vorhält, richtet sich nach dem jeweiligen Cloudflare-Dienst und Verarbeitungszweck. Orkaid legt darüber hinaus keine eigene, gesonderte Aufbewahrungsfrist für eine Anwendungs-/Server-Protokollierung fest, da eine solche nicht betrieben wird.</p>
       <p><strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an sicherer und zuverlässiger Bereitstellung der Website).</p>
       <p><strong>Datenschutzerklärung:</strong> <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">https://www.cloudflare.com/privacypolicy/</a></p>
-      <p><strong>Datenübermittlung USA:</strong> Für die Übermittlung in die USA stützt sich Cloudflare auf das EU-U.S. Data Privacy Framework sowie auf EU-Standardvertragsklauseln als Garantien.</p>
+      <p><strong>Datenübermittlung USA:</strong> Nach eigenen Angaben hält Cloudflare das EU-U.S. Data Privacy Framework ein und stützt sich für Übermittlungen aus dem EWR außerdem auf EU-Standardvertragsklauseln.</p>
     </section>
 
     <section>
-      <h2>4. E-Mail-Kontakt</h2>
+      <h2>5. E-Mail-Kontakt</h2>
       <p>Für die Kommunikation per E-Mail (<a href="mailto:kontakt@orkaid.de">kontakt@orkaid.de</a>) nutze ich Zoho Mail in der EU-Rechenzentrumsregion von Zoho (mail.zoho.eu). Beim Versand einer E-Mail werden Ihre Absenderadresse, der Inhalt Ihrer Nachricht und weitere von Ihnen freiwillig mitgeteilte Daten verarbeitet, um Ihre Anfrage zu bearbeiten.</p>
-      <p>Nach Zohos eigenen Angaben werden die Daten in der EU-Region überwiegend innerhalb der EU gespeichert und verarbeitet. In seltenen Supportfällen können Mitarbeitende der indischen Zoho-Konzerngesellschaft (Zoho Corporation Private Limited) auf das EU-Rechenzentrum zugreifen; dies erfolgt nach Angaben von Zoho auf Grundlage einer Auftragsverarbeitungsvereinbarung mit EU-Standardvertragsklauseln samt ergänzender Maßnahmen (Transfer Impact Assessment) und ohne physische Übertragung der Daten aus der EU heraus. Für einzelne Funktionen können zudem weitere Subunternehmer (Subprocessor) unter vergleichbaren vertraglichen Garantien beteiligt sein.</p>
+      <p>Nach Zohos Datenschutzrichtlinie können Daten innerhalb der Zoho-Unternehmensgruppe, auch außerhalb des EWR, verarbeitet werden; für Übermittlungen innerhalb der Gruppe nennt Zoho Vereinbarungen auf Grundlage der EU-Standardvertragsklauseln.</p>
       <p><strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Bearbeitung eingehender Anfragen).</p>
       <p><strong>Speicherdauer:</strong> Korrespondenz wird so lange aufbewahrt, wie es zur Bearbeitung der Anfrage und einer angemessenen Anschlusskommunikation erforderlich ist, es sei denn, eine längere Aufbewahrung ist gesetzlich vorgeschrieben oder zur Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen erforderlich. Nach einer Löschung durch mich können bei Zoho Mail anbieterseitige Papierkorb- bzw. Wiederherstellungs-/Löschfristen anschließend fortbestehen; Näheres regelt Zohos aktuelle Lösch- und Aufbewahrungsdokumentation.</p>
       <p><strong>Weitere Informationen:</strong> <a href="https://www.zoho.com/privacy.html" target="_blank" rel="noopener noreferrer">https://www.zoho.com/privacy.html</a> · <a href="https://www.zoho.com/mail/help/data-deletion-policy.html" target="_blank" rel="noopener noreferrer">Zoho Mail – Löschrichtlinie</a></p>
     </section>
 
     <section>
-      <h2>5. SSL- bzw. TLS-Verschlüsselung</h2>
+      <h2>6. SSL- bzw. TLS-Verschlüsselung</h2>
       <p>Diese Website ist ausschließlich über eine verschlüsselte HTTPS-Verbindung erreichbar; unverschlüsselte HTTP-Aufrufe werden automatisch auf HTTPS umgeleitet. Es kommen aktuelle Transportverschlüsselungsstandards (TLS) zum Einsatz.</p>
     </section>
 
     <section>
-      <h2>6. Externe Links</h2>
+      <h2>7. Externe Links</h2>
       <p>Diese Website enthält Links zu externen Diensten und Websites (z. B. GitHub, Substack). Allein durch das Laden dieser Seite wird keine Ressource eines verlinkten Anbieters eingebunden oder abgerufen.</p>
       <p>Wenn Sie einem Link folgen, baut Ihr Browser eine Verbindung zu dem externen Anbieter auf; ab diesem Zeitpunkt gilt dessen eigene Datenverarbeitung, für die ausschließlich der jeweilige Anbieter verantwortlich ist und dessen Datenschutzbestimmungen gelten. Das Anklicken eines Links stellt für sich genommen keine Einwilligung gegenüber Orkaid dar.</p>
+      <p>Die Anleitungen verweisen unter anderem auf Angebote der Koordinierungsstelle für IT-Standards (KoSIT) und auf GitHub, etwa zum Herunterladen des KoSIT-Validators. Wenn Sie eine XRechnung mit einem Online-Prüfdienst Dritter prüfen, übermitteln Sie den vollständigen Inhalt der Rechnung an diesen Anbieter; für diese Verarbeitung ist der jeweilige Anbieter verantwortlich. Orkaid übermittelt keine Rechnung an einen solchen Dienst.</p>
     </section>
 
     <section>
-      <h2>7. Ihre Rechte nach DSGVO</h2>
+      <h2>8. Ihre Rechte nach DSGVO</h2>
       <p>Soweit die jeweiligen gesetzlichen Voraussetzungen erfüllt sind, haben Sie insbesondere folgende Rechte bezüglich Ihrer personenbezogenen Daten:</p>
       <ul>
         <li><strong>Auskunftsrecht</strong> (Art. 15 DSGVO)</li>
@@ -100,12 +111,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
     </section>
 
     <section>
-      <h2>8. Änderungen dieser Datenschutzerklärung</h2>
+      <h2>9. Änderungen dieser Datenschutzerklärung</h2>
       <p>Ich behalte mir vor, diese Datenschutzerklärung anzupassen, damit sie stets den aktuellen rechtlichen Anforderungen entspricht oder um Änderungen meiner Leistungen — etwa neue Werkzeuge auf orkaid.de — in der Datenschutzerklärung umzusetzen. Für Ihren erneuten Besuch gilt dann die neue Datenschutzerklärung.</p>
     </section>
 
     <section>
-      <h2>9. Fragen zum Datenschutz</h2>
+      <h2>10. Fragen zum Datenschutz</h2>
       <p>Wenn Sie Fragen zum Datenschutz haben, schreiben Sie mir bitte eine E-Mail:<br /><a href="mailto:kontakt@orkaid.de">kontakt@orkaid.de</a></p>
     </section>
   </article>

@@ -1,26 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import ToolsPage from '../../components/platform/ToolsPage.astro';
 ---
 
-<BaseLayout
-  locale="de"
-  title="Werkzeuge — Orkaid"
-  description="Der Orkaid Werkzeug-Hub für freie professionelle Werkzeuge."
-  pathname="/tools/"
->
-  <header class="page-heading">
-    <p class="eyebrow">Werkzeug-Hub</p>
-    <h1>Werkzeuge</h1>
-    <p>Die Grundlage des Werkzeug-Hubs ist bereit. Der XRechnung-Generator selbst ist nicht Teil dieses technischen Bootstraps.</p>
-  </header>
-  <section class="content-section" aria-labelledby="status-heading">
-    <h2 id="status-heading">Status</h2>
-    <dl class="tool-status">
-      <dt>Plattform</dt>
-      <dd>Grundlage bereit</dd>
-      <dt>XRechnung</dt>
-      <dd><span class="status-highlight">In Entwicklung</span></dd>
-    </dl>
-    <p>Die Umsetzung wird im <a href="https://orkaid.substack.com" target="_blank" rel="noopener noreferrer">öffentlichen Build-Log</a> dokumentiert. Der Quellcode liegt auf <a href="https://github.com/orkaid/orkaid" target="_blank" rel="noopener noreferrer">GitHub</a>.</p>
-  </section>
+<BaseLayout locale="de" title="Werkzeuge — Orkaid" description="Freie Werkzeuge von Orkaid mit Umfang, Grenzen, Anleitung und Prüfhinweisen. Derzeit: der XRechnung-Generator." pathname="/tools/">
+  <ToolsPage locale="de" />
 </BaseLayout>
